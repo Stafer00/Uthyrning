@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skiduthyrning Offline</title>
+<style>
+body { font-family: Arial; padding:20px; background:#f4f4f4; }
+h1 { text-align:center; }
+select,input,button { padding:12px; font-size:16px; margin:5px 0; width:100%; }
+button { background:#1976d2; color:white; border:none; border-radius:6px; }
+.card { background:white; padding:10px; margin:8px 0; border-radius:6px; }
+.small { font-size:14px; color:#555; }
+</style>
+</head>
+<body>
+
+<h1>Skiduthyrning</h1>
+
+<input id="customer" placeholder="Kundnamn">
+
+<select id="category">
+<option>Knatte</option>
+<option>Junior</option>
+<option>Vuxen</option>
+</select>
+
+<select id="length"></select>
+
+<input type="number" id="days" placeholder="Dagar" min="1">
+
+<button onclick="rent()">Hyr ut</button>
+
+<h2>Aktiva uthyrningar</h2>
+<div id="rentals"></div>
+
+<script>
+
+const defaultInventory = {
+90:1,100:3,110:4,120:6,130:8,140:3,150:5,160:5,170:3,
+179:7,190:2,192:2,194:7,195:1,197:6,199:5,202:3,204:6,207:3
+};
+
+if(!localStorage.inventory){
+  localStorage.inventory = JSON.stringify(defaultInventory);
+}
+
+if(!localStorage.rentals){
+  localStorage.rentals = JSON.stringify([]);
+}
+
+function calculatePrice(cat, days){
+  const table = {
+    Knatte:[140,220,290,340,380,420,420],
+    Junior:[200,290,360,430,500,530,530],
+    Vuxen:[280,380,470,550,610,680,680]
+  };
+  const extra = {Knatte:60, Junior:70, Vuxen:90};
+  if(days<=7) return table[cat][days-1];
+  return table[cat][6] + (days-7)*extra[cat];
+}
+
+function loadInventory(){
+  let inventory = JSON.parse(localStorage.inventory);
+  let select = document.getElementById("length");
+  select.innerHTML="";
+  Object.keys(inventory)
+    .sort((a,b)=>a-b)
+    .forEach(len=>{
+      if(inventory[len] > 0){
+        let opt = document.createElement("option");
+        opt.value = len;
+        opt.text = len+" cm ("+inventory[len]+" kvar)";
+        select.appendChild(opt);
+      }
+    });
+}
+
+function rent(){
+  let customer=document.getElementById("customer").value;
+  let category=document.getElementById("category").value;
+  let length=document.getElementById("length").value;
+  let days=parseInt(document.getElementById("days").value);
+
+  if(!customer || !days) return alert("Fyll i alla fält");
+
+  let price=calculatePrice(category,days);
+
+  let inventory=JSON.parse(localStorage.inventory);
+  inventory[length]--;
+  localStorage.inventory=JSON.stringify(inventory);
+
+  let rentals=JSON.parse(localStorage.rentals);
+  rentals.push({id:Date.now(),customer,category,length,days,price});
+  localStorage.rentals=JSON.stringify(rentals);
+
+  document.getElementById("customer").value="";
+  document.getElementById("days").value="";
+
+  loadInventory();
+  loadRentals();
+}
+
+function returnItem(id){
+  let rentals=JSON.parse(localStorage.rentals);
+  let inventory=JSON.parse(localStorage.inventory);
+
+  let item=rentals.find(r=>r.id===id);
+  inventory[item.length]++;
+
+  rentals=rentals.filter(r=>r.id!==id);
+
+  localStorage.inventory=JSON.stringify(inventory);
+  localStorage.rentals=JSON.stringify(rentals);
+
+  loadInventory();
+  loadRentals();
+}
+
+function loadRentals(){
+  let rentals=JSON.parse(localStorage.rentals);
+  let div=document.getElementById("rentals");
+  div.innerHTML="";
+
+  rentals.forEach(r=>{
+    div.innerHTML+=`
+    <div class="card">
+      <strong>${r.customer}</strong><br>
+      ${r.length} cm – ${r.days} dagar – ${r.price} kr
+      <button onclick="returnItem(${r.id})">Återlämna</button>
+    </div>`;
+  });
+}
+
+loadInventory();
+loadRentals();
+
+</script>
+</body>
+</html>
