@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skiduthyrning Avancerad V2</title>
+<style>
+body { font-family: Arial; padding:20px; background:#f4f4f4; }
+h1 { text-align:center; }
+h2 { margin-top:30px; }
+input, select, button { padding:10px; font-size:14px; margin:5px 0; width:100%; }
+button { background:#1976d2; color:white; border:none; border-radius:6px; }
+.smallbtn { width:auto; margin:5px; padding:8px 12px; }
+table { border-collapse: collapse; width:100%; margin-top:15px; font-size:12px; }
+th, td { border:1px solid #ccc; padding:6px; text-align:center; cursor:pointer; }
+th { background:#eee; }
+.full { background:#f44336; color:white; }
+.low { background:#ff9800; color:white; }
+.good { background:#4caf50; color:white; }
+.returnDay { background:#9c27b0; color:white; }
+.card { background:white; padding:10px; margin:8px 0; border-radius:6px; }
+.modal { background:white; padding:15px; margin-top:15px; border-radius:6px; }
+</style>
+</head>
+<body>
+
+<h1>Skiduthyrning</h1>
+
+<h2>Ny bokning</h2>
+<input id="customer" placeholder="Namn">
+<input id="phone" placeholder="Telefonnummer">
+<select id="category">
+<option>Knatte</option>
+<option>Junior</option>
+<option>Vuxen</option>
+</select>
+<select id="length"></select>
+<input type="number" id="quantity" placeholder="Antal skidor" min="1" value="1">
+<label>Startdatum</label>
+<input type="date" id="start">
+<label>Slutdatum</label>
+<input type="date" id="end">
+<button onclick="rent()">Boka</button>
+
+<h2>Aktiva bokningar</h2>
+<div id="rentals"></div>
+
+<h2>Veckovy (per dag)</h2>
+<div>
+<button class="smallbtn" onclick="changeWeek(-1)">⬅</button>
+<strong id="weekLabel"></strong>
+<button class="smallbtn" onclick="changeWeek(1)">➡</button>
+</div>
+
+<div id="calendar"></div>
+
+<div id="returnInfo"></div>
+
+<script>
+
+const inventory = {
+90:1,100:3,110:4,120:6,130:8,140:3,150:5,160:5,170:3,
+179:7,190:2,192:2,194:7,195:1,197:6,199:5,202:3,204:6,207:3
+};
+
+if(!localStorage.rentals){
+  localStorage.rentals = JSON.stringify([]);
+}
+
+let currentMonday = getMonday(new Date());
+
+function getMonday(d){
+  d = new Date(d);
+  let day = d.getDay();
+  let diff = d.getDate() - (day === 0 ? 6 : day - 1);
+  return new Date(d.setDate(diff));
+}
+
+function formatDate(d){
+  return d.toISOString().split("T")[0];
+}
+
+function overlaps(aStart,aEnd,bStart,bEnd){
+  return (aStart<=bEnd && bStart<=aEnd);
+}
+
+function calculatePrice(cat, days){
+  const table = {
+    Knatte:[140,220,290,340,380,420,420],
+    Junior:[200,290,360,430,500,530,530],
+    Vuxen:[280,380,470,550,610,680,680]
+  };
+  const extra = {Knatte:60, Junior:70, Vuxen:90};
+  if(days<=7) return table[cat][days-1];
+  return table[cat][6] + (days-7)*extra[cat];
+}
+
+function daysBetween(start,end){
+  return Math.ceil((new Date(end)-new Date(start))/(1000*60*60*24))+1;
+}
+
+function loadInventory(){
+  let select=document.getElementById("length");
+  select.innerHTML="";
+  Object.keys(inventory).sort((a,b)=>a-b).forEach(len=>{
+    let opt=document.createElement("option");
+    opt.value=len;
+    opt.text=len+" cm";
+    select.appendChild(opt);
+  });
+}
+
+function rent(){
+  let customer=document.getElementById("customer").value;
+  let phone=document.getElementById("phone").value;
+  let category=document.getElementById("category").value;
+  let length=document.getElementById("length").value;
+  let quantity=parseInt(document.getElementById("quantity").value);
+  let start=document.getElementById("start").value;
+  let end=document.getElementById("end").value;
+
+  if(!customer||!phone||!start||!end||!quantity) return alert("Fyll i alla fält");
+  if(end<start) return alert("Slutdatum måste vara efter startdatum");
+
+  let rentals=JSON.parse(localStorage.rentals);
+
+  let booked=rentals.filter(r=>
+    !r.returned &&
+    r.length==length &&
+    overlaps(start,end,r.start,r.end)
+  ).reduce((sum,r)=>sum+r.quantity,0);
+
+  if(booked+quantity>inventory[length]){
+    return alert("Inte tillräckligt många lediga denna period");
+  }
+
+  let days=daysBetween(start,end);
+  let price=calculatePrice(category,days)*quantity;
+
+  rentals.push({
+    id:Date.now(),
+    customer,phone,category,length,start,end,quantity,price,returned:false
+  });
+
+  localStorage.rentals=JSON.stringify(rentals);
+  document.getElementById("customer").value="";
+  document.getElementById("phone").value="";
+  document.getElementById("quantity").value="1";
+  loadRentals();
+  renderWeek();
+}
+
+function markReturned(id){
+  let rentals=JSON.parse(localStorage.rentals);
+  let item=rentals.find(r=>r.id===id);
+  item.returned=true;
+  localStorage.rentals=JSON.stringify(rentals);
+  loadRentals();
+  renderWeek();
+}
+
+function loadRentals(){
+  let rentals=JSON.parse(localStorage.rentals);
+  let div=document.getElementById("rentals");
+  div.innerHTML="";
+  rentals.filter(r=>!r.returned).forEach(r=>{
+    div.innerHTML+=`
+    <div class="card">
+      <strong>${r.customer}</strong> (${r.phone})<br>
+      ${r.length} cm x ${r.quantity}<br>
+      ${r.start} – ${r.end}<br>
+      ${r.price} kr
+      <button onclick="markReturned(${r.id})">Återlämnad</button>
+    </div>`;
+  });
+}
+
+function renderWeek(){
+  let monday = new Date(currentMonday);
+  let dates=[];
+  for(let i=0;i<7;i++){
+    let d=new Date(monday);
+    d.setDate(d.getDate()+i);
+    dates.push(formatDate(d));
+  }
+
+  document.getElementById("weekLabel").innerText =
+    dates[0] + " – " + dates[6];
+
+  let rentals = JSON.parse(localStorage.rentals);
+
+  let html="<table><tr><th>Längd</th>";
+  dates.forEach(d=> html+="<th>"+d.substring(5)+"</th>");
+  html+="</tr>";
+
+  Object.keys(inventory).sort((a,b)=>a-b).forEach(len=>{
+    html+="<tr><td>"+len+" cm</td>";
+    dates.forEach(date=>{
+      let booked = rentals.filter(r=>
+        !r.returned &&
+        r.length==len &&
+        overlaps(date,date,r.start,r.end)
+      ).reduce((sum,r)=>sum+r.quantity,0);
+
+      let returnToday = rentals.filter(r=>
+        !r.returned &&
+        r.length==len &&
+        r.end===date
+      );
+
+      let available = inventory[len] - booked;
+
+      let css="good";
+      if(available===0) css="full";
+      else if(available<=Math.ceil(inventory[len]/2)) css="low";
+
+      if(returnToday.length>0) css="returnDay";
+
+      html+="<td class='"+css+"' onclick='showReturns(""+date+"")'>"+available+"</td>";
+    });
+    html+="</tr>";
+  });
+
+  html+="</table>";
+  document.getElementById("calendar").innerHTML=html;
+}
+
+function showReturns(date){
+  let rentals=JSON.parse(localStorage.rentals);
+  let returns=rentals.filter(r=>!r.returned && r.end===date);
+
+  let div=document.getElementById("returnInfo");
+  if(returns.length===0){
+    div.innerHTML="<div class='modal'><strong>Inga återlämningar "+date+"</strong></div>";
+    return;
+  }
+
+  let html="<div class='modal'><strong>Återlämnas "+date+"</strong><br><br>";
+  returns.forEach(r=>{
+    html+=r.customer+" ("+r.phone+") – "+r.length+" cm x "+r.quantity+"<br>";
+  });
+  html+="</div>";
+
+  div.innerHTML=html;
+}
+
+function changeWeek(direction){
+  currentMonday.setDate(currentMonday.getDate() + (7 * direction));
+  renderWeek();
+}
+
+loadInventory();
+loadRentals();
+renderWeek();
+
+</script>
+</body>
+</html>
