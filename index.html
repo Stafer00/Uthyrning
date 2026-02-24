@@ -2,14 +2,13 @@
 <html lang="sv">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Skiduthyrning Offline</title>
+<title>Skiduthyrning Bokning</title>
 <style>
 body { font-family: Arial; padding:20px; background:#f4f4f4; }
 h1 { text-align:center; }
 select,input,button { padding:12px; font-size:16px; margin:5px 0; width:100%; }
 button { background:#1976d2; color:white; border:none; border-radius:6px; }
 .card { background:white; padding:10px; margin:8px 0; border-radius:6px; }
-.small { font-size:14px; color:#555; }
 </style>
 </head>
 <body>
@@ -26,23 +25,23 @@ button { background:#1976d2; color:white; border:none; border-radius:6px; }
 
 <select id="length"></select>
 
-<input type="number" id="days" placeholder="Dagar" min="1">
+<label>Startdatum</label>
+<input type="date" id="start">
 
-<button onclick="rent()">Hyr ut</button>
+<label>Slutdatum</label>
+<input type="date" id="end">
 
-<h2>Aktiva uthyrningar</h2>
+<button onclick="rent()">Boka</button>
+
+<h2>Aktiva bokningar</h2>
 <div id="rentals"></div>
 
 <script>
 
-const defaultInventory = {
+const inventory = {
 90:1,100:3,110:4,120:6,130:8,140:3,150:5,160:5,170:3,
 179:7,190:2,192:2,194:7,195:1,197:6,199:5,202:3,204:6,207:3
 };
-
-if(!localStorage.inventory){
-  localStorage.inventory = JSON.stringify(defaultInventory);
-}
 
 if(!localStorage.rentals){
   localStorage.rentals = JSON.stringify([]);
@@ -59,64 +58,76 @@ function calculatePrice(cat, days){
   return table[cat][6] + (days-7)*extra[cat];
 }
 
+function daysBetween(start,end){
+  return Math.ceil((new Date(end)-new Date(start))/(1000*60*60*24))+1;
+}
+
+function overlaps(aStart,aEnd,bStart,bEnd){
+  return (aStart<=bEnd && bStart<=aEnd);
+}
+
+function cleanExpired(){
+  let today=new Date().toISOString().split("T")[0];
+  let rentals=JSON.parse(localStorage.rentals);
+  rentals=rentals.filter(r=>r.end>=today);
+  localStorage.rentals=JSON.stringify(rentals);
+}
+
 function loadInventory(){
-  let inventory = JSON.parse(localStorage.inventory);
-  let select = document.getElementById("length");
+  let select=document.getElementById("length");
   select.innerHTML="";
-  Object.keys(inventory)
-    .sort((a,b)=>a-b)
-    .forEach(len=>{
-      if(inventory[len] > 0){
-        let opt = document.createElement("option");
-        opt.value = len;
-        opt.text = len+" cm ("+inventory[len]+" kvar)";
-        select.appendChild(opt);
-      }
-    });
+  Object.keys(inventory).sort((a,b)=>a-b).forEach(len=>{
+    let opt=document.createElement("option");
+    opt.value=len;
+    opt.text=len+" cm ("+inventory[len]+" totalt)";
+    select.appendChild(opt);
+  });
 }
 
 function rent(){
   let customer=document.getElementById("customer").value;
   let category=document.getElementById("category").value;
   let length=document.getElementById("length").value;
-  let days=parseInt(document.getElementById("days").value);
+  let start=document.getElementById("start").value;
+  let end=document.getElementById("end").value;
 
-  if(!customer || !days) return alert("Fyll i alla fält");
-
-  let price=calculatePrice(category,days);
-
-  let inventory=JSON.parse(localStorage.inventory);
-  inventory[length]--;
-  localStorage.inventory=JSON.stringify(inventory);
+  if(!customer||!start||!end) return alert("Fyll i alla fält");
+  if(end<start) return alert("Slutdatum måste vara efter startdatum");
 
   let rentals=JSON.parse(localStorage.rentals);
-  rentals.push({id:Date.now(),customer,category,length,days,price});
+
+  let booked=rentals.filter(r=>
+    r.length==length &&
+    overlaps(start,end,r.start,r.end)
+  ).length;
+
+  if(booked>=inventory[length]){
+    return alert("Fullbokat denna period");
+  }
+
+  let days=daysBetween(start,end);
+  let price=calculatePrice(category,days);
+
+  rentals.push({
+    id:Date.now(),
+    customer,category,length,start,end,price
+  });
+
   localStorage.rentals=JSON.stringify(rentals);
 
   document.getElementById("customer").value="";
-  document.getElementById("days").value="";
-
-  loadInventory();
   loadRentals();
 }
 
 function returnItem(id){
   let rentals=JSON.parse(localStorage.rentals);
-  let inventory=JSON.parse(localStorage.inventory);
-
-  let item=rentals.find(r=>r.id===id);
-  inventory[item.length]++;
-
   rentals=rentals.filter(r=>r.id!==id);
-
-  localStorage.inventory=JSON.stringify(inventory);
   localStorage.rentals=JSON.stringify(rentals);
-
-  loadInventory();
   loadRentals();
 }
 
 function loadRentals(){
+  cleanExpired();
   let rentals=JSON.parse(localStorage.rentals);
   let div=document.getElementById("rentals");
   div.innerHTML="";
@@ -125,8 +136,10 @@ function loadRentals(){
     div.innerHTML+=`
     <div class="card">
       <strong>${r.customer}</strong><br>
-      ${r.length} cm – ${r.days} dagar – ${r.price} kr
-      <button onclick="returnItem(${r.id})">Återlämna</button>
+      ${r.length} cm<br>
+      ${r.start} – ${r.end}<br>
+      ${r.price} kr
+      <button onclick="returnItem(${r.id})">Ta bort</button>
     </div>`;
   });
 }
