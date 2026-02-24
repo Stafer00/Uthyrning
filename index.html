@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skiduthyrning Veckotillgänglighet</title>
+<style>
+body { font-family: Arial; padding:20px; background:#f4f4f4; }
+h1 { text-align:center; }
+button { padding:10px; font-size:14px; margin:5px; background:#1976d2; color:white; border:none; border-radius:6px; }
+table { border-collapse: collapse; width:100%; margin-top:20px; }
+th, td { border:1px solid #ccc; padding:8px; text-align:center; }
+th { background:#eee; }
+.low { background:#ff9800; color:white; }
+.full { background:#f44336; color:white; }
+.good { background:#4caf50; color:white; }
+.controls { text-align:center; margin-top:10px; }
+</style>
+</head>
+<body>
+
+<h1>Veckotillgänglighet</h1>
+
+<div class="controls">
+<button onclick="changeWeek(-1)">⬅ Föregående vecka</button>
+<strong id="weekLabel"></strong>
+<button onclick="changeWeek(1)">Nästa vecka ➡</button>
+</div>
+
+<div id="tableContainer"></div>
+
+<script>
+
+const inventory = {
+90:1,100:3,110:4,120:6,130:8,140:3,150:5,160:5,170:3,
+179:7,190:2,192:2,194:7,195:1,197:6,199:5,202:3,204:6,207:3
+};
+
+if(!localStorage.rentals){
+  localStorage.rentals = JSON.stringify([]);
+}
+
+let currentMonday = getMonday(new Date());
+
+function getMonday(d){
+  d = new Date(d);
+  let day = d.getDay();
+  let diff = d.getDate() - (day === 0 ? 6 : day - 1);
+  return new Date(d.setDate(diff));
+}
+
+function formatDate(d){
+  return d.toISOString().split("T")[0];
+}
+
+function overlaps(aStart,aEnd,bStart,bEnd){
+  return (aStart<=bEnd && bStart<=aEnd);
+}
+
+function renderWeek(){
+  let monday = new Date(currentMonday);
+  let sunday = new Date(monday);
+  sunday.setDate(sunday.getDate()+6);
+
+  document.getElementById("weekLabel").innerText =
+    formatDate(monday) + " – " + formatDate(sunday);
+
+  let rentals = JSON.parse(localStorage.rentals);
+  let html = "<table><tr><th>Längd</th><th>Lediga denna vecka</th></tr>";
+
+  Object.keys(inventory).sort((a,b)=>a-b).forEach(len=>{
+
+    let minAvailable = inventory[len];
+
+    for(let i=0;i<7;i++){
+      let day = new Date(monday);
+      day.setDate(day.getDate()+i);
+      let dateStr = formatDate(day);
+
+      let booked = rentals.filter(r=>
+        !r.returned &&
+        r.length==len &&
+        overlaps(dateStr,dateStr,r.start,r.end)
+      ).length;
+
+      let available = inventory[len] - booked;
+      if(available < minAvailable){
+        minAvailable = available;
+      }
+    }
+
+    let total = inventory[len];
+    let cssClass = "good";
+    if(minAvailable === 0) cssClass = "full";
+    else if(minAvailable <= Math.ceil(total/2)) cssClass = "low";
+
+    html += "<tr>";
+    html += "<td>"+len+" cm</td>";
+    html += "<td class='"+cssClass+"'>"+minAvailable+" / "+total+"</td>";
+    html += "</tr>";
+  });
+
+  html += "</table>";
+  document.getElementById("tableContainer").innerHTML = html;
+}
+
+function changeWeek(direction){
+  currentMonday.setDate(currentMonday.getDate() + (7 * direction));
+  renderWeek();
+}
+
+renderWeek();
+
+</script>
+</body>
+</html>
