@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skiduthyrning PRO SAFE</title>
+<style>
+body{font-family:Arial;padding:20px;background:#f4f4f4;}
+h1{text-align:center;}
+input,select,button{padding:8px;margin:4px 0;width:100%;}
+button{background:#1976d2;color:white;border:none;border-radius:6px;}
+.smallbtn{width:auto;padding:4px 8px;margin:4px;}
+.deletebtn{background:#d32f2f;}
+.navbtn{width:auto;padding:6px 12px;margin:4px;background:#555;}
+table{border-collapse:collapse;width:100%;margin-top:10px;font-size:12px;}
+th,td{border:1px solid #ccc;padding:5px;text-align:center;}
+th{background:#eee;}
+.section{background:white;padding:10px;margin-top:15px;border-radius:6px;}
+.card{background:white;padding:10px;margin:8px 0;border-radius:6px;}
+.returned{color:#999;text-decoration:line-through;}
+.good{background:#4caf50;color:white;}
+.low{background:#ff9800;color:white;}
+.full{background:#f44336;color:white;}
+.today{background:#ffe082;}
+.center{text-align:center;}
+</style>
+</head>
+<body>
+
+<h1>Skiduthyrning PRO SAFE</h1>
+
+<h2>Ny familjebokning</h2>
+<input id="customer" placeholder="Namn">
+<input id="phone" placeholder="Telefonnummer">
+<label>Startdatum</label>
+<input type="date" id="start">
+<label>Slutdatum</label>
+<input type="date" id="end">
+
+<select id="category" onchange="loadLengths()"></select>
+<select id="length"></select>
+<button class="smallbtn" onclick="addItem()">Lägg till rad</button>
+
+<div id="cart"></div>
+<button onclick="saveBooking()">Spara bokning</button>
+
+<h2>Aktiva bokningar</h2>
+<div id="rentals"></div>
+
+<h2>Återlämningar idag</h2>
+<div id="returns"></div>
+
+<h2>Veckovy</h2>
+<div class="center">
+<button class="navbtn" onclick="changeWeek(-1)">⬅ Föregående</button>
+<span id="weeklabel"></span>
+<button class="navbtn" onclick="changeWeek(1)">Nästa ➡</button>
+</div>
+<div id="calendar"></div>
+
+<script>
+
+var categories=["Knatte","Junior","Vuxen"];
+var weekOffset=0;
+
+var inventory={
+"Knatte":[[90,1],[100,3],[110,4],[120,6]],
+"Junior":[[130,8],[140,3],[150,5],[160,5]],
+"Vuxen":[[170,3],[179,7],[190,2],[192,2],[194,7],[195,1]]
+};
+
+var cartItems=[];
+
+function safeRentals(){
+try{
+var data=localStorage.getItem("rentals");
+if(!data) return [];
+var parsed=JSON.parse(data);
+if(!Array.isArray(parsed)) return [];
+return parsed;
+}catch(e){
+return [];
+}
+}
+
+function setRentals(arr){
+localStorage.setItem("rentals",JSON.stringify(arr));
+}
+
+function formatDate(d){
+var y=d.getFullYear();
+var m=("0"+(d.getMonth()+1)).slice(-2);
+var da=("0"+d.getDate()).slice(-2);
+return y+"-"+m+"-"+da;
+}
+
+function getMonday(d){
+d=new Date(d);
+var day=d.getDay();
+var diff=d.getDate() - (day==0?6:day-1);
+return new Date(d.setDate(diff));
+}
+
+function getWeekNumber(d){
+d=new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+var yearStart=new Date(Date.UTC(d.getUTCFullYear(),0,1));
+return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+}
+
+function changeWeek(o){
+weekOffset+=o;
+renderWeek();
+}
+
+function initCategories(){
+var sel=document.getElementById("category");
+for(var i=0;i<categories.length;i++){
+var o=document.createElement("option");
+o.value=categories[i];
+o.text=categories[i];
+sel.appendChild(o);
+}
+loadLengths();
+}
+
+function loadLengths(){
+var cat=document.getElementById("category").value;
+var sel=document.getElementById("length");
+sel.innerHTML="";
+var arr=inventory[cat] || [];
+for(var i=0;i<arr.length;i++){
+var o=document.createElement("option");
+o.value=arr[i][0];
+o.text=arr[i][0]+" cm";
+sel.appendChild(o);
+}
+}
+
+function addItem(){
+var cat=document.getElementById("category").value;
+var len=document.getElementById("length").value;
+cartItems.push({category:cat,length:len,returned:false});
+renderCart();
+}
+
+function renderCart(){
+var div=document.getElementById("cart");
+if(cartItems.length===0){div.innerHTML="";return;}
+var html="<table><tr><th>Kategori</th><th>Längd</th></tr>";
+for(var i=0;i<cartItems.length;i++){
+html+="<tr><td>"+cartItems[i].category+"</td><td>"+cartItems[i].length+"</td></tr>";
+}
+html+="</table>";
+div.innerHTML=html;
+}
+
+function saveBooking(){
+var name=document.getElementById("customer").value;
+var phone=document.getElementById("phone").value;
+var start=document.getElementById("start").value;
+var end=document.getElementById("end").value;
+
+if(!name||!phone||!start||!end||cartItems.length===0){
+alert("Fyll i allt och lägg till minst en rad");
+return;
+}
+
+var rentals=safeRentals();
+rentals.push({
+id:Date.now(),
+customer:name,
+phone:phone,
+start:start,
+end:end,
+items:cartItems.slice()
+});
+
+setRentals(rentals);
+cartItems=[];
+renderCart();
+document.getElementById("customer").value="";
+document.getElementById("phone").value="";
+loadAll();
+}
+
+function returnItem(bid,i){
+var rentals=safeRentals();
+for(var r=0;r<rentals.length;r++){
+if(rentals[r].id===bid && rentals[r].items && rentals[r].items[i]){
+rentals[r].items[i].returned=true;
+}
+}
+setRentals(rentals);
+loadAll();
+}
+
+function deleteBooking(bid){
+var rentals=safeRentals();
+var n=[];
+for(var i=0;i<rentals.length;i++){
+if(rentals[i].id!==bid) n.push(rentals[i]);
+}
+setRentals(n);
+loadAll();
+}
+
+function loadRentals(){
+var rentals=safeRentals();
+var div=document.getElementById("rentals");
+div.innerHTML="";
+
+for(var i=0;i<rentals.length;i++){
+var r=rentals[i];
+if(!r.items || !Array.isArray(r.items)) continue;
+
+var allReturned=true;
+for(var j=0;j<r.items.length;j++){
+if(!r.items[j].returned) allReturned=false;
+}
+
+var html="<div class='card'><strong>"+r.customer+"</strong> ("+r.phone+")<br>"+
+r.start+" – "+r.end+"<br>";
+
+for(var j=0;j<r.items.length;j++){
+var it=r.items[j];
+if(it.returned){
+html+="<span class='returned'>"+it.category+" "+it.length+" cm</span><br>";
+}else{
+html+=it.category+" "+it.length+" cm ";
+html+="<button class='smallbtn' onclick='returnItem("+r.id+","+j+")'>Återlämna</button><br>";
+}
+}
+
+if(allReturned){
+html+="<button class='smallbtn deletebtn' onclick='deleteBooking("+r.id+")'>Ta bort bokning</button>";
+}
+
+html+="</div>";
+div.innerHTML+=html;
+}
+}
+
+function renderReturns(){
+var rentals=safeRentals();
+var div=document.getElementById("returns");
+div.innerHTML="";
+var today=formatDate(new Date());
+var html="";
+
+for(var i=0;i<rentals.length;i++){
+if(rentals[i].end===today){
+html+="<div class='card today'><strong>"+rentals[i].customer+"</strong> Slut: "+rentals[i].end+"</div>";
+}
+}
+
+if(html==="") html="<div class='card'>Inga återlämningar idag</div>";
+div.innerHTML=html;
+}
+
+function overlaps(aStart,aEnd,bStart,bEnd){
+return (aStart<=bEnd && bStart<=aEnd);
+}
+
+function renderWeek(){
+
+var base=getMonday(new Date());
+base.setDate(base.getDate() + weekOffset*7);
+
+var weekNumber=getWeekNumber(base);
+var weekStart=formatDate(base);
+var weekEndDate=new Date(base);
+weekEndDate.setDate(base.getDate()+6);
+var weekEnd=formatDate(weekEndDate);
+
+document.getElementById("weeklabel").innerHTML=
+"Vecka "+weekNumber+" ("+weekStart+" – "+weekEnd+")";
+
+var dates=[];
+for(var i=0;i<7;i++){
+var d=new Date(base);
+d.setDate(base.getDate()+i);
+dates.push(formatDate(d));
+}
+
+var rentals=safeRentals();
+var html="";
+
+for(var c=0;c<categories.length;c++){
+var cat=categories[c];
+html+="<div class='section'><strong>"+cat+"</strong>";
+html+="<table><tr><th>Längd</th>";
+for(var d=0;d<7;d++){
+html+="<th>"+dates[d].substring(5)+"</th>";
+}
+html+="</tr>";
+
+var arr=inventory[cat] || [];
+
+for(var l=0;l<arr.length;l++){
+var len=arr[l][0];
+var total=arr[l][1];
+html+="<tr><td>"+len+"</td>";
+
+for(var d=0;d<7;d++){
+var booked=0;
+for(var r=0;r<rentals.length;r++){
+var rental=rentals[r];
+if(!rental.items || !Array.isArray(rental.items)) continue;
+if(overlaps(dates[d],dates[d],rental.start,rental.end)){
+for(var j=0;j<rental.items.length;j++){
+if(!rental.items[j].returned &&
+rental.items[j].category===cat &&
+rental.items[j].length==len){
+booked++;
+}
+}
+}
+}
+var available=total-booked;
+var css="good";
+if(available==0) css="full";
+else if(available<=Math.ceil(total/2)) css="low";
+html+="<td class='"+css+"'>"+available+"</td>";
+}
+html+="</tr>";
+}
+html+="</table></div>";
+}
+
+document.getElementById("calendar").innerHTML=html;
+}
+
+function loadAll(){
+loadRentals();
+renderReturns();
+renderWeek();
+}
+
+initCategories();
+loadAll();
+
+</script>
+
+</body>
+</html>
