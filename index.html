@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skiduthyrning STEP 2B</title>
+<style>
+body{font-family:Arial;padding:20px;background:#f4f4f4;}
+h1{text-align:center;}
+input,select,button{padding:8px;margin:4px 0;width:100%;}
+button{background:#1976d2;color:white;border:none;border-radius:6px;}
+table{border-collapse:collapse;width:100%;margin-top:10px;font-size:12px;}
+th,td{border:1px solid #ccc;padding:5px;text-align:center;}
+th{background:#eee;}
+.section{background:white;padding:10px;margin-top:15px;border-radius:6px;}
+.card{background:white;padding:10px;margin:8px 0;border-radius:6px;}
+.good{background:#4caf50;color:white;}
+.low{background:#ff9800;color:white;}
+.full{background:#f44336;color:white;}
+</style>
+</head>
+<body>
+
+<h1>Skiduthyrning</h1>
+
+<h2>Ny bokning</h2>
+<input id="customer" placeholder="Namn">
+<input id="phone" placeholder="Telefonnummer">
+<label>Startdatum</label>
+<input type="date" id="start">
+<label>Slutdatum</label>
+<input type="date" id="end">
+
+<select id="category" onchange="loadLengths()"></select>
+<select id="length"></select>
+
+<button onclick="saveBooking()">Spara bokning</button>
+
+<h2>Aktiva bokningar</h2>
+<div id="rentals"></div>
+
+<h2>Veckovy</h2>
+<div id="calendar"></div>
+
+<script>
+
+var categories=["Knatte","Junior","Vuxen"];
+
+var inventory={
+"Knatte":[[90,1],[100,3],[110,4],[120,6]],
+"Junior":[[130,8],[140,3],[150,5],[160,5]],
+"Vuxen":[[170,3],[179,7],[190,2],[192,2],[194,7],[195,1]]
+};
+
+function getRentals(){
+try{
+var data=localStorage.getItem("rentals");
+if(!data) return [];
+return JSON.parse(data);
+}catch(e){
+localStorage.removeItem("rentals");
+return [];
+}
+}
+
+function setRentals(arr){
+try{
+localStorage.setItem("rentals",JSON.stringify(arr));
+}catch(e){}
+}
+
+function initCategories(){
+var sel=document.getElementById("category");
+for(var i=0;i<categories.length;i++){
+var o=document.createElement("option");
+o.value=categories[i];
+o.text=categories[i];
+sel.appendChild(o);
+}
+loadLengths();
+}
+
+function loadLengths(){
+var cat=document.getElementById("category").value;
+var sel=document.getElementById("length");
+sel.innerHTML="";
+var arr=inventory[cat];
+for(var i=0;i<arr.length;i++){
+var o=document.createElement("option");
+o.value=arr[i][0];
+o.text=arr[i][0]+" cm";
+sel.appendChild(o);
+}
+}
+
+function saveBooking(){
+var name=document.getElementById("customer").value;
+var phone=document.getElementById("phone").value;
+var start=document.getElementById("start").value;
+var end=document.getElementById("end").value;
+var cat=document.getElementById("category").value;
+var len=document.getElementById("length").value;
+
+if(!name||!phone||!start||!end){
+alert("Fyll i allt");
+return;
+}
+
+var rentals=getRentals();
+rentals.push({
+id:Date.now(),
+customer:name,
+phone:phone,
+start:start,
+end:end,
+category:cat,
+length:len
+});
+
+setRentals(rentals);
+
+document.getElementById("customer").value="";
+document.getElementById("phone").value="";
+
+loadRentals();
+renderWeek();
+}
+
+function loadRentals(){
+var rentals=getRentals();
+var div=document.getElementById("rentals");
+div.innerHTML="";
+for(var i=0;i<rentals.length;i++){
+div.innerHTML += "<div class='card'><strong>"+rentals[i].customer+
+"</strong> ("+rentals[i].phone+")<br>"+
+rentals[i].category+" "+rentals[i].length+" cm<br>"+
+rentals[i].start+" – "+rentals[i].end+"</div>";
+}
+}
+
+function formatDate(d){
+var y=d.getFullYear();
+var m=("0"+(d.getMonth()+1)).slice(-2);
+var da=("0"+d.getDate()).slice(-2);
+return y+"-"+m+"-"+da;
+}
+
+function overlaps(aStart,aEnd,bStart,bEnd){
+return (aStart<=bEnd && bStart<=aEnd);
+}
+
+function renderWeek(){
+
+var today=new Date();
+var dates=[];
+
+for(var i=0;i<7;i++){
+var d=new Date(today);
+d.setDate(d.getDate()+i);
+dates.push(formatDate(d));
+}
+
+var rentals=getRentals();
+var html="";
+
+for(var c=0;c<categories.length;c++){
+
+var cat=categories[c];
+html+="<div class='section'><strong>"+cat+"</strong>";
+html+="<table><tr><th>Längd</th>";
+
+for(var d=0;d<dates.length;d++){
+html+="<th>"+dates[d].substring(5)+"</th>";
+}
+
+html+="</tr>";
+
+var arr=inventory[cat];
+
+for(var l=0;l<arr.length;l++){
+var len=arr[l][0];
+var total=arr[l][1];
+
+html+="<tr><td>"+len+"</td>";
+
+for(var d=0;d<dates.length;d++){
+
+var booked=0;
+
+for(var r=0;r<rentals.length;r++){
+var rental=rentals[r];
+if(rental.category===cat &&
+rental.length==len &&
+overlaps(dates[d],dates[d],rental.start,rental.end)){
+booked+=1;
+}
+}
+
+var available=total-booked;
+var css="good";
+if(available==0) css="full";
+else if(available<=Math.ceil(total/2)) css="low";
+
+html+="<td class='"+css+"'>"+available+"</td>";
+}
+
+html+="</tr>";
+}
+
+html+="</table></div>";
+}
+
+document.getElementById("calendar").innerHTML=html;
+}
+
+initCategories();
+loadRentals();
+renderWeek();
+
+</script>
+
+</body>
+</html>
