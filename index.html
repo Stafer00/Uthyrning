@@ -125,7 +125,56 @@ div.innerHTML=html
 }
 
 init()
+var rentals=[]
 
+function saveBooking(){
+
+var name=document.getElementById("customer").value
+var phone=document.getElementById("phone").value
+
+if(!name||cart.length==0){
+alert("Fyll i namn och välj skidor")
+return
+}
+
+rentals.push({
+name:name,
+phone:phone,
+items:JSON.parse(JSON.stringify(cart))
+})
+
+cart=[]
+renderCart()
+
+renderRentals()
+
+}
+
+function renderRentals(){
+
+var div=document.getElementById("rentals")
+
+div.innerHTML=""
+
+rentals.forEach(function(r){
+
+var html="<div class='card'>"
+
+html+="<strong>"+r.name+"</strong> "+r.phone+"<br>"
+
+r.items.forEach(function(i){
+
+html+=i.category+" "+i.length+" cm<br>"
+
+})
+
+html+="</div>"
+
+div.innerHTML+=html
+
+})
+
+}
 </script>
 
 </body>
