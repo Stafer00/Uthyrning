@@ -26,7 +26,11 @@ th,td{border:1px solid #ccc;padding:5px;text-align:center}
 
 <input id="customer" placeholder="Namn">
 <input id="phone" placeholder="Telefon">
+<label>Startdatum</label>
+<input type="date" id="start">
 
+<label>Slutdatum</label>
+<input type="date" id="end">
 <select id="category"></select>
 <select id="length"></select>
 
@@ -35,7 +39,13 @@ th,td{border:1px solid #ccc;padding:5px;text-align:center}
 
 <div id="cart"></div>
 
-<h2>Aktiva bokningar</h2>
+<h2>Veckovy</h2>
+
+<button onclick="changeWeek(-1)">⬅</button>
+<span id="weeklabel"></span>
+<button onclick="changeWeek(1)">➡</button>
+
+<div id="calendar"></div>
 <div id="rentals"></div>
 
 <script>
@@ -132,6 +142,32 @@ function saveBooking(){
 
 var name=document.getElementById("customer").value
 var phone=document.getElementById("phone").value
+var start=document.getElementById("start").value
+var end=document.getElementById("end").value
+
+if(!name||!start||!end||cart.length==0){
+alert("Fyll i alla fält")
+return
+}
+
+rentals.push({
+name:name,
+phone:phone,
+start:start,
+end:end,
+items:JSON.parse(JSON.stringify(cart))
+})
+
+cart=[]
+renderCart()
+
+renderRentals()
+renderWeek()
+
+}
+
+var name=document.getElementById("customer").value
+var phone=document.getElementById("phone").value
 
 if(!name||cart.length==0){
 alert("Fyll i namn och välj skidor")
@@ -175,6 +211,74 @@ div.innerHTML+=html
 
 })
 
+}
+var weekOffset=0
+
+function changeWeek(n){
+
+weekOffset+=n
+renderWeek()
+
+}
+
+function getMonday(d){
+
+d=new Date(d)
+
+var day=d.getDay()
+
+var diff=d.getDate()-(day==0?6:day-1)
+
+return new Date(d.setDate(diff))
+
+}
+
+function renderWeek(){
+
+var base=getMonday(new Date())
+
+base.setDate(base.getDate()+weekOffset*7)
+
+var weeklabel=document.getElementById("weeklabel")
+
+weeklabel.innerHTML=base.toLocaleDateString()
+
+var html="<table><tr><th>Längd</th>"
+
+var days=[]
+
+for(var i=0;i<7;i++){
+
+var d=new Date(base)
+
+d.setDate(base.getDate()+i)
+
+days.push(d)
+
+html+="<th>"+d.getDate()+"</th>"
+
+}
+
+html+="</tr>"
+
+inventory.Vuxen.forEach(function(row){
+
+html+="<tr><td>"+row[0]+"</td>"
+
+days.forEach(function(){
+
+html+="<td>"+row[1]+"</td>"
+
+})
+
+html+="</tr>"
+
+})
+
+html+="</table>"
+
+document.getElementById("calendar").innerHTML=html
+renderWeek()
 }
 </script>
 
