@@ -6,13 +6,7 @@
 <title>Skiduthyrning</title>
 
 <style>
-
-body{
-font-family:Arial;
-padding:20px;
-background:#f4f4f4
-}
-
+body{font-family:Arial;background:#f4f4f4;padding:20px}
 h1{text-align:center}
 
 input,select,button{
@@ -28,6 +22,13 @@ border:none;
 border-radius:6px
 }
 
+.card{
+background:white;
+padding:10px;
+margin-top:10px;
+border-radius:6px
+}
+
 table{
 border-collapse:collapse;
 width:100%;
@@ -40,25 +41,6 @@ border:1px solid #ccc;
 padding:5px;
 text-align:center
 }
-
-.section{
-background:white;
-padding:10px;
-margin-top:15px;
-border-radius:6px
-}
-
-.card{
-background:white;
-padding:10px;
-margin-top:10px;
-border-radius:6px
-}
-
-.good{background:#4caf50;color:white}
-.low{background:#ff9800;color:white}
-.full{background:#f44336;color:white}
-
 </style>
 </head>
 
@@ -85,34 +67,21 @@ border-radius:6px
 
 <div id="cart"></div>
 
-<h2>Veckovy</h2>
-
-<button onclick="changeWeek(-1)">⬅</button>
-<span id="weeklabel"></span>
-<button onclick="changeWeek(1)">➡</button>
-
-<div id="calendar"></div>
-
 <h2>Aktiva bokningar</h2>
-<div id="rentals"></div>
+<div id="rentals">Inga bokningar ännu</div>
 
 <script>
 
 var categories=["Knatte","Junior","Vuxen"]
 
 var inventory={
-Knatte:[[90,1],[100,3],[110,4],[120,6]],
-Junior:[[130,8],[140,3],[150,5],[160,5]],
-Vuxen:[[170,3],[179,7],[190,2],[192,2],[194,7],[195,1],[197,6],[199,5],[202,3],[204,6],[207,3]]
+Knatte:[90,100,110,120],
+Junior:[130,140,150,160],
+Vuxen:[170,179,190,192,194,195,197,199,202,204,207]
 }
 
-var rentals=[]
 var cart=[]
-var weekOffset=0
-
-function saveData(){
-localStorage.setItem("rentals",JSON.stringify(rentals))
-}
+var rentals=[]
 
 function loadData(){
 
@@ -129,8 +98,16 @@ rentals=[]
 }
 
 }catch(e){
+
 rentals=[]
+
 }
+
+}
+
+function saveData(){
+
+localStorage.setItem("rentals",JSON.stringify(rentals))
 
 }
 
@@ -154,7 +131,6 @@ cat.onchange=loadLengths
 
 loadLengths()
 
-renderWeek()
 renderRentals()
 
 }
@@ -167,12 +143,12 @@ var sel=document.getElementById("length")
 
 sel.innerHTML=""
 
-inventory[cat].forEach(function(i){
+inventory[cat].forEach(function(len){
 
 var o=document.createElement("option")
 
-o.value=i[0]
-o.text=i[0]+" cm"
+o.value=len
+o.text=len+" cm"
 
 sel.appendChild(o)
 
@@ -198,7 +174,6 @@ var div=document.getElementById("cart")
 if(cart.length===0){
 
 div.innerHTML=""
-
 return
 
 }
@@ -237,7 +212,6 @@ name:name,
 phone:phone,
 start:start,
 end:end,
-returned:false,
 items:JSON.parse(JSON.stringify(cart))
 })
 
@@ -247,18 +221,6 @@ saveData()
 
 renderCart()
 renderRentals()
-renderWeek()
-
-}
-
-function returnBooking(i){
-
-rentals[i].returned=true
-
-saveData()
-
-renderRentals()
-renderWeek()
 
 }
 
@@ -271,14 +233,11 @@ div.innerHTML=""
 if(rentals.length===0){
 
 div.innerHTML="Inga bokningar ännu"
-
 return
 
 }
 
-rentals.forEach(function(r,i){
-
-if(r.returned) return
+rentals.forEach(function(r){
 
 var html="<div class='card'>"
 
@@ -286,128 +245,16 @@ html+="<strong>"+r.name+"</strong> "+r.phone+"<br>"
 html+=r.start+" - "+r.end+"<br>"
 
 r.items.forEach(function(it){
-html+=it.category+" "+it.length+" cm<br>"
-})
 
-html+="<button onclick='returnBooking("+i+")'>Återlämnad</button>"
+html+=it.category+" "+it.length+" cm<br>"
+
+})
 
 html+="</div>"
 
 div.innerHTML+=html
 
 })
-
-}
-
-function changeWeek(n){
-
-weekOffset+=n
-
-renderWeek()
-
-}
-
-function monday(d){
-
-d=new Date(d)
-
-var day=d.getDay()
-var diff=d.getDate()-(day===0?6:day-1)
-
-return new Date(d.setDate(diff))
-
-}
-
-function format(d){
-
-return d.toISOString().split("T")[0]
-
-}
-
-function renderWeek(){
-
-var base=monday(new Date())
-
-base.setDate(base.getDate()+weekOffset*7)
-
-var dates=[]
-
-for(var i=0;i<7;i++){
-
-var d=new Date(base)
-
-d.setDate(base.getDate()+i)
-
-dates.push(format(d))
-
-}
-
-document.getElementById("weeklabel").innerHTML=
-dates[0]+" - "+dates[6]
-
-var html=""
-
-categories.forEach(function(cat){
-
-html+="<div class='section'><strong>"+cat+"</strong>"
-
-html+="<table><tr><th>Längd</th>"
-
-dates.forEach(function(d){
-html+="<th>"+d.substring(5)+"</th>"
-})
-
-html+="</tr>"
-
-inventory[cat].forEach(function(row){
-
-var len=row[0]
-var total=row[1]
-
-html+="<tr><td>"+len+"</td>"
-
-dates.forEach(function(day){
-
-var booked=0
-
-rentals.forEach(function(r){
-
-if(r.returned) return
-
-if(day>=r.start && day<=r.end){
-
-r.items.forEach(function(it){
-
-if(it.category===cat && it.length==len){
-booked++
-}
-
-})
-
-}
-
-})
-
-var free=total-booked
-
-var css="good"
-
-if(free===0) css="full"
-else if(free<=Math.ceil(total/2)) css="low"
-
-html+="<td class='"+css+"'>"+free+"</td>"
-
-})
-
-html+="</tr>"
-
-})
-
-html+="</table></div>"
-
-})
-
-document.getElementById("calendar").innerHTML=html
 
 }
 
