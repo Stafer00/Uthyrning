@@ -3,10 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Skiduthyrning PRO</title>
+<title>Skiduthyrning</title>
 
 <style>
-body{font-family:Arial;padding:20px;background:#f4f4f4}
+
+body{
+font-family:Arial;
+padding:20px;
+background:#f4f4f4
+}
+
 h1{text-align:center}
 
 input,select,button{
@@ -35,13 +41,6 @@ padding:5px;
 text-align:center
 }
 
-.card{
-background:white;
-padding:10px;
-margin:10px 0;
-border-radius:6px
-}
-
 .section{
 background:white;
 padding:10px;
@@ -49,11 +48,17 @@ margin-top:15px;
 border-radius:6px
 }
 
+.card{
+background:white;
+padding:10px;
+margin-top:10px;
+border-radius:6px
+}
+
 .good{background:#4caf50;color:white}
 .low{background:#ff9800;color:white}
 .full{background:#f44336;color:white}
-
-.daylink{cursor:pointer;text-decoration:underline}
+.return{background:#e91e63;color:white}
 
 </style>
 </head>
@@ -89,18 +94,13 @@ border-radius:6px
 
 <div id="calendar"></div>
 
-<h2>Återlämningar vald dag</h2>
+<h2>Återlämningar</h2>
 <div id="returns"></div>
 
 <h2>Aktiva bokningar</h2>
 <div id="rentals"></div>
 
-<h2>Lager</h2>
-<div id="inventory"></div>
-
 <script>
-
-"use strict";
 
 var categories=["Knatte","Junior","Vuxen"]
 
@@ -116,17 +116,11 @@ var weekOffset=0
 
 function saveData(){
 localStorage.setItem("rentals",JSON.stringify(rentals))
-localStorage.setItem("inventory",JSON.stringify(inventory))
 }
 
 function loadData(){
-
 var r=localStorage.getItem("rentals")
-var i=localStorage.getItem("inventory")
-
 if(r) rentals=JSON.parse(r)
-if(i) inventory=JSON.parse(i)
-
 }
 
 function init(){
@@ -135,18 +129,19 @@ loadData()
 
 var cat=document.getElementById("category")
 
-for(var i=0;i<categories.length;i++){
+categories.forEach(function(c){
+
 var o=document.createElement("option")
-o.value=categories[i]
-o.text=categories[i]
+o.value=c
+o.text=c
 cat.appendChild(o)
-}
+
+})
 
 cat.onchange=loadLengths
 
 loadLengths()
 renderWeek()
-renderInventory()
 renderRentals()
 
 }
@@ -158,21 +153,22 @@ var sel=document.getElementById("length")
 
 sel.innerHTML=""
 
-var list=inventory[cat]
+inventory[cat].forEach(function(i){
 
-for(var i=0;i<list.length;i++){
 var o=document.createElement("option")
-o.value=list[i][0]
-o.text=list[i][0]+" cm"
+o.value=i[0]
+o.text=i[0]+" cm"
+
 sel.appendChild(o)
-}
+
+})
 
 }
 
 function addItem(){
 
 var cat=document.getElementById("category").value
-var len=parseInt(document.getElementById("length").value)
+var len=document.getElementById("length").value
 
 cart.push({category:cat,length:len})
 
@@ -191,9 +187,9 @@ return
 
 var html="<table><tr><th>Kategori</th><th>Längd</th></tr>"
 
-for(var i=0;i<cart.length;i++){
-html+="<tr><td>"+cart[i].category+"</td><td>"+cart[i].length+"</td></tr>"
-}
+cart.forEach(function(i){
+html+="<tr><td>"+i.category+"</td><td>"+i.length+"</td></tr>"
+})
 
 html+="</table>"
 
@@ -223,10 +219,10 @@ items:JSON.parse(JSON.stringify(cart))
 })
 
 cart=[]
-renderCart()
 
 saveData()
 
+renderCart()
 renderRentals()
 renderWeek()
 
@@ -246,55 +242,40 @@ renderWeek()
 function renderRentals(){
 
 var div=document.getElementById("rentals")
+
 div.innerHTML=""
 
-for(var r=0;r<rentals.length;r++){
+rentals.forEach(function(r,i){
 
-if(rentals[r].returned) continue
+if(r.returned) return
 
 var html="<div class='card'>"
 
-html+="<strong>"+rentals[r].name+"</strong> "+rentals[r].phone+"<br>"
-html+=rentals[r].start+" - "+rentals[r].end+"<br>"
+html+="<strong>"+r.name+"</strong> "+r.phone+"<br>"
+html+=r.start+" - "+r.end+"<br>"
 
-for(var i=0;i<rentals[r].items.length;i++){
-var it=rentals[r].items[i]
+r.items.forEach(function(it){
 html+=it.category+" "+it.length+" cm<br>"
-}
+})
 
-html+="<button onclick='returnBooking("+r+")'>Återlämnad</button>"
+html+="<button onclick='returnBooking("+i+")'>Återlämnad</button>"
 
 html+="</div>"
 
 div.innerHTML+=html
 
-}
-
-}
-
-function showReturns(day){
-
-var div=document.getElementById("returns")
-div.innerHTML="<strong>"+day+"</strong><br>"
-
-for(var i=0;i<rentals.length;i++){
-
-if(rentals[i].end==day && !rentals[i].returned){
-
-div.innerHTML+=rentals[i].name+" "+rentals[i].phone+"<br>"
-
-}
-
-}
+})
 
 }
 
 function changeWeek(n){
+
 weekOffset+=n
 renderWeek()
+
 }
 
-function getMonday(d){
+function monday(d){
 
 d=new Date(d)
 
@@ -305,142 +286,100 @@ return new Date(d.setDate(diff))
 
 }
 
-function overlaps(a,b,c,d){
-return (a<=d && c<=b)
-}
+function dateStr(d){
 
-function formatDate(d){
-
-var y=d.getFullYear()
-var m=("0"+(d.getMonth()+1)).slice(-2)
-var da=("0"+d.getDate()).slice(-2)
-
-return y+"-"+m+"-"+da
+return d.toISOString().split("T")[0]
 
 }
 
 function renderWeek(){
 
-var base=getMonday(new Date())
+var base=monday(new Date())
 base.setDate(base.getDate()+weekOffset*7)
 
 var end=new Date(base)
 end.setDate(base.getDate()+6)
 
 document.getElementById("weeklabel").innerHTML=
-formatDate(base)+" - "+formatDate(end)
+dateStr(base)+" - "+dateStr(end)
 
 var dates=[]
 
 for(var i=0;i<7;i++){
+
 var d=new Date(base)
 d.setDate(base.getDate()+i)
-dates.push(formatDate(d))
+
+dates.push(dateStr(d))
+
 }
 
 var html=""
 
-for(var c=0;c<categories.length;c++){
-
-var cat=categories[c]
+categories.forEach(function(cat){
 
 html+="<div class='section'><strong>"+cat+"</strong>"
 html+="<table><tr><th>Längd</th>"
 
-for(var d=0;d<dates.length;d++){
-html+="<th class='daylink' onclick='showReturns(\""+dates[d]+"\")'>"+dates[d].substring(5)+"</th>"
-}
+dates.forEach(function(d){
+html+="<th>"+d.substring(5)+"</th>"
+})
 
 html+="</tr>"
 
-var rows=inventory[cat]
+inventory[cat].forEach(function(row){
 
-for(var r=0;r<rows.length;r++){
-
-var len=rows[r][0]
-var total=rows[r][1]
+var len=row[0]
+var total=row[1]
 
 html+="<tr><td>"+len+"</td>"
 
-for(var d=0;d<dates.length;d++){
+dates.forEach(function(day){
 
 var booked=0
 
-for(var b=0;b<rentals.length;b++){
+rentals.forEach(function(r){
 
-var booking=rentals[b]
+if(r.returned) return
 
-if(booking.returned) continue
+if(day>=r.start && day<=r.end){
 
-if(overlaps(dates[d],dates[d],booking.start,booking.end)){
+r.items.forEach(function(it){
 
-for(var i=0;i<booking.items.length;i++){
-var it=booking.items[i]
 if(it.category==cat && it.length==len){
 booked++
 }
-}
+
+})
 
 }
 
-}
+})
 
-var available=total-booked
+var free=total-booked
 
 var css="good"
-if(available==0) css="full"
-else if(available<=Math.ceil(total/2)) css="low"
 
-html+="<td class='"+css+"'>"+available+"</td>"
+if(free==0) css="full"
+else if(free<=Math.ceil(total/2)) css="low"
 
-}
+html+="<td class='"+css+"'>"+free+"</td>"
+
+})
 
 html+="</tr>"
 
-}
+})
 
 html+="</table></div>"
 
-}
+})
 
 document.getElementById("calendar").innerHTML=html
 
 }
 
-function renderInventory(){
-
-var div=document.getElementById("inventory")
-div.innerHTML=""
-
-for(var c=0;c<categories.length;c++){
-
-var cat=categories[c]
-
-div.innerHTML+="<strong>"+cat+"</strong><br>"
-
-var rows=inventory[cat]
-
-for(var r=0;r<rows.length;r++){
-div.innerHTML+=rows[r][0]+" cm <input type='number' value='"+rows[r][1]+"' onchange='updateInventory(\""+cat+"\","+r+",this.value)'><br>"
-}
-
-div.innerHTML+="<br>"
-
-}
-
-}
-
-function updateInventory(cat,row,val){
-
-inventory[cat][row][1]=parseInt(val)
-
-saveData()
-
-renderWeek()
-
-}
-
-window.onload = init;
+init()
 
 </script>
 
