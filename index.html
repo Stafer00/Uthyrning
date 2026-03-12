@@ -3,49 +3,189 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Test uthyrning</title>
+<title>Skiduthyrning</title>
 
 <style>
-body{font-family:Arial;padding:20px}
-button{padding:10px;margin-top:10px}
-.card{border:1px solid #ccc;padding:10px;margin-top:10px}
+
+body{
+font-family:Arial;
+padding:20px;
+background:#f4f4f4
+}
+
+h1{text-align:center}
+
+input,select,button{
+width:100%;
+padding:8px;
+margin:4px 0
+}
+
+button{
+background:#1976d2;
+color:white;
+border:none;
+border-radius:6px
+}
+
+.card{
+background:white;
+padding:10px;
+margin-top:10px;
+border-radius:6px
+}
+
+table{
+border-collapse:collapse;
+width:100%;
+margin-top:10px
+}
+
+th,td{
+border:1px solid #ccc;
+padding:5px;
+text-align:center
+}
+
 </style>
 
 </head>
 <body>
 
-<h1>Test bokning</h1>
+<h1>Skiduthyrning</h1>
 
-<input id="name" placeholder="Namn">
-<button onclick="save()">Spara bokning</button>
+<h2>Ny bokning</h2>
 
-<h2>Bokningar</h2>
-<div id="list"></div>
+<input id="customer" placeholder="Namn">
+<input id="phone" placeholder="Telefon">
+
+<select id="category">
+<option>Knatte</option>
+<option>Junior</option>
+<option>Vuxen</option>
+</select>
+
+<select id="length">
+<option>90</option>
+<option>100</option>
+<option>110</option>
+<option>120</option>
+<option>130</option>
+<option>140</option>
+<option>150</option>
+<option>160</option>
+<option>170</option>
+<option>179</option>
+<option>190</option>
+<option>192</option>
+<option>194</option>
+<option>195</option>
+<option>197</option>
+<option>199</option>
+<option>202</option>
+<option>204</option>
+<option>207</option>
+</select>
+
+<button onclick="addSki()">Lägg till skidor</button>
+<button onclick="saveBooking()">Spara bokning</button>
+
+<div id="cart"></div>
+
+<h2>Aktiva bokningar</h2>
+
+<div id="rentals"></div>
 
 <script>
 
+var cart=[]
 var rentals=[]
 
-function save(){
+function addSki(){
 
-var name=document.getElementById("name").value
+var cat=document.getElementById("category").value
+var len=document.getElementById("length").value
 
-rentals.push({name:name})
+cart.push({category:cat,length:len})
 
-render()
+renderCart()
 
 }
 
-function render(){
+function renderCart(){
 
-var div=document.getElementById("list")
+var div=document.getElementById("cart")
+
+if(cart.length===0){
+
+div.innerHTML=""
+return
+
+}
+
+var html="<table><tr><th>Kategori</th><th>Längd</th></tr>"
+
+cart.forEach(function(s){
+
+html+="<tr><td>"+s.category+"</td><td>"+s.length+" cm</td></tr>"
+
+})
+
+html+="</table>"
+
+div.innerHTML=html
+
+}
+
+function saveBooking(){
+
+var name=document.getElementById("customer").value
+var phone=document.getElementById("phone").value
+
+if(!name || cart.length===0){
+
+alert("Fyll i namn och välj skidor")
+
+return
+
+}
+
+rentals.push({
+
+name:name,
+phone:phone,
+items:JSON.parse(JSON.stringify(cart))
+
+})
+
+cart=[]
+
+renderCart()
+renderRentals()
+
+}
+
+function renderRentals(){
+
+var div=document.getElementById("rentals")
 
 div.innerHTML=""
 
 rentals.forEach(function(r){
 
-div.innerHTML+=
-"<div class='card'>"+r.name+"</div>"
+var html="<div class='card'>"
+
+html+="<strong>"+r.name+"</strong> "+r.phone+"<br>"
+
+r.items.forEach(function(i){
+
+html+=i.category+" "+i.length+" cm<br>"
+
+})
+
+html+="</div>"
+
+div.innerHTML+=html
 
 })
 
