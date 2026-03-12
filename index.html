@@ -7,11 +7,7 @@
 
 <style>
 
-body{
-font-family:Arial;
-padding:20px;
-background:#f4f4f4
-}
+body{font-family:Arial;padding:20px;background:#f4f4f4}
 
 h1{text-align:center}
 
@@ -28,17 +24,11 @@ border:none;
 border-radius:6px
 }
 
-.card{
-background:white;
-padding:10px;
-margin-top:10px;
-border-radius:6px
-}
-
 table{
 border-collapse:collapse;
 width:100%;
-margin-top:10px
+margin-top:10px;
+font-size:12px
 }
 
 th,td{
@@ -46,6 +36,17 @@ border:1px solid #ccc;
 padding:5px;
 text-align:center
 }
+
+.card{
+background:white;
+padding:10px;
+margin-top:10px;
+border-radius:6px
+}
+
+.good{background:#4caf50;color:white}
+.low{background:#ff9800;color:white}
+.full{background:#f44336;color:white}
 
 </style>
 
@@ -58,6 +59,12 @@ text-align:center
 
 <input id="customer" placeholder="Namn">
 <input id="phone" placeholder="Telefon">
+
+<label>Startdatum</label>
+<input type="date" id="start">
+
+<label>Slutdatum</label>
+<input type="date" id="end">
 
 <select id="category">
 <option>Knatte</option>
@@ -92,14 +99,31 @@ text-align:center
 
 <div id="cart"></div>
 
+<h2>Veckovy</h2>
+
+<button onclick="changeWeek(-1)">⬅</button>
+<span id="weeklabel"></span>
+<button onclick="changeWeek(1)">➡</button>
+
+<div id="calendar"></div>
+
 <h2>Aktiva bokningar</h2>
 
 <div id="rentals"></div>
 
 <script>
 
+var inventory={
+
+Knatte:{90:1,100:3,110:4,120:6},
+Junior:{130:8,140:3,150:5,160:5},
+Vuxen:{170:3,179:7,190:2,192:2,194:7,195:1,197:6,199:5,202:3,204:6,207:3}
+
+}
+
 var cart=[]
 var rentals=[]
+var weekOffset=0
 
 function addSki(){
 
@@ -117,10 +141,8 @@ function renderCart(){
 var div=document.getElementById("cart")
 
 if(cart.length===0){
-
 div.innerHTML=""
 return
-
 }
 
 var html="<table><tr><th>Kategori</th><th>Längd</th></tr>"
@@ -141,11 +163,12 @@ function saveBooking(){
 
 var name=document.getElementById("customer").value
 var phone=document.getElementById("phone").value
+var start=document.getElementById("start").value
+var end=document.getElementById("end").value
 
-if(!name || cart.length===0){
+if(!name||!start||!end||cart.length===0){
 
-alert("Fyll i namn och välj skidor")
-
+alert("Fyll i alla fält")
 return
 
 }
@@ -154,6 +177,8 @@ rentals.push({
 
 name:name,
 phone:phone,
+start:start,
+end:end,
 items:JSON.parse(JSON.stringify(cart))
 
 })
@@ -162,6 +187,7 @@ cart=[]
 
 renderCart()
 renderRentals()
+renderWeek()
 
 }
 
@@ -176,6 +202,7 @@ rentals.forEach(function(r){
 var html="<div class='card'>"
 
 html+="<strong>"+r.name+"</strong> "+r.phone+"<br>"
+html+=r.start+" - "+r.end+"<br>"
 
 r.items.forEach(function(i){
 
@@ -190,6 +217,115 @@ div.innerHTML+=html
 })
 
 }
+
+function monday(d){
+
+d=new Date(d)
+
+var day=d.getDay()
+var diff=d.getDate()-(day===0?6:day-1)
+
+return new Date(d.setDate(diff))
+
+}
+
+function format(d){
+
+return d.toISOString().split("T")[0]
+
+}
+
+function changeWeek(n){
+
+weekOffset+=n
+renderWeek()
+
+}
+
+function renderWeek(){
+
+var base=monday(new Date())
+
+base.setDate(base.getDate()+weekOffset*7)
+
+var dates=[]
+
+for(var i=0;i<7;i++){
+
+var d=new Date(base)
+d.setDate(base.getDate()+i)
+
+dates.push(format(d))
+
+}
+
+document.getElementById("weeklabel").innerHTML=
+dates[0]+" - "+dates[6]
+
+var html=""
+
+for(var cat in inventory){
+
+html+="<table><tr><th>"+cat+"</th>"
+
+dates.forEach(function(d){
+html+="<th>"+d.substring(5)+"</th>"
+})
+
+html+="</tr>"
+
+for(var len in inventory[cat]){
+
+var total=inventory[cat][len]
+
+html+="<tr><td>"+len+"</td>"
+
+dates.forEach(function(day){
+
+var booked=0
+
+rentals.forEach(function(r){
+
+if(day>=r.start && day<=r.end){
+
+r.items.forEach(function(it){
+
+if(it.category===cat && it.length==len){
+
+booked++
+
+}
+
+})
+
+}
+
+})
+
+var free=total-booked
+
+var css="good"
+
+if(free===0) css="full"
+else if(free<=Math.ceil(total/2)) css="low"
+
+html+="<td class='"+css+"'>"+free+"</td>"
+
+})
+
+html+="</tr>"
+
+}
+
+html+="</table><br>"
+
+}
+
+document.getElementById("calendar").innerHTML=html
+
+}
+
+renderWeek()
 
 </script>
 
