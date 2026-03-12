@@ -7,18 +7,13 @@
 
 <style>
 
-body{
-font-family:Arial;
-padding:20px;
-background:#f4f4f4
-}
-
+body{font-family:Arial;background:#f4f4f4;padding:20px}
 h1{text-align:center}
 
 input,select,button{
+width:100%;
 padding:8px;
 margin:4px 0;
-width:100%
 }
 
 button{
@@ -61,7 +56,6 @@ border-radius:6px
 
 </style>
 </head>
-
 <body>
 
 <h1>Skiduthyrning</h1>
@@ -93,11 +87,9 @@ border-radius:6px
 
 <div id="calendar"></div>
 
-<h2>Återlämningar</h2>
-<div id="returns"></div>
-
 <h2>Aktiva bokningar</h2>
-<div id="rentals">Inga bokningar ännu</div>
+
+<div id="rentals"></div>
 
 <script>
 
@@ -109,8 +101,8 @@ Junior:[[130,8],[140,3],[150,5],[160,5]],
 Vuxen:[[170,3],[179,7],[190,2],[192,2],[194,7],[195,1],[197,6],[199,5],[202,3],[204,6],[207,3]]
 }
 
-var cart=[]
 var rentals=[]
+var cart=[]
 var weekOffset=0
 
 function saveData(){
@@ -118,8 +110,14 @@ localStorage.setItem("rentals",JSON.stringify(rentals))
 }
 
 function loadData(){
+
+try{
 var r=localStorage.getItem("rentals")
 if(r) rentals=JSON.parse(r)
+}catch(e){
+rentals=[]
+}
+
 }
 
 function init(){
@@ -143,7 +141,6 @@ cat.onchange=loadLengths
 loadLengths()
 
 renderWeek()
-
 renderRentals()
 
 }
@@ -151,7 +148,6 @@ renderRentals()
 function loadLengths(){
 
 var cat=document.getElementById("category").value
-
 var sel=document.getElementById("length")
 
 sel.innerHTML=""
@@ -159,7 +155,6 @@ sel.innerHTML=""
 inventory[cat].forEach(function(i){
 
 var o=document.createElement("option")
-
 o.value=i[0]
 o.text=i[0]+" cm"
 
@@ -187,7 +182,6 @@ var div=document.getElementById("cart")
 if(cart.length==0){
 
 div.innerHTML=""
-
 return
 
 }
@@ -214,11 +208,8 @@ var start=document.getElementById("start").value
 var end=document.getElementById("end").value
 
 if(!name||!start||!end||cart.length==0){
-
 alert("Fyll i alla fält")
-
 return
-
 }
 
 rentals.push({
@@ -257,13 +248,9 @@ var div=document.getElementById("rentals")
 
 div.innerHTML=""
 
-var active=false
-
 rentals.forEach(function(r,i){
 
 if(r.returned) return
-
-active=true
 
 var html="<div class='card'>"
 
@@ -271,9 +258,7 @@ html+="<strong>"+r.name+"</strong> "+r.phone+"<br>"
 html+=r.start+" - "+r.end+"<br>"
 
 r.items.forEach(function(it){
-
 html+=it.category+" "+it.length+" cm<br>"
-
 })
 
 html+="<button onclick='returnBooking("+i+")'>Återlämnad</button>"
@@ -283,10 +268,6 @@ html+="</div>"
 div.innerHTML+=html
 
 })
-
-if(!active){
-div.innerHTML="Inga bokningar"
-}
 
 }
 
@@ -303,7 +284,6 @@ function monday(d){
 d=new Date(d)
 
 var day=d.getDay()
-
 var diff=d.getDate()-(day==0?6:day-1)
 
 return new Date(d.setDate(diff))
@@ -311,15 +291,12 @@ return new Date(d.setDate(diff))
 }
 
 function format(d){
-
 return d.toISOString().split("T")[0]
-
 }
 
 function renderWeek(){
 
 var base=monday(new Date())
-
 base.setDate(base.getDate()+weekOffset*7)
 
 var dates=[]
@@ -327,7 +304,6 @@ var dates=[]
 for(var i=0;i<7;i++){
 
 var d=new Date(base)
-
 d.setDate(base.getDate()+i)
 
 dates.push(format(d))
@@ -346,9 +322,7 @@ html+="<div class='section'><strong>"+cat+"</strong>"
 html+="<table><tr><th>Längd</th>"
 
 dates.forEach(function(d){
-
 html+="<th>"+d.substring(5)+"</th>"
-
 })
 
 html+="</tr>"
@@ -356,7 +330,6 @@ html+="</tr>"
 inventory[cat].forEach(function(row){
 
 var len=row[0]
-
 var total=row[1]
 
 html+="<tr><td>"+len+"</td>"
@@ -374,9 +347,7 @@ if(day>=r.start && day<=r.end){
 r.items.forEach(function(it){
 
 if(it.category==cat && it.length==len){
-
 booked++
-
 }
 
 })
