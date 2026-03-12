@@ -58,7 +58,6 @@ border-radius:6px
 .good{background:#4caf50;color:white}
 .low{background:#ff9800;color:white}
 .full{background:#f44336;color:white}
-.return{background:#e91e63;color:white}
 
 </style>
 </head>
@@ -98,7 +97,7 @@ border-radius:6px
 <div id="returns"></div>
 
 <h2>Aktiva bokningar</h2>
-<div id="rentals"></div>
+<div id="rentals">Inga bokningar ännu</div>
 
 <script>
 
@@ -134,6 +133,7 @@ categories.forEach(function(c){
 var o=document.createElement("option")
 o.value=c
 o.text=c
+
 cat.appendChild(o)
 
 })
@@ -141,7 +141,9 @@ cat.appendChild(o)
 cat.onchange=loadLengths
 
 loadLengths()
+
 renderWeek()
+
 renderRentals()
 
 }
@@ -149,6 +151,7 @@ renderRentals()
 function loadLengths(){
 
 var cat=document.getElementById("category").value
+
 var sel=document.getElementById("length")
 
 sel.innerHTML=""
@@ -156,6 +159,7 @@ sel.innerHTML=""
 inventory[cat].forEach(function(i){
 
 var o=document.createElement("option")
+
 o.value=i[0]
 o.text=i[0]+" cm"
 
@@ -181,14 +185,19 @@ function renderCart(){
 var div=document.getElementById("cart")
 
 if(cart.length==0){
+
 div.innerHTML=""
+
 return
+
 }
 
 var html="<table><tr><th>Kategori</th><th>Längd</th></tr>"
 
 cart.forEach(function(i){
+
 html+="<tr><td>"+i.category+"</td><td>"+i.length+"</td></tr>"
+
 })
 
 html+="</table>"
@@ -205,8 +214,11 @@ var start=document.getElementById("start").value
 var end=document.getElementById("end").value
 
 if(!name||!start||!end||cart.length==0){
+
 alert("Fyll i alla fält")
+
 return
+
 }
 
 rentals.push({
@@ -245,9 +257,13 @@ var div=document.getElementById("rentals")
 
 div.innerHTML=""
 
+var active=false
+
 rentals.forEach(function(r,i){
 
 if(r.returned) return
+
+active=true
 
 var html="<div class='card'>"
 
@@ -255,7 +271,9 @@ html+="<strong>"+r.name+"</strong> "+r.phone+"<br>"
 html+=r.start+" - "+r.end+"<br>"
 
 r.items.forEach(function(it){
+
 html+=it.category+" "+it.length+" cm<br>"
+
 })
 
 html+="<button onclick='returnBooking("+i+")'>Återlämnad</button>"
@@ -266,11 +284,16 @@ div.innerHTML+=html
 
 })
 
+if(!active){
+div.innerHTML="Inga bokningar"
+}
+
 }
 
 function changeWeek(n){
 
 weekOffset+=n
+
 renderWeek()
 
 }
@@ -280,13 +303,14 @@ function monday(d){
 d=new Date(d)
 
 var day=d.getDay()
+
 var diff=d.getDate()-(day==0?6:day-1)
 
 return new Date(d.setDate(diff))
 
 }
 
-function dateStr(d){
+function format(d){
 
 return d.toISOString().split("T")[0]
 
@@ -295,34 +319,36 @@ return d.toISOString().split("T")[0]
 function renderWeek(){
 
 var base=monday(new Date())
+
 base.setDate(base.getDate()+weekOffset*7)
-
-var end=new Date(base)
-end.setDate(base.getDate()+6)
-
-document.getElementById("weeklabel").innerHTML=
-dateStr(base)+" - "+dateStr(end)
 
 var dates=[]
 
 for(var i=0;i<7;i++){
 
 var d=new Date(base)
+
 d.setDate(base.getDate()+i)
 
-dates.push(dateStr(d))
+dates.push(format(d))
 
 }
+
+document.getElementById("weeklabel").innerHTML=
+dates[0]+" - "+dates[6]
 
 var html=""
 
 categories.forEach(function(cat){
 
 html+="<div class='section'><strong>"+cat+"</strong>"
+
 html+="<table><tr><th>Längd</th>"
 
 dates.forEach(function(d){
+
 html+="<th>"+d.substring(5)+"</th>"
+
 })
 
 html+="</tr>"
@@ -330,6 +356,7 @@ html+="</tr>"
 inventory[cat].forEach(function(row){
 
 var len=row[0]
+
 var total=row[1]
 
 html+="<tr><td>"+len+"</td>"
@@ -347,7 +374,9 @@ if(day>=r.start && day<=r.end){
 r.items.forEach(function(it){
 
 if(it.category==cat && it.length==len){
+
 booked++
+
 }
 
 })
@@ -379,7 +408,7 @@ document.getElementById("calendar").innerHTML=html
 
 }
 
-init()
+window.onload=init
 
 </script>
 
