@@ -3,262 +3,53 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Skiduthyrning</title>
+<title>Test uthyrning</title>
 
 <style>
-body{font-family:Arial;background:#f4f4f4;padding:20px}
-h1{text-align:center}
-
-input,select,button{
-width:100%;
-padding:8px;
-margin:4px 0
-}
-
-button{
-background:#1976d2;
-color:white;
-border:none;
-border-radius:6px
-}
-
-.card{
-background:white;
-padding:10px;
-margin-top:10px;
-border-radius:6px
-}
-
-table{
-border-collapse:collapse;
-width:100%;
-margin-top:10px;
-font-size:12px
-}
-
-th,td{
-border:1px solid #ccc;
-padding:5px;
-text-align:center
-}
+body{font-family:Arial;padding:20px}
+button{padding:10px;margin-top:10px}
+.card{border:1px solid #ccc;padding:10px;margin-top:10px}
 </style>
-</head>
 
+</head>
 <body>
 
-<h1>Skiduthyrning</h1>
+<h1>Test bokning</h1>
 
-<h2>Ny bokning</h2>
+<input id="name" placeholder="Namn">
+<button onclick="save()">Spara bokning</button>
 
-<input id="customer" placeholder="Namn">
-<input id="phone" placeholder="Telefon">
-
-<label>Startdatum</label>
-<input type="date" id="start">
-
-<label>Slutdatum</label>
-<input type="date" id="end">
-
-<select id="category"></select>
-<select id="length"></select>
-
-<button onclick="addItem()">Lägg till skidor</button>
-<button onclick="saveBooking()">Spara bokning</button>
-
-<div id="cart"></div>
-
-<h2>Aktiva bokningar</h2>
-<div id="rentals">Inga bokningar ännu</div>
+<h2>Bokningar</h2>
+<div id="list"></div>
 
 <script>
 
-var categories=["Knatte","Junior","Vuxen"]
-
-var inventory={
-Knatte:[90,100,110,120],
-Junior:[130,140,150,160],
-Vuxen:[170,179,190,192,194,195,197,199,202,204,207]
-}
-
-var cart=[]
 var rentals=[]
 
-function loadData(){
+function save(){
 
-try{
+var name=document.getElementById("name").value
 
-var r=localStorage.getItem("rentals")
+rentals.push({name:name})
 
-if(r){
-rentals=JSON.parse(r)
-}
-
-if(!Array.isArray(rentals)){
-rentals=[]
-}
-
-}catch(e){
-
-rentals=[]
+render()
 
 }
 
-}
+function render(){
 
-function saveData(){
-
-localStorage.setItem("rentals",JSON.stringify(rentals))
-
-}
-
-function init(){
-
-loadData()
-
-var cat=document.getElementById("category")
-
-categories.forEach(function(c){
-
-var o=document.createElement("option")
-o.value=c
-o.text=c
-
-cat.appendChild(o)
-
-})
-
-cat.onchange=loadLengths
-
-loadLengths()
-
-renderRentals()
-
-}
-
-function loadLengths(){
-
-var cat=document.getElementById("category").value
-
-var sel=document.getElementById("length")
-
-sel.innerHTML=""
-
-inventory[cat].forEach(function(len){
-
-var o=document.createElement("option")
-
-o.value=len
-o.text=len+" cm"
-
-sel.appendChild(o)
-
-})
-
-}
-
-function addItem(){
-
-var cat=document.getElementById("category").value
-var len=document.getElementById("length").value
-
-cart.push({category:cat,length:len})
-
-renderCart()
-
-}
-
-function renderCart(){
-
-var div=document.getElementById("cart")
-
-if(cart.length===0){
+var div=document.getElementById("list")
 
 div.innerHTML=""
-return
-
-}
-
-var html="<table><tr><th>Kategori</th><th>Längd</th></tr>"
-
-cart.forEach(function(i){
-
-html+="<tr><td>"+i.category+"</td><td>"+i.length+"</td></tr>"
-
-})
-
-html+="</table>"
-
-div.innerHTML=html
-
-}
-
-function saveBooking(){
-
-var name=document.getElementById("customer").value
-var phone=document.getElementById("phone").value
-var start=document.getElementById("start").value
-var end=document.getElementById("end").value
-
-if(!name||!start||!end||cart.length===0){
-
-alert("Fyll i alla fält")
-
-return
-
-}
-
-rentals.push({
-name:name,
-phone:phone,
-start:start,
-end:end,
-items:JSON.parse(JSON.stringify(cart))
-})
-
-cart=[]
-
-saveData()
-
-renderCart()
-renderRentals()
-
-}
-
-function renderRentals(){
-
-var div=document.getElementById("rentals")
-
-div.innerHTML=""
-
-if(rentals.length===0){
-
-div.innerHTML="Inga bokningar ännu"
-return
-
-}
 
 rentals.forEach(function(r){
 
-var html="<div class='card'>"
-
-html+="<strong>"+r.name+"</strong> "+r.phone+"<br>"
-html+=r.start+" - "+r.end+"<br>"
-
-r.items.forEach(function(it){
-
-html+=it.category+" "+it.length+" cm<br>"
-
-})
-
-html+="</div>"
-
-div.innerHTML+=html
+div.innerHTML+=
+"<div class='card'>"+r.name+"</div>"
 
 })
 
 }
-
-window.onload=init
 
 </script>
 
