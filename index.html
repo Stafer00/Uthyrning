@@ -97,6 +97,8 @@ border-radius:6px
 <option>207</option>
 </select>
 
+<input type="number" id="qty" value="1" min="1">
+
 <button onclick="addSki()">Lägg till skidor</button>
 <button onclick="saveBooking()">Spara bokning</button>
 
@@ -116,6 +118,9 @@ border-radius:6px
 <h2>Aktiva bokningar</h2>
 <div id="rentals"></div>
 
+<h2>Lager</h2>
+<div id="inventoryEditor"></div>
+
 <script>
 
 var inventory={
@@ -132,8 +137,13 @@ function addSki(){
 
 var cat=document.getElementById("category").value
 var len=document.getElementById("length").value
+var qty=parseInt(document.getElementById("qty").value)
+
+for(var i=0;i<qty;i++){
 
 cart.push({category:cat,length:len})
+
+}
 
 renderCart()
 
@@ -368,7 +378,36 @@ document.getElementById("calendar").innerHTML=html
 
 }
 
+function renderInventoryEditor(){
+
+var html=""
+
+for(var cat in inventory){
+
+html+="<strong>"+cat+"</strong><br>"
+
+for(var len in inventory[cat]){
+
+html+=len+" cm "
+
+html+="<input type='number' value='"+inventory[cat][len]+"' "
+
+html+="onchange='inventory[\""+cat+"\"][\""+len+"\"]=parseInt(this.value);renderWeek()'>"
+
+html+="<br>"
+
+}
+
+html+="<br>"
+
+}
+
+document.getElementById("inventoryEditor").innerHTML=html
+
+}
+
 renderWeek()
+renderInventoryEditor()
 
 </script>
 
