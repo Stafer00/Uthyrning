@@ -3,20 +3,58 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Skiduthyrning</title>
+<title>Skiduthyrning PRO</title>
 
 <style>
-body{font-family:Arial;padding:20px;background:#f4f4f4;}
+body{font-family:Arial;padding:20px;background:#f4f4f4}
 h1{text-align:center}
-input,select,button{padding:8px;margin:4px 0;width:100%;}
-button{background:#1976d2;color:white;border:none;border-radius:6px;}
-table{border-collapse:collapse;width:100%;margin-top:10px;font-size:12px;}
-th,td{border:1px solid #ccc;padding:5px;text-align:center;}
-.card{background:white;padding:10px;margin:10px 0;border-radius:6px;}
-.section{background:white;padding:10px;margin-top:15px;border-radius:6px;}
+
+input,select,button{
+padding:8px;
+margin:4px 0;
+width:100%
+}
+
+button{
+background:#1976d2;
+color:white;
+border:none;
+border-radius:6px
+}
+
+table{
+border-collapse:collapse;
+width:100%;
+margin-top:10px;
+font-size:12px
+}
+
+th,td{
+border:1px solid #ccc;
+padding:5px;
+text-align:center
+}
+
+.card{
+background:white;
+padding:10px;
+margin:10px 0;
+border-radius:6px
+}
+
+.section{
+background:white;
+padding:10px;
+margin-top:15px;
+border-radius:6px
+}
+
 .good{background:#4caf50;color:white}
 .low{background:#ff9800;color:white}
 .full{background:#f44336;color:white}
+
+.daylink{cursor:pointer;text-decoration:underline}
+
 </style>
 </head>
 
@@ -51,10 +89,18 @@ th,td{border:1px solid #ccc;padding:5px;text-align:center;}
 
 <div id="calendar"></div>
 
+<h2>Återlämningar vald dag</h2>
+<div id="returns"></div>
+
 <h2>Aktiva bokningar</h2>
 <div id="rentals"></div>
 
+<h2>Lager</h2>
+<div id="inventory"></div>
+
 <script>
+
+"use strict";
 
 var categories=["Knatte","Junior","Vuxen"]
 
@@ -68,7 +114,24 @@ var cart=[]
 var rentals=[]
 var weekOffset=0
 
+function saveData(){
+localStorage.setItem("rentals",JSON.stringify(rentals))
+localStorage.setItem("inventory",JSON.stringify(inventory))
+}
+
+function loadData(){
+
+var r=localStorage.getItem("rentals")
+var i=localStorage.getItem("inventory")
+
+if(r) rentals=JSON.parse(r)
+if(i) inventory=JSON.parse(i)
+
+}
+
 function init(){
+
+loadData()
 
 var cat=document.getElementById("category")
 
@@ -83,6 +146,8 @@ cat.onchange=loadLengths
 
 loadLengths()
 renderWeek()
+renderInventory()
+renderRentals()
 
 }
 
@@ -153,11 +218,26 @@ name:name,
 phone:phone,
 start:start,
 end:end,
+returned:false,
 items:JSON.parse(JSON.stringify(cart))
 })
 
 cart=[]
 renderCart()
+
+saveData()
+
+renderRentals()
+renderWeek()
+
+}
+
+function returnBooking(i){
+
+rentals[i].returned=true
+
+saveData()
+
 renderRentals()
 renderWeek()
 
@@ -170,7 +250,10 @@ div.innerHTML=""
 
 for(var r=0;r<rentals.length;r++){
 
+if(rentals[r].returned) continue
+
 var html="<div class='card'>"
+
 html+="<strong>"+rentals[r].name+"</strong> "+rentals[r].phone+"<br>"
 html+=rentals[r].start+" - "+rentals[r].end+"<br>"
 
@@ -179,9 +262,28 @@ var it=rentals[r].items[i]
 html+=it.category+" "+it.length+" cm<br>"
 }
 
+html+="<button onclick='returnBooking("+r+")'>Återlämnad</button>"
+
 html+="</div>"
 
 div.innerHTML+=html
+
+}
+
+}
+
+function showReturns(day){
+
+var div=document.getElementById("returns")
+div.innerHTML="<strong>"+day+"</strong><br>"
+
+for(var i=0;i<rentals.length;i++){
+
+if(rentals[i].end==day && !rentals[i].returned){
+
+div.innerHTML+=rentals[i].name+" "+rentals[i].phone+"<br>"
+
+}
 
 }
 
@@ -193,10 +295,14 @@ renderWeek()
 }
 
 function getMonday(d){
+
 d=new Date(d)
+
 var day=d.getDay()
 var diff=d.getDate()-(day==0?6:day-1)
+
 return new Date(d.setDate(diff))
+
 }
 
 function overlaps(a,b,c,d){
@@ -204,10 +310,13 @@ return (a<=d && c<=b)
 }
 
 function formatDate(d){
+
 var y=d.getFullYear()
 var m=("0"+(d.getMonth()+1)).slice(-2)
 var da=("0"+d.getDate()).slice(-2)
+
 return y+"-"+m+"-"+da
+
 }
 
 function renderWeek(){
@@ -239,7 +348,7 @@ html+="<div class='section'><strong>"+cat+"</strong>"
 html+="<table><tr><th>Längd</th>"
 
 for(var d=0;d<dates.length;d++){
-html+="<th>"+dates[d].substring(5)+"</th>"
+html+="<th class='daylink' onclick='showReturns(\""+dates[d]+"\")'>"+dates[d].substring(5)+"</th>"
 }
 
 html+="</tr>"
@@ -260,6 +369,8 @@ var booked=0
 for(var b=0;b<rentals.length;b++){
 
 var booking=rentals[b]
+
+if(booking.returned) continue
 
 if(overlaps(dates[d],dates[d],booking.start,booking.end)){
 
@@ -293,6 +404,39 @@ html+="</table></div>"
 }
 
 document.getElementById("calendar").innerHTML=html
+
+}
+
+function renderInventory(){
+
+var div=document.getElementById("inventory")
+div.innerHTML=""
+
+for(var c=0;c<categories.length;c++){
+
+var cat=categories[c]
+
+div.innerHTML+="<strong>"+cat+"</strong><br>"
+
+var rows=inventory[cat]
+
+for(var r=0;r<rows.length;r++){
+div.innerHTML+=rows[r][0]+" cm <input type='number' value='"+rows[r][1]+"' onchange='updateInventory(\""+cat+"\","+r+",this.value)'><br>"
+}
+
+div.innerHTML+="<br>"
+
+}
+
+}
+
+function updateInventory(cat,row,val){
+
+inventory[cat][row][1]=parseInt(val)
+
+saveData()
+
+renderWeek()
 
 }
 
