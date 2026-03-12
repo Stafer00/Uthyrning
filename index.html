@@ -7,13 +7,18 @@
 
 <style>
 
-body{font-family:Arial;background:#f4f4f4;padding:20px}
+body{
+font-family:Arial;
+padding:20px;
+background:#f4f4f4
+}
+
 h1{text-align:center}
 
 input,select,button{
 width:100%;
 padding:8px;
-margin:4px 0;
+margin:4px 0
 }
 
 button{
@@ -56,6 +61,7 @@ border-radius:6px
 
 </style>
 </head>
+
 <body>
 
 <h1>Skiduthyrning</h1>
@@ -88,7 +94,6 @@ border-radius:6px
 <div id="calendar"></div>
 
 <h2>Aktiva bokningar</h2>
-
 <div id="rentals"></div>
 
 <script>
@@ -112,8 +117,17 @@ localStorage.setItem("rentals",JSON.stringify(rentals))
 function loadData(){
 
 try{
+
 var r=localStorage.getItem("rentals")
-if(r) rentals=JSON.parse(r)
+
+if(r){
+rentals=JSON.parse(r)
+}
+
+if(!Array.isArray(rentals)){
+rentals=[]
+}
+
 }catch(e){
 rentals=[]
 }
@@ -148,6 +162,7 @@ renderRentals()
 function loadLengths(){
 
 var cat=document.getElementById("category").value
+
 var sel=document.getElementById("length")
 
 sel.innerHTML=""
@@ -155,6 +170,7 @@ sel.innerHTML=""
 inventory[cat].forEach(function(i){
 
 var o=document.createElement("option")
+
 o.value=i[0]
 o.text=i[0]+" cm"
 
@@ -179,9 +195,10 @@ function renderCart(){
 
 var div=document.getElementById("cart")
 
-if(cart.length==0){
+if(cart.length===0){
 
 div.innerHTML=""
+
 return
 
 }
@@ -207,9 +224,12 @@ var phone=document.getElementById("phone").value
 var start=document.getElementById("start").value
 var end=document.getElementById("end").value
 
-if(!name||!start||!end||cart.length==0){
+if(!name||!start||!end||cart.length===0){
+
 alert("Fyll i alla fält")
+
 return
+
 }
 
 rentals.push({
@@ -248,6 +268,14 @@ var div=document.getElementById("rentals")
 
 div.innerHTML=""
 
+if(rentals.length===0){
+
+div.innerHTML="Inga bokningar ännu"
+
+return
+
+}
+
 rentals.forEach(function(r,i){
 
 if(r.returned) return
@@ -284,19 +312,22 @@ function monday(d){
 d=new Date(d)
 
 var day=d.getDay()
-var diff=d.getDate()-(day==0?6:day-1)
+var diff=d.getDate()-(day===0?6:day-1)
 
 return new Date(d.setDate(diff))
 
 }
 
 function format(d){
+
 return d.toISOString().split("T")[0]
+
 }
 
 function renderWeek(){
 
 var base=monday(new Date())
+
 base.setDate(base.getDate()+weekOffset*7)
 
 var dates=[]
@@ -304,6 +335,7 @@ var dates=[]
 for(var i=0;i<7;i++){
 
 var d=new Date(base)
+
 d.setDate(base.getDate()+i)
 
 dates.push(format(d))
@@ -346,7 +378,7 @@ if(day>=r.start && day<=r.end){
 
 r.items.forEach(function(it){
 
-if(it.category==cat && it.length==len){
+if(it.category===cat && it.length==len){
 booked++
 }
 
@@ -360,7 +392,7 @@ var free=total-booked
 
 var css="good"
 
-if(free==0) css="full"
+if(free===0) css="full"
 else if(free<=Math.ceil(total/2)) css="low"
 
 html+="<td class='"+css+"'>"+free+"</td>"
