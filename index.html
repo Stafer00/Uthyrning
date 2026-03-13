@@ -112,13 +112,21 @@ padding:6px
 
 <script>
 
-const supabase = window.supabase.createClient(
+let supabase
+
+var cart=[]
+var rentals=[]
+
+window.addEventListener("load", async () => {
+
+supabase = window.supabase.createClient(
 "https://ycasdixhobiaiizevgsi.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
 )
 
-var cart=[]
-var rentals=[]
+loadBookings()
+
+})
 
 function addSki(){
 
@@ -180,13 +188,13 @@ name:name,
 phone:phone,
 start:start,
 end:end,
-items: JSON.stringify(cart),
+items: cart,
 returned:false
 })
 
 if(error){
 
-alert("Fel vid sparning: "+error.message)
+alert("Fel: "+error.message)
 console.log(error)
 return
 
@@ -245,13 +253,7 @@ html+="<strong>"+r.name+"</strong><br>"
 html+=r.phone+"<br>"
 html+=r.start+" - "+r.end+"<br>"
 
-var items=[]
-
-try{
-items=JSON.parse(r.items)
-}catch{
-items=r.items||[]
-}
+var items=r.items||[]
 
 items.forEach(function(it){
 
@@ -268,8 +270,6 @@ div.innerHTML+=html
 })
 
 }
-
-window.onload=loadBookings
 
 </script>
 
