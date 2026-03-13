@@ -10,8 +10,6 @@
 
 <title>Skiduthyrning</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
 
 body{
@@ -110,31 +108,25 @@ padding:6px
 
 <div id="rentals"></div>
 
-<script>
+<script type="module">
 
-let supabase
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
-var cart=[]
-var rentals=[]
-
-window.addEventListener("load", async () => {
-
-supabase = window.supabase.createClient(
+const supabase = createClient(
 "https://ycasdixhobiaiizevgsi.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA48929189.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
 )
 
-loadBookings()
+let cart=[]
+let rentals=[]
 
-})
-
-function addSki(){
+window.addSki=function(){
 
 var cat=document.getElementById("category").value
 var len=document.getElementById("length").value
 var qty=parseInt(document.getElementById("qty").value)
 
-for(var i=0;i<qty;i++){
+for(let i=0;i<qty;i++){
 
 cart.push({category:cat,length:len})
 
@@ -167,7 +159,7 @@ div.innerHTML=html
 
 }
 
-async function saveBooking(){
+window.saveBooking=async function(){
 
 var name=document.getElementById("customer").value
 var phone=document.getElementById("phone").value
@@ -179,18 +171,23 @@ alert("Fyll i alla fält")
 return
 }
 
-const result = await supabase
+const {error}=await supabase
 .from("rentals")
 .insert({
 name:name,
 phone:phone,
 start:start,
 end:end,
-items: cart,
+items:cart,
 returned:false
 })
 
-alert(JSON.stringify(result))
+if(error){
+
+alert("Fel: "+error.message)
+return
+
+}
 
 cart=[]
 renderCart()
@@ -201,7 +198,7 @@ loadBookings()
 
 async function loadBookings(){
 
-let { data,error } = await supabase
+let {data,error}=await supabase
 .from("rentals")
 .select("*")
 .eq("returned",false)
@@ -209,7 +206,7 @@ let { data,error } = await supabase
 
 if(error){
 
-console.log(error)
+alert(error.message)
 return
 
 }
@@ -220,7 +217,7 @@ renderRentals()
 
 }
 
-async function returnBooking(id){
+window.returnBooking=async function(id){
 
 await supabase
 .from("rentals")
@@ -262,6 +259,8 @@ div.innerHTML+=html
 })
 
 }
+
+loadBookings()
 
 </script>
 
