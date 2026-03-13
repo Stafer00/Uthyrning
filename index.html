@@ -26,19 +26,6 @@ border:none;
 border-radius:6px
 }
 
-table{
-border-collapse:collapse;
-width:100%;
-margin-top:10px;
-font-size:12px
-}
-
-th,td{
-border:1px solid #ccc;
-padding:5px;
-text-align:center
-}
-
 .card{
 background:white;
 padding:10px;
@@ -46,12 +33,16 @@ margin-top:10px;
 border-radius:6px
 }
 
-.good{background:#4caf50;color:white}
-.low{background:#ff9800;color:white}
-.full{background:#f44336;color:white}
-.return{background:#2196f3;color:white}
+table{
+border-collapse:collapse;
+width:100%;
+margin-top:10px
+}
 
-.day{cursor:pointer;text-decoration:underline}
+th,td{
+border:1px solid #ccc;
+padding:6px
+}
 
 </style>
 </head>
@@ -107,6 +98,7 @@ border-radius:6px
 <div id="cart"></div>
 
 <h2>Aktiva bokningar</h2>
+
 <div id="rentals"></div>
 
 <script>
@@ -194,10 +186,22 @@ let { data } = await supabase
 .from("rentals")
 .select("*")
 .eq("returned",false)
+.order("start",{ascending:true})
 
 rentals=data
 
 renderRentals()
+
+}
+
+async function returnBooking(id){
+
+await supabase
+.from("rentals")
+.update({returned:true})
+.eq("id",id)
+
+loadBookings()
 
 }
 
@@ -211,7 +215,8 @@ rentals.forEach(function(r){
 
 var html="<div class='card'>"
 
-html+="<strong>"+r.name+"</strong> "+r.phone+"<br>"
+html+="<strong>"+r.name+"</strong><br>"
+html+=r.phone+"<br>"
 html+=r.start+" - "+r.end+"<br>"
 
 r.items.forEach(function(it){
@@ -219,6 +224,8 @@ r.items.forEach(function(it){
 html+=it.category+" "+it.length+" cm<br>"
 
 })
+
+html+="<button onclick='returnBooking("+r.id+")'>Återlämnad</button>"
 
 html+="</div>"
 
