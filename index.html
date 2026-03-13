@@ -10,9 +10,10 @@
 
 <title>Skiduthyrning</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2?v=1"></script>
 
 <style>
+
 body{
 font-family:Arial;
 padding:20px;
@@ -53,6 +54,7 @@ padding:10px;
 margin-top:10px;
 border-radius:6px
 }
+
 </style>
 </head>
 
@@ -111,6 +113,8 @@ border-radius:6px
 
 <script>
 
+console.log("Skiduthyrning version 1.0")
+
 const supabase = window.supabase.createClient(
 "https://ycasdixhobiaiizevgsi.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
@@ -130,6 +134,7 @@ cart.push({category:cat,length:len})
 }
 
 renderCart()
+
 }
 
 function renderCart(){
@@ -150,6 +155,7 @@ html+="<tr><td>"+s.category+"</td><td>"+s.length+" cm</td></tr>"
 html+="</table>"
 
 div.innerHTML=html
+
 }
 
 async function saveBooking(){
@@ -182,7 +188,9 @@ return
 
 cart=[]
 renderCart()
+
 loadBookings()
+
 }
 
 async function loadBookings(){
@@ -195,6 +203,7 @@ let { data } = await supabase
 rentals=data||[]
 
 renderRentals()
+
 }
 
 async function returnBooking(id){
@@ -205,6 +214,7 @@ await supabase
 .eq("id",id)
 
 loadBookings()
+
 }
 
 function renderRentals(){
@@ -233,16 +243,21 @@ html+=it.category+" "+it.length+" cm<br>"
 })
 
 html+="<button onclick='returnBooking("+r.id+")'>Återlämnad</button>"
+
 html+="</div>"
 
 div.innerHTML+=html
+
 })
+
 }
 
 loadBookings()
 
+/* auto refresh */
+
 setInterval(function(){
-location.reload()
+location.reload(true)
 },300000)
 
 </script>
