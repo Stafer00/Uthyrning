@@ -114,7 +114,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const supabase = createClient(
 "https://ycasdixhobiaiizevgsi.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA48929189.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
 )
 
 let cart=[]
@@ -122,14 +122,12 @@ let rentals=[]
 
 window.addSki=function(){
 
-var cat=document.getElementById("category").value
-var len=document.getElementById("length").value
-var qty=parseInt(document.getElementById("qty").value)
+let cat=document.getElementById("category").value
+let len=document.getElementById("length").value
+let qty=parseInt(document.getElementById("qty").value)
 
 for(let i=0;i<qty;i++){
-
 cart.push({category:cat,length:len})
-
 }
 
 renderCart()
@@ -138,19 +136,17 @@ renderCart()
 
 function renderCart(){
 
-var div=document.getElementById("cart")
+let div=document.getElementById("cart")
 
 if(cart.length===0){
 div.innerHTML=""
 return
 }
 
-var html="<table><tr><th>Kategori</th><th>Längd</th></tr>"
+let html="<table><tr><th>Kategori</th><th>Längd</th></tr>"
 
 cart.forEach(function(s){
-
 html+="<tr><td>"+s.category+"</td><td>"+s.length+" cm</td></tr>"
-
 })
 
 html+="</table>"
@@ -161,17 +157,17 @@ div.innerHTML=html
 
 window.saveBooking=async function(){
 
-var name=document.getElementById("customer").value
-var phone=document.getElementById("phone").value
-var start=document.getElementById("start").value
-var end=document.getElementById("end").value
+let name=document.getElementById("customer").value
+let phone=document.getElementById("phone").value
+let start=document.getElementById("start").value
+let end=document.getElementById("end").value
 
 if(!name||!start||!end||cart.length===0){
 alert("Fyll i alla fält")
 return
 }
 
-const {error}=await supabase
+const { error } = await supabase
 .from("rentals")
 .insert({
 name:name,
@@ -183,10 +179,8 @@ returned:false
 })
 
 if(error){
-
 alert("Fel: "+error.message)
 return
-
 }
 
 cart=[]
@@ -198,17 +192,15 @@ loadBookings()
 
 async function loadBookings(){
 
-let {data,error}=await supabase
+let { data,error } = await supabase
 .from("rentals")
 .select("*")
 .eq("returned",false)
 .order("start",{ascending:true})
 
 if(error){
-
 alert(error.message)
 return
-
 }
 
 rentals=data||[]
@@ -230,24 +222,22 @@ loadBookings()
 
 function renderRentals(){
 
-var div=document.getElementById("rentals")
+let div=document.getElementById("rentals")
 
 div.innerHTML=""
 
 rentals.forEach(function(r){
 
-var html="<div class='card'>"
+let html="<div class='card'>"
 
 html+="<strong>"+r.name+"</strong><br>"
 html+=r.phone+"<br>"
 html+=r.start+" - "+r.end+"<br>"
 
-var items=r.items||[]
+let items=r.items||[]
 
 items.forEach(function(it){
-
 html+=it.category+" "+it.length+" cm<br>"
-
 })
 
 html+="<button onclick='returnBooking("+r.id+")'>Återlämnad</button>"
