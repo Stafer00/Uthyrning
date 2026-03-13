@@ -158,13 +158,11 @@ var start=document.getElementById("start").value
 var end=document.getElementById("end").value
 
 if(!name||!start||!end||cart.length===0){
-
 alert("Fyll i alla fält")
 return
-
 }
 
-await supabase.from("rentals").insert({
+const { error } = await supabase.from("rentals").insert({
 name:name,
 phone:phone,
 start:start,
@@ -172,6 +170,11 @@ end:end,
 items:cart,
 returned:false
 })
+
+if(error){
+alert("Fel vid sparning: "+error.message)
+return
+}
 
 cart=[]
 renderCart()
@@ -182,13 +185,18 @@ loadBookings()
 
 async function loadBookings(){
 
-let { data } = await supabase
+let { data, error } = await supabase
 .from("rentals")
 .select("*")
 .eq("returned",false)
 .order("start",{ascending:true})
 
-rentals=data
+if(error){
+console.log(error)
+return
+}
+
+rentals=data || []
 
 renderRentals()
 
@@ -196,10 +204,15 @@ renderRentals()
 
 async function returnBooking(id){
 
-await supabase
+const { error } = await supabase
 .from("rentals")
 .update({returned:true})
 .eq("id",id)
+
+if(error){
+alert("Fel vid återlämning")
+return
+}
 
 loadBookings()
 
@@ -219,7 +232,9 @@ html+="<strong>"+r.name+"</strong><br>"
 html+=r.phone+"<br>"
 html+=r.start+" - "+r.end+"<br>"
 
-r.items.forEach(function(it){
+var items=r.items || []
+
+items.forEach(function(it){
 
 html+=it.category+" "+it.length+" cm<br>"
 
@@ -235,7 +250,7 @@ div.innerHTML+=html
 
 }
 
-loadBookings()
+window.onload = loadBookings
 
 </script>
 
