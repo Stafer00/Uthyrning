@@ -5,9 +5,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Supabase test</title>
+<title>Test</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
 
@@ -17,7 +17,7 @@ padding:20px
 }
 
 button{
-padding:10px;
+padding:12px;
 margin:10px 0;
 width:100%
 }
@@ -35,87 +35,50 @@ white-space:pre-wrap
 
 <body>
 
-<h1>Supabase diagnostik</h1>
+<h1>Test</h1>
 
-<button onclick="testConnection()">Test anslutning</button>
+<button onclick="testJS()">Test JavaScript</button>
 
-<button onclick="testInsert()">Test bokning (insert)</button>
-
-<button onclick="testSelect()">Test läsning (select)</button>
+<button onclick="testSupabase()">Test Supabase</button>
 
 <div id="log"></div>
 
 <script>
+
+document.getElementById("log").innerText="Script laddat OK\n"
+
+function log(t){
+document.getElementById("log").innerText+=t+"\n"
+}
+
+function testJS(){
+
+log("JavaScript fungerar")
+
+}
 
 const supabase = window.supabase.createClient(
 "https://ycasdixhobiaiizevgsi.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
 )
 
-function log(text){
-document.getElementById("log").innerText+=text+"\n\n"
-}
+async function testSupabase(){
 
-async function testConnection(){
+log("Testar Supabase...")
 
-log("Testar anslutning...")
-
-try{
-
-const {data,error}=await supabase.from("rentals").select("*").limit(1)
-
-if(error){
-log("Fel: "+error.message)
-}else{
-log("Anslutning OK")
-}
-
-}catch(e){
-
-log("JS fel: "+e.message)
-
-}
-
-}
-
-async function testInsert(){
-
-log("Testar insert...")
-
-const testData={
-name:"Test",
-phone:"123",
-start:"2026-01-01",
-end:"2026-01-02",
-items:[{category:"Vuxen",length:"170"}],
-returned:false
-}
-
-const {data,error}=await supabase
-.from("rentals")
-.insert(testData)
-
-if(error){
-log("Insert fel: "+error.message)
-}else{
-log("Insert OK")
-}
-
-}
-
-async function testSelect(){
-
-log("Testar select...")
-
-const {data,error}=await supabase
+let {data,error}=await supabase
 .from("rentals")
 .select("*")
-.limit(5)
+.limit(1)
 
 if(error){
-log("Select fel: "+error.message)
+
+log("Fel: "+error.message)
+
 }else{
-log(JSON.stringify(data,null,2))
+
+log("Supabase fungerar")
+
 }
 
 }
