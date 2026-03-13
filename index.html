@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 
-<title>Skiduthyrning PRO</title>
+<title>Skiduthyrning</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -50,8 +50,7 @@ margin-top:10px
 
 th,td{
 border:1px solid #ccc;
-padding:6px;
-text-align:left
+padding:6px
 }
 
 </style>
@@ -79,17 +78,14 @@ text-align:left
 </select>
 
 <select id="length">
-
 <option>90</option>
 <option>100</option>
 <option>110</option>
 <option>120</option>
-
 <option>130</option>
 <option>140</option>
 <option>150</option>
 <option>160</option>
-
 <option>170</option>
 <option>179</option>
 <option>190</option>
@@ -101,12 +97,11 @@ text-align:left
 <option>202</option>
 <option>204</option>
 <option>207</option>
-
 </select>
 
 <input type="number" id="qty" value="1" min="1">
 
-<button onclick="addItem()">Lägg till skidor</button>
+<button onclick="addSki()">Lägg till skidor</button>
 <button onclick="saveBooking()">Spara bokning</button>
 
 <div id="cart"></div>
@@ -125,7 +120,7 @@ const supabase = window.supabase.createClient(
 var cart=[]
 var rentals=[]
 
-function addItem(){
+function addSki(){
 
 var cat=document.getElementById("category").value
 var len=document.getElementById("length").value
@@ -150,15 +145,11 @@ div.innerHTML=""
 return
 }
 
-var html="<table>"
-html+="<tr><th>Kategori</th><th>Längd</th></tr>"
+var html="<table><tr><th>Kategori</th><th>Längd</th></tr>"
 
-cart.forEach(function(i){
+cart.forEach(function(s){
 
-html+="<tr>"
-html+="<td>"+i.category+"</td>"
-html+="<td>"+i.length+" cm</td>"
-html+="</tr>"
+html+="<tr><td>"+s.category+"</td><td>"+s.length+" cm</td></tr>"
 
 })
 
@@ -189,13 +180,14 @@ name:name,
 phone:phone,
 start:start,
 end:end,
-items:cart,
+items: JSON.stringify(cart),
 returned:false
 })
 
 if(error){
 
-alert("Fel: "+error.message)
+alert("Fel vid sparning: "+error.message)
+console.log(error)
 return
 
 }
@@ -253,7 +245,13 @@ html+="<strong>"+r.name+"</strong><br>"
 html+=r.phone+"<br>"
 html+=r.start+" - "+r.end+"<br>"
 
-var items=r.items||[]
+var items=[]
+
+try{
+items=JSON.parse(r.items)
+}catch{
+items=r.items||[]
+}
 
 items.forEach(function(it){
 
@@ -272,12 +270,6 @@ div.innerHTML+=html
 }
 
 window.onload=loadBookings
-
-setInterval(function(){
-
-location.reload()
-
-},60000)
 
 </script>
 
