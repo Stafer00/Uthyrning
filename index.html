@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+
 <title>Skiduthyrning</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -118,9 +123,7 @@ var len=document.getElementById("length").value
 var qty=parseInt(document.getElementById("qty").value)
 
 for(var i=0;i<qty;i++){
-
 cart.push({category:cat,length:len})
-
 }
 
 renderCart()
@@ -139,9 +142,7 @@ return
 var html="<table><tr><th>Kategori</th><th>Längd</th></tr>"
 
 cart.forEach(function(s){
-
 html+="<tr><td>"+s.category+"</td><td>"+s.length+" cm</td></tr>"
-
 })
 
 html+="</table>"
@@ -235,9 +236,7 @@ html+=r.start+" - "+r.end+"<br>"
 var items=r.items || []
 
 items.forEach(function(it){
-
 html+=it.category+" "+it.length+" cm<br>"
-
 })
 
 html+="<button onclick='returnBooking("+r.id+")'>Återlämnad</button>"
@@ -251,6 +250,10 @@ div.innerHTML+=html
 }
 
 window.onload = loadBookings
+
+setInterval(function(){
+location.reload()
+},60000)
 
 </script>
 
