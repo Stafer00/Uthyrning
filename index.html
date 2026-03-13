@@ -8,13 +8,17 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 
-<title>Skiduthyrning</title>
+<title>Skiduthyrning PRO</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 
-body{font-family:Arial;padding:20px;background:#f4f4f4}
+body{
+font-family:Arial;
+padding:20px;
+background:#f4f4f4
+}
 
 h1{text-align:center}
 
@@ -46,7 +50,8 @@ margin-top:10px
 
 th,td{
 border:1px solid #ccc;
-padding:6px
+padding:6px;
+text-align:left
 }
 
 </style>
@@ -74,14 +79,17 @@ padding:6px
 </select>
 
 <select id="length">
+
 <option>90</option>
 <option>100</option>
 <option>110</option>
 <option>120</option>
+
 <option>130</option>
 <option>140</option>
 <option>150</option>
 <option>160</option>
+
 <option>170</option>
 <option>179</option>
 <option>190</option>
@@ -93,11 +101,12 @@ padding:6px
 <option>202</option>
 <option>204</option>
 <option>207</option>
+
 </select>
 
 <input type="number" id="qty" value="1" min="1">
 
-<button onclick="addSki()">Lägg till skidor</button>
+<button onclick="addItem()">Lägg till skidor</button>
 <button onclick="saveBooking()">Spara bokning</button>
 
 <div id="cart"></div>
@@ -116,14 +125,16 @@ const supabase = window.supabase.createClient(
 var cart=[]
 var rentals=[]
 
-function addSki(){
+function addItem(){
 
 var cat=document.getElementById("category").value
 var len=document.getElementById("length").value
 var qty=parseInt(document.getElementById("qty").value)
 
 for(var i=0;i<qty;i++){
+
 cart.push({category:cat,length:len})
+
 }
 
 renderCart()
@@ -139,10 +150,16 @@ div.innerHTML=""
 return
 }
 
-var html="<table><tr><th>Kategori</th><th>Längd</th></tr>"
+var html="<table>"
+html+="<tr><th>Kategori</th><th>Längd</th></tr>"
 
-cart.forEach(function(s){
-html+="<tr><td>"+s.category+"</td><td>"+s.length+" cm</td></tr>"
+cart.forEach(function(i){
+
+html+="<tr>"
+html+="<td>"+i.category+"</td>"
+html+="<td>"+i.length+" cm</td>"
+html+="</tr>"
+
 })
 
 html+="</table>"
@@ -159,11 +176,15 @@ var start=document.getElementById("start").value
 var end=document.getElementById("end").value
 
 if(!name||!start||!end||cart.length===0){
+
 alert("Fyll i alla fält")
 return
+
 }
 
-const { error } = await supabase.from("rentals").insert({
+const { error } = await supabase
+.from("rentals")
+.insert({
 name:name,
 phone:phone,
 start:start,
@@ -173,8 +194,10 @@ returned:false
 })
 
 if(error){
-alert("Fel vid sparning: "+error.message)
+
+alert("Fel: "+error.message)
 return
+
 }
 
 cart=[]
@@ -186,18 +209,20 @@ loadBookings()
 
 async function loadBookings(){
 
-let { data, error } = await supabase
+let { data,error } = await supabase
 .from("rentals")
 .select("*")
 .eq("returned",false)
 .order("start",{ascending:true})
 
 if(error){
+
 console.log(error)
 return
+
 }
 
-rentals=data || []
+rentals=data||[]
 
 renderRentals()
 
@@ -205,15 +230,10 @@ renderRentals()
 
 async function returnBooking(id){
 
-const { error } = await supabase
+await supabase
 .from("rentals")
 .update({returned:true})
 .eq("id",id)
-
-if(error){
-alert("Fel vid återlämning")
-return
-}
 
 loadBookings()
 
@@ -233,10 +253,12 @@ html+="<strong>"+r.name+"</strong><br>"
 html+=r.phone+"<br>"
 html+=r.start+" - "+r.end+"<br>"
 
-var items=r.items || []
+var items=r.items||[]
 
 items.forEach(function(it){
+
 html+=it.category+" "+it.length+" cm<br>"
+
 })
 
 html+="<button onclick='returnBooking("+r.id+")'>Återlämnad</button>"
@@ -249,10 +271,12 @@ div.innerHTML+=html
 
 }
 
-window.onload = loadBookings
+window.onload=loadBookings
 
 setInterval(function(){
+
 location.reload()
+
 },60000)
 
 </script>
