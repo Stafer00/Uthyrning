@@ -5,11 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-
-<title>Skiduthyrning PRO</title>
+<title>Supabase test</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -17,48 +13,21 @@
 
 body{
 font-family:Arial;
-padding:20px;
-background:#f4f4f4
-}
-
-h1{text-align:center}
-
-input,select,button{
-width:100%;
-padding:8px;
-margin:4px 0
+padding:20px
 }
 
 button{
-background:#1976d2;
-color:white;
-border:none;
-border-radius:6px
-}
-
-.card{
-background:white;
 padding:10px;
-margin-top:10px;
-border-radius:6px
+margin:10px 0;
+width:100%
 }
 
-table{
-border-collapse:collapse;
-width:100%;
-margin-top:10px;
-font-size:12px
+#log{
+background:#eee;
+padding:10px;
+margin-top:20px;
+white-space:pre-wrap
 }
-
-th,td{
-border:1px solid #ccc;
-padding:6px;
-text-align:center
-}
-
-.good{background:#4caf50;color:white}
-.low{background:#ff9800;color:white}
-.full{background:#f44336;color:white}
 
 </style>
 
@@ -66,56 +35,15 @@ text-align:center
 
 <body>
 
-<h1>Skiduthyrning</h1>
+<h1>Supabase diagnostik</h1>
 
-<h2>Ny bokning</h2>
+<button onclick="testConnection()">Test anslutning</button>
 
-<input id="customer" placeholder="Namn">
-<input id="phone" placeholder="Telefon">
+<button onclick="testInsert()">Test bokning (insert)</button>
 
-<label>Startdatum</label>
-<input type="date" id="start">
+<button onclick="testSelect()">Test läsning (select)</button>
 
-<label>Slutdatum</label>
-<input type="date" id="end">
-
-<select id="category">
-<option>Knatte</option>
-<option>Junior</option>
-<option>Vuxen</option>
-</select>
-
-<select id="length">
-<option>90</option>
-<option>100</option>
-<option>110</option>
-<option>120</option>
-<option>130</option>
-<option>140</option>
-<option>150</option>
-<option>160</option>
-<option>170</option>
-<option>179</option>
-<option>190</option>
-<option>192</option>
-<option>194</option>
-<option>195</option>
-<option>197</option>
-<option>199</option>
-<option>202</option>
-<option>204</option>
-<option>207</option>
-</select>
-
-<input type="number" id="qty" value="1" min="1">
-
-<button onclick="addSki()">Lägg till skidor</button>
-<button onclick="saveBooking()">Spara bokning</button>
-
-<div id="cart"></div>
-
-<h2>Aktiva bokningar</h2>
-<div id="rentals"></div>
+<div id="log"></div>
 
 <script>
 
@@ -124,141 +52,73 @@ const supabase = window.supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
 )
 
-let cart=[]
-let rentals=[]
-
-function addSki(){
-
-let cat=document.getElementById("category").value
-let len=document.getElementById("length").value
-let qty=parseInt(document.getElementById("qty").value)
-
-for(let i=0;i<qty;i++){
-cart.push({category:cat,length:len})
+function log(text){
+document.getElementById("log").innerText+=text+"\n\n"
 }
 
-renderCart()
+async function testConnection(){
 
-}
+log("Testar anslutning...")
 
-function renderCart(){
+try{
 
-let div=document.getElementById("cart")
-
-if(cart.length===0){
-div.innerHTML=""
-return
-}
-
-let html="<table><tr><th>Kategori</th><th>Längd</th></tr>"
-
-cart.forEach(function(s){
-html+="<tr><td>"+s.category+"</td><td>"+s.length+" cm</td></tr>"
-})
-
-html+="</table>"
-
-div.innerHTML=html
-
-}
-
-async function saveBooking(){
-
-let name=document.getElementById("customer").value
-let phone=document.getElementById("phone").value
-let start=document.getElementById("start").value
-let end=document.getElementById("end").value
-
-if(!name||!start||!end||cart.length===0){
-alert("Fyll i alla fält")
-return
-}
-
-const {error}=await supabase
-.from("rentals")
-.insert({
-name:name,
-phone:phone,
-start:start,
-end:end,
-items:cart,
-returned:false
-})
+const {data,error}=await supabase.from("rentals").select("*").limit(1)
 
 if(error){
-alert("Databasfel: "+error.message)
-console.log(error)
-return
+log("Fel: "+error.message)
+}else{
+log("Anslutning OK")
 }
 
-cart=[]
-renderCart()
+}catch(e){
 
-loadBookings()
+log("JS fel: "+e.message)
 
 }
 
-async function loadBookings(){
+}
 
-let {data,error}=await supabase
+async function testInsert(){
+
+log("Testar insert...")
+
+const testData={
+name:"Test",
+phone:"123",
+start:"2026-01-01",
+end:"2026-01-02",
+items:[{category:"Vuxen",length:"170"}],
+returned:false
+}
+
+const {data,error}=await supabase
+.from("rentals")
+.insert(testData)
+
+if(error){
+log("Insert fel: "+error.message)
+}else{
+log("Insert OK")
+}
+
+}
+
+async function testSelect(){
+
+log("Testar select...")
+
+const {data,error}=await supabase
 .from("rentals")
 .select("*")
-.eq("returned",false)
-.order("start",{ascending:true})
+.limit(5)
 
 if(error){
-console.log(error)
-return
+log("Select fel: "+error.message)
+}else{
+log(JSON.stringify(data,null,2))
 }
 
-rentals=data||[]
-
-renderRentals()
-
 }
-
-async function returnBooking(id){
-
-await supabase
-.from("rentals")
-.update({returned:true})
-.eq("id",id)
-
-loadBookings()
-
-}
-
-function renderRentals(){
-
-let div=document.getElementById("rentals")
-
-div.innerHTML=""
-
-rentals.forEach(function(r){
-
-let html="<div class='card'>"
-
-html+="<strong>"+r.name+"</strong><br>"
-html+=r.phone+"<br>"
-html+=r.start+" - "+r.end+"<br>"
-
-let items=r.items||[]
-
-items.forEach(function(it){
-html+=it.category+" "+it.length+" cm<br>"
-})
-
-html+="<button onclick='returnBooking("+r.id+")'>Återlämnad</button>"
-
-html+="</div>"
-
-div.innerHTML+=html
-
-})
-
-}
-
-loadBookings()
 
 </script>
 
