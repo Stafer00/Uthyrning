@@ -4,12 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+
 <title>Skiduthyrning</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-
 body{
 font-family:Arial;
 padding:20px;
@@ -50,7 +53,6 @@ padding:10px;
 margin-top:10px;
 border-radius:6px
 }
-
 </style>
 </head>
 
@@ -128,7 +130,6 @@ cart.push({category:cat,length:len})
 }
 
 renderCart()
-
 }
 
 function renderCart(){
@@ -149,7 +150,6 @@ html+="<tr><td>"+s.category+"</td><td>"+s.length+" cm</td></tr>"
 html+="</table>"
 
 div.innerHTML=html
-
 }
 
 async function saveBooking(){
@@ -164,8 +164,6 @@ alert("Fyll i alla fält")
 return
 }
 
-try{
-
 const { error } = await supabase
 .from("rentals")
 .insert({
@@ -178,50 +176,25 @@ returned:false
 })
 
 if(error){
-alert("Databasfel: "+error.message)
-console.log(error)
+alert(error.message)
 return
 }
 
 cart=[]
 renderCart()
-
 loadBookings()
-
-}catch(err){
-
-alert("Fel vid sparning")
-console.log(err)
-
-}
-
 }
 
 async function loadBookings(){
 
-try{
-
-let { data,error } = await supabase
+let { data } = await supabase
 .from("rentals")
 .select("*")
 .eq("returned",false)
-.order("start",{ascending:true})
-
-if(error){
-console.log(error)
-return
-}
 
 rentals=data||[]
 
 renderRentals()
-
-}catch(err){
-
-console.log(err)
-
-}
-
 }
 
 async function returnBooking(id){
@@ -232,7 +205,6 @@ await supabase
 .eq("id",id)
 
 loadBookings()
-
 }
 
 function renderRentals(){
@@ -261,16 +233,17 @@ html+=it.category+" "+it.length+" cm<br>"
 })
 
 html+="<button onclick='returnBooking("+r.id+")'>Återlämnad</button>"
-
 html+="</div>"
 
 div.innerHTML+=html
-
 })
-
 }
 
 loadBookings()
+
+setInterval(function(){
+location.reload()
+},300000)
 
 </script>
 
