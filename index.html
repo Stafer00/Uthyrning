@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -10,7 +11,7 @@
 
 <title>Skiduthyrning</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2?v=1"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 
@@ -35,19 +36,6 @@ border:none;
 border-radius:6px
 }
 
-table{
-border-collapse:collapse;
-width:100%;
-margin-top:10px;
-font-size:12px
-}
-
-th,td{
-border:1px solid #ccc;
-padding:6px;
-text-align:center
-}
-
 .card{
 background:white;
 padding:10px;
@@ -55,7 +43,19 @@ margin-top:10px;
 border-radius:6px
 }
 
+table{
+border-collapse:collapse;
+width:100%;
+margin-top:10px
+}
+
+th,td{
+border:1px solid #ccc;
+padding:6px
+}
+
 </style>
+
 </head>
 
 <body>
@@ -109,13 +109,16 @@ border-radius:6px
 <div id="cart"></div>
 
 <h2>Aktiva bokningar</h2>
+
 <div id="rentals"></div>
 
 <script>
 
-console.log("Skiduthyrning version 1.0")
+const APP_VERSION="1.0"
 
-const supabase = window.supabase.createClient(
+console.log("Skiduthyrning version",APP_VERSION)
+
+const supabase=window.supabase.createClient(
 "https://ycasdixhobiaiizevgsi.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
 )
@@ -130,7 +133,9 @@ let len=document.getElementById("length").value
 let qty=parseInt(document.getElementById("qty").value)
 
 for(let i=0;i<qty;i++){
+
 cart.push({category:cat,length:len})
+
 }
 
 renderCart()
@@ -149,7 +154,9 @@ return
 let html="<table><tr><th>Kategori</th><th>Längd</th></tr>"
 
 cart.forEach(function(s){
+
 html+="<tr><td>"+s.category+"</td><td>"+s.length+" cm</td></tr>"
+
 })
 
 html+="</table>"
@@ -166,24 +173,29 @@ let start=document.getElementById("start").value
 let end=document.getElementById("end").value
 
 if(!name||!start||!end||cart.length===0){
+
 alert("Fyll i alla fält")
 return
+
 }
 
-const { error } = await supabase
+const {error}=await supabase
 .from("rentals")
 .insert({
 name:name,
 phone:phone,
 start:start,
 end:end,
-items: JSON.stringify(cart),
+items:JSON.stringify(cart),
 returned:false
 })
 
 if(error){
-alert(error.message)
+
+alert("Databasfel: "+error.message)
+console.log(error)
 return
+
 }
 
 cart=[]
@@ -195,10 +207,16 @@ loadBookings()
 
 async function loadBookings(){
 
-let { data } = await supabase
+let {data,error}=await supabase
 .from("rentals")
 .select("*")
 .eq("returned",false)
+.order("start",{ascending:true})
+
+if(error){
+console.log(error)
+return
+}
 
 rentals=data||[]
 
@@ -220,6 +238,7 @@ loadBookings()
 function renderRentals(){
 
 let div=document.getElementById("rentals")
+
 div.innerHTML=""
 
 rentals.forEach(function(r){
@@ -239,7 +258,9 @@ items=[]
 }
 
 items.forEach(function(it){
+
 html+=it.category+" "+it.length+" cm<br>"
+
 })
 
 html+="<button onclick='returnBooking("+r.id+")'>Återlämnad</button>"
@@ -254,11 +275,37 @@ div.innerHTML+=html
 
 loadBookings()
 
-/* auto refresh */
+async function checkForUpdate(){
 
-setInterval(function(){
+try{
+
+const res=await fetch(window.location.href+"?t="+Date.now())
+
+const text=await res.text()
+
+const match=text.match(/APP_VERSION\s*=\s*"(.*?)"/)
+
+if(!match)return
+
+const latest=match[1]
+
+if(latest!==APP_VERSION){
+
+console.log("Ny version hittad")
+
 location.reload(true)
-},300000)
+
+}
+
+}catch(e){
+
+console.log("Update check misslyckades")
+
+}
+
+}
+
+setInterval(checkForUpdate,60000)
 
 </script>
 
