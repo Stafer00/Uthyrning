@@ -71,9 +71,7 @@ alert("Fyll i alla fält")
 return
 }
 
-await supabase
-.from("rentals")
-.insert({
+await supabase.from("rentals").insert({
 name:name,
 phone:phone,
 start:start,
@@ -91,7 +89,7 @@ loadBookings()
 
 async function loadBookings(){
 
-let { data } = await supabase
+let {data}=await supabase
 .from("rentals")
 .select("*")
 .eq("returned",false)
@@ -124,8 +122,7 @@ rentals.forEach(function(r){
 
 let html="<div class='card'>"
 
-html+="<strong>"+r.name+"</strong><br>"
-html+=r.phone+"<br>"
+html+="<strong>"+r.name+"</strong> "+r.phone+"<br>"
 html+=r.start+" - "+r.end+"<br>"
 
 r.items.forEach(function(it){
@@ -144,6 +141,7 @@ div.innerHTML+=html
 function monday(d){
 
 d=new Date(d)
+
 let day=d.getDay()
 let diff=d.getDate()-(day===0?6:day-1)
 
@@ -156,8 +154,28 @@ return d.toISOString().split("T")[0]
 }
 
 window.changeWeek=function(n){
+
 weekOffset+=n
 renderWeek()
+
+}
+
+window.showReturns=function(day){
+
+let div=document.getElementById("returns")
+
+div.innerHTML="<strong>"+day+"</strong><br>"
+
+rentals.forEach(function(r){
+
+if(r.end===day){
+
+div.innerHTML+=r.name+" "+r.phone+"<br>"
+
+}
+
+})
+
 }
 
 function renderWeek(){
@@ -186,7 +204,9 @@ for(let cat in inventory){
 html+="<table><tr><th>"+cat+"</th>"
 
 dates.forEach(function(d){
-html+="<th>"+d.substring(5)+"</th>"
+
+html+="<th onclick='showReturns(\""+d+"\")'>"+d.substring(5)+"</th>"
+
 })
 
 html+="</tr>"
@@ -318,6 +338,10 @@ th,td{border:1px solid #ccc;padding:5px;text-align:center}
 <button onclick="changeWeek(1)">➡</button>
 
 <div id="calendar"></div>
+
+<h2>Återlämningar</h2>
+
+<div id="returns"></div>
 
 <h2>Aktiva bokningar</h2>
 
