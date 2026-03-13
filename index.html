@@ -4,9 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Skiduthyrning</title>
+<title>Skiduthyrning PRO</title>
 
 <script type="module">
+
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const supabase = createClient(
@@ -23,6 +24,12 @@ Knatte:{90:1,100:3,110:4,120:6},
 Junior:{130:8,140:3,150:5,160:5},
 Vuxen:{170:3,179:7,190:2,192:2,194:7,195:1,197:6,199:5,202:3,204:6,207:3}
 }
+
+supabase.channel("rentals-live")
+.on("postgres_changes",{event:"*",schema:"public",table:"rentals"},()=>{
+loadBookings()
+})
+.subscribe()
 
 window.addSki=function(){
 
@@ -149,6 +156,15 @@ return new Date(d.setDate(diff))
 
 }
 
+function weekNumber(d){
+
+d=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()))
+d.setUTCDate(d.getUTCDate()+4-(d.getUTCDay()||7))
+let yearStart=new Date(Date.UTC(d.getUTCFullYear(),0,1))
+return Math.ceil((((d-yearStart)/86400000)+1)/7)
+
+}
+
 function format(d){
 return d.toISOString().split("T")[0]
 }
@@ -169,9 +185,7 @@ div.innerHTML="<strong>"+day+"</strong><br>"
 rentals.forEach(function(r){
 
 if(r.end===day){
-
 div.innerHTML+=r.name+" "+r.phone+"<br>"
-
 }
 
 })
@@ -195,7 +209,7 @@ dates.push(format(d))
 }
 
 document.getElementById("weeklabel").innerHTML=
-dates[0]+" - "+dates[6]
+"v."+weekNumber(base)+" "+dates[0]+" - "+dates[6]
 
 let html=""
 
@@ -204,9 +218,7 @@ for(let cat in inventory){
 html+="<table><tr><th>"+cat+"</th>"
 
 dates.forEach(function(d){
-
 html+="<th onclick='showReturns(\""+d+"\")'>"+d.substring(5)+"</th>"
-
 })
 
 html+="</tr>"
@@ -239,10 +251,10 @@ booked++
 
 let free=total-booked
 
-let color="green"
+let color="#4caf50"
 
-if(free===0) color="red"
-else if(free<=Math.ceil(total/2)) color="orange"
+if(free===0) color="#f44336"
+else if(free<=Math.ceil(total/2)) color="#ff9800"
 
 html+="<td style='background:"+color+"'>"+free+"</td>"
 
