@@ -179,7 +179,7 @@ alert("Fyll i alla fält")
 return
 }
 
-const { data, error } = await supabase
+const result = await supabase
 .from("rentals")
 .insert({
 name:name,
@@ -189,20 +189,14 @@ end:end,
 items: cart,
 returned:false
 })
-.select()
 
-console.log("DATA:",data)
-console.log("ERROR:",error)
-
-if(error){
-alert("Fel: "+error.message)
-return
-}
+alert(JSON.stringify(result))
 
 cart=[]
 renderCart()
 
 loadBookings()
+
 }
 
 async function loadBookings(){
