@@ -175,13 +175,11 @@ var start=document.getElementById("start").value
 var end=document.getElementById("end").value
 
 if(!name||!start||!end||cart.length===0){
-
 alert("Fyll i alla fält")
 return
-
 }
 
-const { error } = await supabase
+const { data, error } = await supabase
 .from("rentals")
 .insert({
 name:name,
@@ -191,20 +189,20 @@ end:end,
 items: cart,
 returned:false
 })
+.select()
+
+console.log("DATA:",data)
+console.log("ERROR:",error)
 
 if(error){
-
 alert("Fel: "+error.message)
-console.log(error)
 return
-
 }
 
 cart=[]
 renderCart()
 
 loadBookings()
-
 }
 
 async function loadBookings(){
