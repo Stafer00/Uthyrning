@@ -4,112 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-
 <title>Skiduthyrning</title>
 
-<style>
-
-body{
-font-family:Arial;
-padding:20px;
-background:#f4f4f4
-}
-
-h1{text-align:center}
-
-input,select,button{
-width:100%;
-padding:8px;
-margin:4px 0
-}
-
-button{
-background:#1976d2;
-color:white;
-border:none;
-border-radius:6px
-}
-
-.card{
-background:white;
-padding:10px;
-margin-top:10px;
-border-radius:6px
-}
-
-table{
-border-collapse:collapse;
-width:100%;
-margin-top:10px
-}
-
-th,td{
-border:1px solid #ccc;
-padding:6px
-}
-
-</style>
-</head>
-
-<body>
-
-<h1>Skiduthyrning</h1>
-
-<h2>Ny bokning</h2>
-
-<input id="customer" placeholder="Namn">
-<input id="phone" placeholder="Telefon">
-
-<label>Startdatum</label>
-<input type="date" id="start">
-
-<label>Slutdatum</label>
-<input type="date" id="end">
-
-<select id="category">
-<option>Knatte</option>
-<option>Junior</option>
-<option>Vuxen</option>
-</select>
-
-<select id="length">
-<option>90</option>
-<option>100</option>
-<option>110</option>
-<option>120</option>
-<option>130</option>
-<option>140</option>
-<option>150</option>
-<option>160</option>
-<option>170</option>
-<option>179</option>
-<option>190</option>
-<option>192</option>
-<option>194</option>
-<option>195</option>
-<option>197</option>
-<option>199</option>
-<option>202</option>
-<option>204</option>
-<option>207</option>
-</select>
-
-<input type="number" id="qty" value="1" min="1">
-
-<button onclick="addSki()">Lägg till skidor</button>
-<button onclick="saveBooking()">Spara bokning</button>
-
-<div id="cart"></div>
-
-<h2>Aktiva bokningar</h2>
-
-<div id="rentals"></div>
-
 <script type="module">
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const supabase = createClient(
@@ -119,6 +16,13 @@ const supabase = createClient(
 
 let cart=[]
 let rentals=[]
+let weekOffset=0
+
+const inventory={
+Knatte:{90:1,100:3,110:4,120:6},
+Junior:{130:8,140:3,150:5,160:5},
+Vuxen:{170:3,179:7,190:2,192:2,194:7,195:1,197:6,199:5,202:3,204:6,207:3}
+}
 
 window.addSki=function(){
 
@@ -167,7 +71,7 @@ alert("Fyll i alla fält")
 return
 }
 
-const { error } = await supabase
+await supabase
 .from("rentals")
 .insert({
 name:name,
@@ -178,11 +82,6 @@ items:cart,
 returned:false
 })
 
-if(error){
-alert("Fel: "+error.message)
-return
-}
-
 cart=[]
 renderCart()
 
@@ -192,20 +91,15 @@ loadBookings()
 
 async function loadBookings(){
 
-let { data,error } = await supabase
+let { data } = await supabase
 .from("rentals")
 .select("*")
 .eq("returned",false)
-.order("start",{ascending:true})
-
-if(error){
-alert(error.message)
-return
-}
 
 rentals=data||[]
 
 renderRentals()
+renderWeek()
 
 }
 
@@ -234,14 +128,11 @@ html+="<strong>"+r.name+"</strong><br>"
 html+=r.phone+"<br>"
 html+=r.start+" - "+r.end+"<br>"
 
-let items=r.items||[]
-
-items.forEach(function(it){
+r.items.forEach(function(it){
 html+=it.category+" "+it.length+" cm<br>"
 })
 
 html+="<button onclick='returnBooking("+r.id+")'>Återlämnad</button>"
-
 html+="</div>"
 
 div.innerHTML+=html
@@ -250,9 +141,187 @@ div.innerHTML+=html
 
 }
 
+function monday(d){
+
+d=new Date(d)
+let day=d.getDay()
+let diff=d.getDate()-(day===0?6:day-1)
+
+return new Date(d.setDate(diff))
+
+}
+
+function format(d){
+return d.toISOString().split("T")[0]
+}
+
+window.changeWeek=function(n){
+weekOffset+=n
+renderWeek()
+}
+
+function renderWeek(){
+
+let base=monday(new Date())
+base.setDate(base.getDate()+weekOffset*7)
+
+let dates=[]
+
+for(let i=0;i<7;i++){
+
+let d=new Date(base)
+d.setDate(base.getDate()+i)
+
+dates.push(format(d))
+
+}
+
+document.getElementById("weeklabel").innerHTML=
+dates[0]+" - "+dates[6]
+
+let html=""
+
+for(let cat in inventory){
+
+html+="<table><tr><th>"+cat+"</th>"
+
+dates.forEach(function(d){
+html+="<th>"+d.substring(5)+"</th>"
+})
+
+html+="</tr>"
+
+for(let len in inventory[cat]){
+
+let total=inventory[cat][len]
+
+html+="<tr><td>"+len+"</td>"
+
+dates.forEach(function(day){
+
+let booked=0
+
+rentals.forEach(function(r){
+
+if(day>=r.start && day<=r.end){
+
+r.items.forEach(function(it){
+
+if(it.category===cat && it.length==len){
+booked++
+}
+
+})
+
+}
+
+})
+
+let free=total-booked
+
+let color="green"
+
+if(free===0) color="red"
+else if(free<=Math.ceil(total/2)) color="orange"
+
+html+="<td style='background:"+color+"'>"+free+"</td>"
+
+})
+
+html+="</tr>"
+
+}
+
+html+="</table><br>"
+
+}
+
+document.getElementById("calendar").innerHTML=html
+
+}
+
 loadBookings()
 
 </script>
+
+<style>
+
+body{font-family:Arial;padding:20px;background:#f4f4f4}
+
+input,select,button{width:100%;padding:8px;margin:4px 0}
+
+button{background:#1976d2;color:white;border:none;border-radius:6px}
+
+table{border-collapse:collapse;width:100%;margin-top:10px;font-size:12px}
+
+th,td{border:1px solid #ccc;padding:5px;text-align:center}
+
+.card{background:white;padding:10px;margin-top:10px;border-radius:6px}
+
+</style>
+</head>
+
+<body>
+
+<h1>Skiduthyrning</h1>
+
+<h2>Ny bokning</h2>
+
+<input id="customer" placeholder="Namn">
+<input id="phone" placeholder="Telefon">
+
+<label>Startdatum</label>
+<input type="date" id="start">
+
+<label>Slutdatum</label>
+<input type="date" id="end">
+
+<select id="category">
+<option>Knatte</option>
+<option>Junior</option>
+<option>Vuxen</option>
+</select>
+
+<select id="length">
+<option>90</option>
+<option>100</option>
+<option>110</option>
+<option>120</option>
+<option>130</option>
+<option>140</option>
+<option>150</option>
+<option>160</option>
+<option>170</option>
+<option>179</option>
+<option>190</option>
+<option>192</option>
+<option>194</option>
+<option>195</option>
+<option>197</option>
+<option>199</option>
+<option>202</option>
+<option>204</option>
+<option>207</option>
+</select>
+
+<input type="number" id="qty" value="1">
+
+<button onclick="addSki()">Lägg till skidor</button>
+<button onclick="saveBooking()">Spara bokning</button>
+
+<div id="cart"></div>
+
+<h2>Veckovy</h2>
+
+<button onclick="changeWeek(-1)">⬅</button>
+<span id="weeklabel"></span>
+<button onclick="changeWeek(1)">➡</button>
+
+<div id="calendar"></div>
+
+<h2>Aktiva bokningar</h2>
+
+<div id="rentals"></div>
 
 </body>
 </html>
