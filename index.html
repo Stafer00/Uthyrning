@@ -51,11 +51,6 @@ margin-top:10px;
 border-radius:6px
 }
 
-.good{background:#4caf50;color:white}
-.low{background:#ff9800;color:white}
-.full{background:#f44336;color:white}
-.return{background:#2196f3;color:white}
-
 </style>
 </head>
 
@@ -169,6 +164,8 @@ alert("Fyll i alla fält")
 return
 }
 
+try{
+
 const { error } = await supabase
 .from("rentals")
 .insert({
@@ -176,12 +173,13 @@ name:name,
 phone:phone,
 start:start,
 end:end,
-items:cart,
+items: JSON.stringify(cart),
 returned:false
 })
 
 if(error){
-alert("Fel: "+error.message)
+alert("Databasfel: "+error.message)
+console.log(error)
 return
 }
 
@@ -190,9 +188,18 @@ renderCart()
 
 loadBookings()
 
+}catch(err){
+
+alert("Fel vid sparning")
+console.log(err)
+
+}
+
 }
 
 async function loadBookings(){
+
+try{
 
 let { data,error } = await supabase
 .from("rentals")
@@ -208,6 +215,12 @@ return
 rentals=data||[]
 
 renderRentals()
+
+}catch(err){
+
+console.log(err)
+
+}
 
 }
 
@@ -235,7 +248,13 @@ html+="<strong>"+r.name+"</strong><br>"
 html+=r.phone+"<br>"
 html+=r.start+" - "+r.end+"<br>"
 
-let items=r.items||[]
+let items=[]
+
+try{
+items=JSON.parse(r.items)
+}catch{
+items=[]
+}
 
 items.forEach(function(it){
 html+=it.category+" "+it.length+" cm<br>"
