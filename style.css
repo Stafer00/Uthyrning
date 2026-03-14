@@ -1,11 +1,12 @@
-
 body{
 font-family:Arial;
 padding:20px;
 background:#f4f4f4
 }
 
-h1{text-align:center}
+h1{
+text-align:center
+}
 
 input,select,button{
 width:100%;
