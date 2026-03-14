@@ -135,17 +135,17 @@ html+=r.start+" - "+r.end+"<br>"
 
 let items=[]
 
-try{
-items=JSON.parse(r.items)
-}catch{}
+if(typeof r.items === "string"){
+items = JSON.parse(r.items)
+}else{
+items = r.items || []
+}
 
 items.forEach(function(it){
-html+=it.category+" "+it.length+" cm<br>"
-})
 
-html+="</div>"
-
-div.innerHTML+=html
+if(it.length==length){
+booked++
+}
 
 })
 
