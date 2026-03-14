@@ -7,6 +7,10 @@
 
 <title>Skiduthyrning</title>
 
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+
 <link rel="stylesheet" href="style.css?v=1">
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -58,8 +62,8 @@
 
 <input type="number" id="qty" value="1">
 
-<button id="addBtn">Lägg till skidor</button>
-<button id="saveBtn">Spara bokning</button>
+<button onclick="addSki()">Lägg till skidor</button>
+<button onclick="saveBooking()">Spara bokning</button>
 
 <div id="cart"></div>
 
@@ -67,6 +71,44 @@
 <div id="rentals"></div>
 
 <script src="app.js?v=1"></script>
+
+<script>
+
+/* Auto reload när ny version finns */
+
+const VERSION="1"
+
+async function checkUpdate(){
+
+try{
+
+const res=await fetch(window.location.href+"?t="+Date.now())
+
+const text=await res.text()
+
+const match=text.match(/VERSION="(.*?)"/)
+
+if(!match)return
+
+const latest=match[1]
+
+if(latest!==VERSION){
+
+location.reload(true)
+
+}
+
+}catch(e){
+
+console.log("update check failed")
+
+}
+
+}
+
+setInterval(checkUpdate,30000)
+
+</script>
 
 </body>
 </html>
