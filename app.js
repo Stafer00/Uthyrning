@@ -10,6 +10,14 @@ const supabase = window.supabase.createClient(
 let cart=[]
 let rentals=[]
 
+const inventory={
+90:5,100:5,110:5,120:5,
+130:5,140:5,150:5,160:5,
+170:5,179:5,190:6,192:6,
+194:6,195:4,197:4,199:4,
+202:3,204:3,207:2
+}
+
 document.getElementById("addBtn").onclick=addSki
 document.getElementById("saveBtn").onclick=saveBooking
 
@@ -44,9 +52,7 @@ return
 let html="<table><tr><th>Kategori</th><th>Längd</th></tr>"
 
 cart.forEach(function(s){
-
 html+="<tr><td>"+s.category+"</td><td>"+s.length+" cm</td></tr>"
-
 })
 
 html+="</table>"
@@ -69,7 +75,7 @@ return
 
 }
 
-const {error}=await supabase
+await supabase
 .from("rentals")
 .insert([{
 
@@ -82,13 +88,6 @@ returned:false
 
 }])
 
-if(error){
-
-alert(error.message)
-return
-
-}
-
 cart=[]
 renderCart()
 
@@ -98,22 +97,17 @@ loadBookings()
 
 async function loadBookings(){
 
-const {data,error}=await supabase
+const {data}=await supabase
 .from("rentals")
 .select("*")
 .eq("returned",false)
 .order("start",{ascending:true})
 
-if(error){
-
-console.log(error)
-return
-
-}
-
 rentals=data||[]
 
 renderRentals()
+renderWeek()
+updateStock()
 
 }
 
@@ -138,9 +132,7 @@ items=JSON.parse(r.items)
 }catch{}
 
 items.forEach(function(it){
-
 html+=it.category+" "+it.length+" cm<br>"
-
 })
 
 html+="<button onclick='returnBooking("+r.id+")'>Återlämnad</button>"
@@ -153,7 +145,7 @@ div.innerHTML+=html
 
 }
 
-window.returnBooking = async function(id){
+window.returnBooking=async function(id){
 
 await supabase
 .from("rentals")
@@ -163,6 +155,99 @@ await supabase
 loadBookings()
 
 }
+
+function renderWeek(){
+
+let div=document.getElementById("week")
+
+let days={}
+
+rentals.forEach(function(r){
+
+if(!days[r.start]) days[r.start]=0
+days[r.start]++
+
+})
+
+let html="<table><tr><th>Datum</th><th>Bokningar</th></tr>"
+
+Object.keys(days).sort().forEach(function(d){
+
+html+="<tr><td>"+d+"</td><td>"+days[d]+"</td></tr>"
+
+})
+
+html+="</table>"
+
+div.innerHTML=html
+
+}
+
+function updateStock(){
+
+let select=document.getElementById("length")
+
+Array.from(select.options).forEach(function(opt){
+
+let length=opt.value
+let total=inventory[length]||0
+
+let booked=0
+
+rentals.forEach(function(r){
+
+let items=[]
+
+try{
+items=JSON.parse(r.items)
+}catch{}
+
+items.forEach(function(it){
+
+if(it.length==length){
+booked++
+}
+
+})
+
+})
+
+let remaining=total-booked
+
+if(remaining<=0){
+
+opt.text=length+" cm 🔴 slut"
+
+}
+
+else if(remaining<=2){
+
+opt.text=length+" cm 🟡 "+remaining+" kvar"
+
+}
+
+else{
+
+opt.text=length+" cm 🟢 "+remaining+" kvar"
+
+}
+
+})
+
+}
+
+supabase
+.channel("rentals")
+.on(
+"postgres_changes",
+{event:"*",schema:"public",table:"rentals"},
+payload=>{
+
+loadBookings()
+
+}
+)
+.subscribe()
 
 loadBookings()
 
