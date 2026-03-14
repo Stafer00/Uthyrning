@@ -1,12 +1,15 @@
-
 <!DOCTYPE html>
 <html lang="sv">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Skiduthyrning</title>
 
-<link rel="stylesheet" href="style.css?v=1">
+<title>Skiduthyrning PRO</title>
+
+<link rel="stylesheet" href="style.css?v=3">
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 </head>
 
@@ -32,6 +35,7 @@
 </select>
 
 <select id="length">
+
 <option>90</option>
 <option>100</option>
 <option>110</option>
@@ -51,9 +55,10 @@
 <option>202</option>
 <option>204</option>
 <option>207</option>
+
 </select>
 
-<input type="number" id="qty" value="1">
+<input type="number" id="qty" value="1" min="1">
 
 <button onclick="addSki()">Lägg till skidor</button>
 <button onclick="saveBooking()">Spara bokning</button>
@@ -61,10 +66,10 @@
 <div id="cart"></div>
 
 <h2>Aktiva bokningar</h2>
+
 <div id="rentals"></div>
 
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="app.js?v=1"></script>
+<script src="app.js?v=3"></script>
 
 </body>
 </html>
