@@ -1,22 +1,24 @@
+const VERSION="1";
+
+console.log("APP VERSION",VERSION);
+
 const supabase = window.supabase.createClient(
 "https://ycasdixhobiaiizevgsi.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
-)
+);
 
-let cart=[]
-let rentals=[]
+let cart=[];
+let rentals=[];
 
 const skis=[
 {cat:"Knatte",len:90},
 {cat:"Knatte",len:100},
 {cat:"Knatte",len:110},
 {cat:"Knatte",len:120},
-
 {cat:"Junior",len:130},
 {cat:"Junior",len:140},
 {cat:"Junior",len:150},
 {cat:"Junior",len:160},
-
 {cat:"Vuxen",len:170},
 {cat:"Vuxen",len:179},
 {cat:"Vuxen",len:190},
@@ -28,79 +30,84 @@ const skis=[
 {cat:"Vuxen",len:202},
 {cat:"Vuxen",len:204},
 {cat:"Vuxen",len:207}
-]
+];
 
-document.addEventListener("DOMContentLoaded",init)
+document.addEventListener("DOMContentLoaded",init);
 
 function init(){
 
-renderButtons()
+renderButtons();
 
 document
 .getElementById("saveBtn")
-.addEventListener("click",saveBooking)
+.addEventListener("click",saveBooking);
 
-loadBookings()
+loadBookings();
 
 }
 
 function renderButtons(){
 
-const div=document.getElementById("skiButtons")
+const div=document.getElementById("skiButtons");
+
+div.innerHTML="";
 
 skis.forEach(s=>{
 
-const btn=document.createElement("button")
+const btn=document.createElement("button");
 
-btn.className="skiButton"
+btn.className="skiButton";
 
-btn.innerText=s.cat+" "+s.len+"cm"
+btn.innerText=s.cat+" "+s.len+" cm";
 
-btn.onclick=()=>addSki(s)
+btn.onclick=()=>addSki(s);
 
-div.appendChild(btn)
+div.appendChild(btn);
 
-})
+});
 
 }
 
 function addSki(s){
 
-cart.push(s)
+cart.push(s);
 
-renderCart()
+renderCart();
 
 }
 
 function renderCart(){
 
-let div=document.getElementById("cart")
+const div=document.getElementById("cart");
 
 if(cart.length===0){
-div.innerHTML=""
-return
+div.innerHTML="";
+return;
 }
 
-let html=""
+let html="";
 
 cart.forEach(s=>{
-html+=s.cat+" "+s.len+" cm<br>"
-})
+html+=s.cat+" "+s.len+" cm<br>";
+});
 
-div.innerHTML=html
+div.innerHTML=html;
 
 }
 
 async function saveBooking(){
 
-let name=document.getElementById("customer").value
-let phone=document.getElementById("phone").value
-let start=document.getElementById("start").value
-let end=document.getElementById("end").value
+let name=document.getElementById("customer").value;
+let phone=document.getElementById("phone").value;
+let start=document.getElementById("start").value;
+let end=document.getElementById("end").value;
 
 if(!name||!start||!end||cart.length===0){
-alert("Fyll i alla fält")
-return
+
+alert("Fyll i alla fält");
+
+return;
+
 }
 
 const {error}=await supabase
@@ -112,17 +119,21 @@ start:start,
 end:end,
 items:JSON.stringify(cart),
 returned:false
-})
+});
 
 if(error){
-alert(error.message)
-return
+
+alert(error.message);
+
+return;
+
 }
 
-cart=[]
-renderCart()
+cart=[];
 
-loadBookings()
+renderCart();
+
+loadBookings();
 
 }
 
@@ -131,47 +142,50 @@ async function loadBookings(){
 const {data,error}=await supabase
 .from("rentals")
 .select("*")
-.eq("returned",false)
+.eq("returned",false);
 
 if(error){
-console.log(error)
-return
+
+console.log(error);
+
+return;
+
 }
 
-rentals=data||[]
+rentals=data||[];
 
-renderRentals()
+renderRentals();
 
 }
 
 function renderRentals(){
 
-const div=document.getElementById("rentals")
+const div=document.getElementById("rentals");
 
-div.innerHTML=""
+div.innerHTML="";
 
 rentals.forEach(r=>{
 
-let html="<div class='card'>"
+let html="<div class='card'>";
 
-html+="<strong>"+r.name+"</strong><br>"
-html+=r.phone+"<br>"
-html+=r.start+" - "+r.end+"<br>"
+html+="<strong>"+r.name+"</strong><br>";
+html+=r.phone+"<br>";
+html+=r.start+" - "+r.end+"<br>";
 
-let items=[]
+let items=[];
 
 try{
-items=JSON.parse(r.items)
+items=JSON.parse(r.items);
 }catch{}
 
 items.forEach(it=>{
-html+=it.cat+" "+it.len+" cm<br>"
-})
+html+=it.cat+" "+it.len+" cm<br>";
+});
 
-html+="</div>"
+html+="</div>";
 
-div.innerHTML+=html
+div.innerHTML+=html;
 
-})
+});
 
 }
