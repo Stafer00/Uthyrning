@@ -60,13 +60,12 @@ name:name,
 phone:phone,
 start:start,
 end:end,
-items:cart,
+items:JSON.stringify(cart),
 returned:false
 })
 
 if(error){
-alert("Databasfel: "+error.message)
-console.log(error)
+alert(error.message)
 return
 }
 
@@ -110,21 +109,22 @@ loadBookings()
 function renderRentals(){
 
 let div=document.getElementById("rentals")
-
 div.innerHTML=""
 
 rentals.forEach(function(r){
 
 let html="<div class='card'>"
 
-html+="<strong>"+(r.name||"")+"</strong><br>"
-html+=(r.phone||"")+"<br>"
-html+=(r.start||"")+" - "+(r.end||"")+"<br>"
+html+="<strong>"+r.name+"</strong><br>"
+html+=r.phone+"<br>"
+html+=r.start+" - "+r.end+"<br>"
 
 let items=[]
 
-if(Array.isArray(r.items)){
-items=r.items
+try{
+items=JSON.parse(r.items)
+}catch{
+items=[]
 }
 
 items.forEach(function(it){
