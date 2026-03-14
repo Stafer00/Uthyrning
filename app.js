@@ -1,5 +1,3 @@
-const VERSION="1"console.log("APP STARTAR")
-
 const supabase = window.supabase.createClient(
 "https://ycasdixhobiaiizevgsi.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
@@ -8,26 +6,67 @@ const supabase = window.supabase.createClient(
 let cart=[]
 let rentals=[]
 
-document.addEventListener("DOMContentLoaded",function(){
+const skis=[
+{cat:"Knatte",len:90},
+{cat:"Knatte",len:100},
+{cat:"Knatte",len:110},
+{cat:"Knatte",len:120},
 
-console.log("DOM LOADED")
+{cat:"Junior",len:130},
+{cat:"Junior",len:140},
+{cat:"Junior",len:150},
+{cat:"Junior",len:160},
 
-document.getElementById("addBtn").addEventListener("click",addSki)
-document.getElementById("saveBtn").addEventListener("click",saveBooking)
+{cat:"Vuxen",len:170},
+{cat:"Vuxen",len:179},
+{cat:"Vuxen",len:190},
+{cat:"Vuxen",len:192},
+{cat:"Vuxen",len:194},
+{cat:"Vuxen",len:195},
+{cat:"Vuxen",len:197},
+{cat:"Vuxen",len:199},
+{cat:"Vuxen",len:202},
+{cat:"Vuxen",len:204},
+{cat:"Vuxen",len:207}
+]
+
+document.addEventListener("DOMContentLoaded",init)
+
+function init(){
+
+renderButtons()
+
+document
+.getElementById("saveBtn")
+.addEventListener("click",saveBooking)
 
 loadBookings()
 
+}
+
+function renderButtons(){
+
+const div=document.getElementById("skiButtons")
+
+skis.forEach(s=>{
+
+const btn=document.createElement("button")
+
+btn.className="skiButton"
+
+btn.innerText=s.cat+" "+s.len+"cm"
+
+btn.onclick=()=>addSki(s)
+
+div.appendChild(btn)
+
 })
 
-function addSki(){
-
-let cat=document.getElementById("category").value
-let len=document.getElementById("length").value
-let qty=parseInt(document.getElementById("qty").value)
-
-for(let i=0;i<qty;i++){
-cart.push({category:cat,length:len})
 }
+
+function addSki(s){
+
+cart.push(s)
 
 renderCart()
 
@@ -42,21 +81,17 @@ div.innerHTML=""
 return
 }
 
-let html="<table><tr><th>Kategori</th><th>Längd</th></tr>"
+let html=""
 
-cart.forEach(function(s){
-html+="<tr><td>"+s.category+"</td><td>"+s.length+" cm</td></tr>"
+cart.forEach(s=>{
+html+=s.cat+" "+s.len+" cm<br>"
 })
-
-html+="</table>"
 
 div.innerHTML=html
 
 }
 
 async function saveBooking(){
-
-console.log("SAVE BOOKING")
 
 let name=document.getElementById("customer").value
 let phone=document.getElementById("phone").value
@@ -81,11 +116,8 @@ returned:false
 
 if(error){
 alert(error.message)
-console.log(error)
 return
 }
-
-alert("Bokning sparad")
 
 cart=[]
 renderCart()
@@ -114,11 +146,11 @@ renderRentals()
 
 function renderRentals(){
 
-let div=document.getElementById("rentals")
+const div=document.getElementById("rentals")
 
 div.innerHTML=""
 
-rentals.forEach(function(r){
+rentals.forEach(r=>{
 
 let html="<div class='card'>"
 
@@ -132,8 +164,8 @@ try{
 items=JSON.parse(r.items)
 }catch{}
 
-items.forEach(function(it){
-html+=it.category+" "+it.length+" cm<br>"
+items.forEach(it=>{
+html+=it.cat+" "+it.len+" cm<br>"
 })
 
 html+="</div>"
