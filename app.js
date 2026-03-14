@@ -1,4 +1,4 @@
-console.log("APP STARTAR")
+const VERSION="1"console.log("APP STARTAR")
 
 const supabase = window.supabase.createClient(
 "https://ycasdixhobiaiizevgsi.supabase.co",
