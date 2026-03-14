@@ -1,1 +1,74 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
 
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Skiduthyrning</title>
+
+<meta http-equiv="Cache-Control" content="no-cache">
+
+<link rel="stylesheet" href="style.css?v=1">
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+</head>
+
+<body>
+
+<h1>Skiduthyrning</h1>
+
+<h2>Ny bokning</h2>
+
+<input id="customer" placeholder="Namn">
+<input id="phone" placeholder="Telefon">
+
+<label>Startdatum</label>
+<input type="date" id="start">
+
+<label>Slutdatum</label>
+<input type="date" id="end">
+
+<select id="category">
+<option>Knatte</option>
+<option>Junior</option>
+<option>Vuxen</option>
+</select>
+
+<select id="length">
+<option>90</option>
+<option>100</option>
+<option>110</option>
+<option>120</option>
+<option>130</option>
+<option>140</option>
+<option>150</option>
+<option>160</option>
+<option>170</option>
+<option>179</option>
+<option>190</option>
+<option>192</option>
+<option>194</option>
+<option>195</option>
+<option>197</option>
+<option>199</option>
+<option>202</option>
+<option>204</option>
+<option>207</option>
+</select>
+
+<input type="number" id="qty" value="1">
+
+<button id="addBtn">Lägg till skidor</button>
+<button id="saveBtn">Spara bokning</button>
+
+<div id="cart"></div>
+
+<h2>Aktiva bokningar</h2>
+<div id="rentals"></div>
+
+<script src="app.js?v=1"></script>
+
+</body>
+</html>
