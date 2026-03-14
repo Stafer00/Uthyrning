@@ -1,4 +1,4 @@
-console.log("Skiduthyrning startar")
+console.log("APP STARTAR")
 
 const supabase = window.supabase.createClient(
 "https://ycasdixhobiaiizevgsi.supabase.co",
@@ -8,16 +8,16 @@ const supabase = window.supabase.createClient(
 let cart=[]
 let rentals=[]
 
-document.addEventListener("DOMContentLoaded", init)
+document.addEventListener("DOMContentLoaded",function(){
 
-function init(){
+console.log("DOM LOADED")
 
-document.getElementById("addBtn").onclick=addSki
-document.getElementById("saveBtn").onclick=saveBooking
+document.getElementById("addBtn").addEventListener("click",addSki)
+document.getElementById("saveBtn").addEventListener("click",saveBooking)
 
 loadBookings()
 
-}
+})
 
 function addSki(){
 
@@ -56,6 +56,8 @@ div.innerHTML=html
 
 async function saveBooking(){
 
+console.log("SAVE BOOKING")
+
 let name=document.getElementById("customer").value
 let phone=document.getElementById("phone").value
 let start=document.getElementById("start").value
@@ -82,6 +84,8 @@ alert(error.message)
 console.log(error)
 return
 }
+
+alert("Bokning sparad")
 
 cart=[]
 renderCart()
