@@ -1,6 +1,4 @@
-console.log("APP START")
-
-const supabase = window.supabase.createClient(
+const supabase = createClient(
 "https://ycasdixhobiaiizevgsi.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
 )
@@ -55,54 +53,30 @@ alert("Fyll i alla fält")
 return
 }
 
-try{
-
-const result = await supabase
+await supabase
 .from("rentals")
 .insert({
 name:name,
 phone:phone,
 start:start,
 end:end,
-items: JSON.stringify(cart),
+items:cart,
 returned:false
 })
-
-console.log(result)
-
-if(result.error){
-alert("Databasfel: "+result.error.message)
-return
-}
-
-alert("Bokning sparad")
 
 cart=[]
 renderCart()
 
 loadBookings()
 
-}catch(err){
-
-alert("Fel vid sparning")
-console.log(err)
-
-}
-
 }
 
 async function loadBookings(){
 
-let {data,error}=await supabase
+let {data}=await supabase
 .from("rentals")
 .select("*")
 .eq("returned",false)
-.order("start",{ascending:true})
-
-if(error){
-console.log(error)
-return
-}
 
 rentals=data||[]
 
@@ -110,20 +84,10 @@ renderRentals()
 
 }
 
-async function returnBooking(id){
-
-await supabase
-.from("rentals")
-.update({returned:true})
-.eq("id",id)
-
-loadBookings()
-
-}
-
 function renderRentals(){
 
 let div=document.getElementById("rentals")
+
 div.innerHTML=""
 
 rentals.forEach(function(r){
@@ -134,19 +98,11 @@ html+="<strong>"+r.name+"</strong><br>"
 html+=r.phone+"<br>"
 html+=r.start+" - "+r.end+"<br>"
 
-let items=[]
-
-try{
-items=JSON.parse(r.items)
-}catch{
-items=[]
-}
+let items=r.items||[]
 
 items.forEach(function(it){
 html+=it.category+" "+it.length+" cm<br>"
 })
-
-html+="<button onclick='returnBooking("+r.id+")'>Återlämnad</button>"
 
 html+="</div>"
 
