@@ -1,4 +1,3 @@
-
 const supabase = window.supabase.createClient(
 "https://ycasdixhobiaiizevgsi.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
@@ -14,7 +13,9 @@ let len=document.getElementById("length").value
 let qty=parseInt(document.getElementById("qty").value)
 
 for(let i=0;i<qty;i++){
+
 cart.push({category:cat,length:len})
+
 }
 
 renderCart()
@@ -33,7 +34,9 @@ return
 let html="<table><tr><th>Kategori</th><th>Längd</th></tr>"
 
 cart.forEach(function(s){
+
 html+="<tr><td>"+s.category+"</td><td>"+s.length+" cm</td></tr>"
+
 })
 
 html+="</table>"
@@ -50,24 +53,29 @@ let start=document.getElementById("start").value
 let end=document.getElementById("end").value
 
 if(!name||!start||!end||cart.length===0){
+
 alert("Fyll i alla fält")
 return
+
 }
 
-const { error } = await supabase
+const {error}=await supabase
 .from("rentals")
 .insert({
 name:name,
 phone:phone,
 start:start,
 end:end,
-items:cart,
+items:JSON.stringify(cart),
 returned:false
 })
 
 if(error){
-alert("Databasfel: "+error.message)
+
+alert(error.message)
+console.log(error)
 return
+
 }
 
 cart=[]
@@ -121,10 +129,22 @@ html+="<strong>"+r.name+"</strong><br>"
 html+=r.phone+"<br>"
 html+=r.start+" - "+r.end+"<br>"
 
-let items=r.items||[]
+let items=[]
+
+try{
+
+items=JSON.parse(r.items)
+
+}catch{
+
+items=[]
+
+}
 
 items.forEach(function(it){
+
 html+=it.category+" "+it.length+" cm<br>"
+
 })
 
 html+="<button onclick='returnBooking("+r.id+")'>Återlämnad</button>"
