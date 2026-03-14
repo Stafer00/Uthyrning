@@ -53,13 +53,13 @@ let start=document.getElementById("start").value
 let end=document.getElementById("end").value
 
 if(!name||!start||!end||cart.length===0){
-
 alert("Fyll i alla fält")
 return
-
 }
 
-const {error}=await supabase
+try{
+
+const result = await supabase
 .from("rentals")
 .insert({
 name:name,
@@ -70,17 +70,26 @@ items:cart,
 returned:false
 })
 
-if(error){
+console.log(result)
 
-alert(error.message)
+if(result.error){
+alert("Databasfel: "+result.error.message)
 return
-
 }
+
+alert("Bokning sparad")
 
 cart=[]
 renderCart()
 
 loadBookings()
+
+}catch(err){
+
+alert("Fel vid sparning")
+console.log(err)
+
+}
 
 }
 
