@@ -1,3 +1,5 @@
+console.log("APP START")
+
 const supabase = window.supabase.createClient(
 "https://ycasdixhobiaiizevgsi.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
@@ -13,9 +15,7 @@ let len=document.getElementById("length").value
 let qty=parseInt(document.getElementById("qty").value)
 
 for(let i=0;i<qty;i++){
-
 cart.push({category:cat,length:len})
-
 }
 
 renderCart()
@@ -34,9 +34,7 @@ return
 let html="<table><tr><th>Kategori</th><th>Längd</th></tr>"
 
 cart.forEach(function(s){
-
 html+="<tr><td>"+s.category+"</td><td>"+s.length+" cm</td></tr>"
-
 })
 
 html+="</table>"
@@ -66,7 +64,7 @@ name:name,
 phone:phone,
 start:start,
 end:end,
-items:cart,
+items: JSON.stringify(cart),
 returned:false
 })
 
@@ -102,10 +100,8 @@ let {data,error}=await supabase
 .order("start",{ascending:true})
 
 if(error){
-
 console.log(error)
 return
-
 }
 
 rentals=data||[]
@@ -128,7 +124,6 @@ loadBookings()
 function renderRentals(){
 
 let div=document.getElementById("rentals")
-
 div.innerHTML=""
 
 rentals.forEach(function(r){
@@ -139,12 +134,16 @@ html+="<strong>"+r.name+"</strong><br>"
 html+=r.phone+"<br>"
 html+=r.start+" - "+r.end+"<br>"
 
-let items=r.items||[]
+let items=[]
+
+try{
+items=JSON.parse(r.items)
+}catch{
+items=[]
+}
 
 items.forEach(function(it){
-
 html+=it.category+" "+it.length+" cm<br>"
-
 })
 
 html+="<button onclick='returnBooking("+r.id+")'>Återlämnad</button>"
