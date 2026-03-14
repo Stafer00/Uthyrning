@@ -13,7 +13,9 @@ let len=document.getElementById("length").value
 let qty=parseInt(document.getElementById("qty").value)
 
 for(let i=0;i<qty;i++){
+
 cart.push({category:cat,length:len})
+
 }
 
 renderCart()
@@ -32,7 +34,9 @@ return
 let html="<table><tr><th>Kategori</th><th>Längd</th></tr>"
 
 cart.forEach(function(s){
+
 html+="<tr><td>"+s.category+"</td><td>"+s.length+" cm</td></tr>"
+
 })
 
 html+="</table>"
@@ -49,8 +53,10 @@ let start=document.getElementById("start").value
 let end=document.getElementById("end").value
 
 if(!name||!start||!end||cart.length===0){
+
 alert("Fyll i alla fält")
 return
+
 }
 
 const {error}=await supabase
@@ -60,13 +66,15 @@ name:name,
 phone:phone,
 start:start,
 end:end,
-items:JSON.stringify(cart),
+items:cart,
 returned:false
 })
 
 if(error){
+
 alert(error.message)
 return
+
 }
 
 cart=[]
@@ -85,8 +93,10 @@ let {data,error}=await supabase
 .order("start",{ascending:true})
 
 if(error){
+
 console.log(error)
 return
+
 }
 
 rentals=data||[]
@@ -109,6 +119,7 @@ loadBookings()
 function renderRentals(){
 
 let div=document.getElementById("rentals")
+
 div.innerHTML=""
 
 rentals.forEach(function(r){
@@ -119,16 +130,12 @@ html+="<strong>"+r.name+"</strong><br>"
 html+=r.phone+"<br>"
 html+=r.start+" - "+r.end+"<br>"
 
-let items=[]
-
-try{
-items=JSON.parse(r.items)
-}catch{
-items=[]
-}
+let items=r.items||[]
 
 items.forEach(function(it){
+
 html+=it.category+" "+it.length+" cm<br>"
+
 })
 
 html+="<button onclick='returnBooking("+r.id+")'>Återlämnad</button>"
