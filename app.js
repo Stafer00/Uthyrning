@@ -1,3 +1,5 @@
+alert("APP STARTAR")
+
 const VERSION="1";
 
 console.log("APP VERSION",VERSION);
