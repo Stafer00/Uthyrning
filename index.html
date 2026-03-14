@@ -59,8 +59,8 @@
 
 <input type="number" id="qty" value="1" min="1">
 
-<button onclick="addSki()">Lägg till skidor</button>
-<button onclick="saveBooking()">Spara bokning</button>
+<button id="addBtn">Lägg till skidor</button>
+<button id="saveBtn">Spara bokning</button>
 
 <div id="cart"></div>
 
@@ -69,9 +69,9 @@
 
 <h2>Skidkalender</h2>
 
-<button onclick="changeWeek(-1)">⬅</button>
+<button id="prevWeek">⬅</button>
 <span id="weekLabel"></span>
-<button onclick="changeWeek(1)">➡</button>
+<button id="nextWeek">➡</button>
 
 <div id="calendar"></div>
 
