@@ -1,7 +1,3 @@
-document.addEventListener("DOMContentLoaded", init)
-
-function init(){
-
 const supabase = window.supabase.createClient(
 "https://ycasdixhobiaiizevgsi.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
@@ -9,6 +5,7 @@ const supabase = window.supabase.createClient(
 
 let cart=[]
 let rentals=[]
+let weekOffset=0
 
 const inventory={
 90:5,100:5,110:5,120:5,
@@ -18,9 +15,6 @@ const inventory={
 202:3,204:3,207:2
 }
 
-document.getElementById("addBtn").onclick=addSki
-document.getElementById("saveBtn").onclick=saveBooking
-
 function addSki(){
 
 let cat=document.getElementById("category").value
@@ -28,12 +22,7 @@ let len=document.getElementById("length").value
 let qty=parseInt(document.getElementById("qty").value)
 
 for(let i=0;i<qty;i++){
-
-cart.push({
-category:cat,
-length:len
-})
-
+cart.push({category:cat,length:len})
 }
 
 renderCart()
@@ -69,23 +58,19 @@ let start=document.getElementById("start").value
 let end=document.getElementById("end").value
 
 if(!name||!start||!end||cart.length===0){
-
 alert("Fyll i alla fält")
 return
-
 }
 
 await supabase
 .from("rentals")
 .insert([{
-
 name:name,
 phone:phone,
 start:start,
 end:end,
 items:JSON.stringify(cart),
 returned:false
-
 }])
 
 cart=[]
@@ -106,8 +91,7 @@ const {data}=await supabase
 rentals=data||[]
 
 renderRentals()
-renderWeek()
-updateStock()
+renderCalendar()
 
 }
 
@@ -156,45 +140,70 @@ loadBookings()
 
 }
 
-function renderWeek(){
+function changeWeek(n){
 
-let div=document.getElementById("week")
-
-let days={}
-
-rentals.forEach(function(r){
-
-if(!days[r.start]) days[r.start]=0
-days[r.start]++
-
-})
-
-let html="<table><tr><th>Datum</th><th>Bokningar</th></tr>"
-
-Object.keys(days).sort().forEach(function(d){
-
-html+="<tr><td>"+d+"</td><td>"+days[d]+"</td></tr>"
-
-})
-
-html+="</table>"
-
-div.innerHTML=html
+weekOffset+=n
+renderCalendar()
 
 }
 
-function updateStock(){
+function getMonday(d){
 
-let select=document.getElementById("length")
+d=new Date(d)
 
-Array.from(select.options).forEach(function(opt){
+let day=d.getDay()
+let diff=d.getDate()-(day===0?6:day-1)
 
-let length=opt.value
-let total=inventory[length]||0
+return new Date(d.setDate(diff))
 
+}
+
+function formatDate(d){
+return d.toISOString().split("T")[0]
+}
+
+function renderCalendar(){
+
+let div=document.getElementById("calendar")
+
+let base=getMonday(new Date())
+
+base.setDate(base.getDate()+weekOffset*7)
+
+let days=[]
+
+for(let i=0;i<7;i++){
+
+let d=new Date(base)
+d.setDate(base.getDate()+i)
+
+days.push(formatDate(d))
+
+}
+
+document.getElementById("weekLabel").innerHTML=
+days[0]+" - "+days[6]
+
+let html="<table><tr><th>Längd</th>"
+
+days.forEach(function(d){
+html+="<th>"+d.substring(5)+"</th>"
+})
+
+html+="</tr>"
+
+Object.keys(inventory).forEach(function(length){
+
+html+="<tr><td>"+length+"</td>"
+
+days.forEach(function(day){
+
+let total=inventory[length]
 let booked=0
 
 rentals.forEach(function(r){
+
+if(day>=r.start && day<=r.end){
 
 let items=[]
 
@@ -210,45 +219,29 @@ booked++
 
 })
 
-})
-
-let remaining=total-booked
-
-if(remaining<=0){
-
-opt.text=length+" cm 🔴 slut"
-
-}
-
-else if(remaining<=2){
-
-opt.text=length+" cm 🟡 "+remaining+" kvar"
-
-}
-
-else{
-
-opt.text=length+" cm 🟢 "+remaining+" kvar"
-
 }
 
 })
 
-}
+let available=total-booked
 
-supabase
-.channel("rentals")
-.on(
-"postgres_changes",
-{event:"*",schema:"public",table:"rentals"},
-payload=>{
+let css="good"
+
+if(available===0) css="full"
+else if(available<=Math.ceil(total/2)) css="low"
+
+html+="<td class='"+css+"'>"+available+"</td>"
+
+})
+
+html+="</tr>"
+
+})
+
+html+="</table>"
+
+div.innerHTML=html
+
+}
 
 loadBookings()
-
-}
-)
-.subscribe()
-
-loadBookings()
-
-}
