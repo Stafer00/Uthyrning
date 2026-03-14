@@ -1,7 +1,4 @@
-const supabase = window.supabase.createClient(
-"https://ycasdixhobiaiizevgsi.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
-)
+let supabase
 
 let cart=[]
 let rentals=[]
@@ -13,6 +10,24 @@ const inventory={
 170:5,179:5,190:6,192:6,
 194:6,195:4,197:4,199:4,
 202:3,204:3,207:2
+}
+
+document.addEventListener("DOMContentLoaded",init)
+
+function init(){
+
+supabase = window.supabase.createClient(
+"https://ycasdixhobiaiizevgsi.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
+)
+
+document.getElementById("addBtn").onclick=addSki
+document.getElementById("saveBtn").onclick=saveBooking
+document.getElementById("prevWeek").onclick=()=>changeWeek(-1)
+document.getElementById("nextWeek").onclick=()=>changeWeek(1)
+
+loadBookings()
+
 }
 
 function addSki(){
@@ -62,7 +77,7 @@ alert("Fyll i alla fält")
 return
 }
 
-await supabase
+const {error}=await supabase
 .from("rentals")
 .insert([{
 name:name,
@@ -73,6 +88,11 @@ items:JSON.stringify(cart),
 returned:false
 }])
 
+if(error){
+alert(error.message)
+return
+}
+
 cart=[]
 renderCart()
 
@@ -82,11 +102,16 @@ loadBookings()
 
 async function loadBookings(){
 
-const {data}=await supabase
+const {data,error}=await supabase
 .from("rentals")
 .select("*")
 .eq("returned",false)
 .order("start",{ascending:true})
+
+if(error){
+console.log(error)
+return
+}
 
 rentals=data||[]
 
@@ -98,7 +123,6 @@ renderCalendar()
 function renderRentals(){
 
 let div=document.getElementById("rentals")
-
 div.innerHTML=""
 
 rentals.forEach(function(r){
@@ -119,24 +143,11 @@ items.forEach(function(it){
 html+=it.category+" "+it.length+" cm<br>"
 })
 
-html+="<button onclick='returnBooking("+r.id+")'>Återlämnad</button>"
-
 html+="</div>"
 
 div.innerHTML+=html
 
 })
-
-}
-
-window.returnBooking=async function(id){
-
-await supabase
-.from("rentals")
-.update({returned:true})
-.eq("id",id)
-
-loadBookings()
 
 }
 
@@ -167,7 +178,6 @@ function renderCalendar(){
 let div=document.getElementById("calendar")
 
 let base=getMonday(new Date())
-
 base.setDate(base.getDate()+weekOffset*7)
 
 let days=[]
@@ -243,5 +253,3 @@ html+="</table>"
 div.innerHTML=html
 
 }
-
-loadBookings()
