@@ -7,11 +7,7 @@
 
 <title>Skiduthyrning</title>
 
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-
-<link rel="stylesheet" href="style.css?v=1">
+<link rel="stylesheet" href="style.css?v=3">
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
@@ -32,83 +28,19 @@
 <label>Slutdatum</label>
 <input type="date" id="end">
 
-<select id="category">
-<option>Knatte</option>
-<option>Junior</option>
-<option>Vuxen</option>
-</select>
+<h3>Skidor</h3>
 
-<select id="length">
-<option>90</option>
-<option>100</option>
-<option>110</option>
-<option>120</option>
-<option>130</option>
-<option>140</option>
-<option>150</option>
-<option>160</option>
-<option>170</option>
-<option>179</option>
-<option>190</option>
-<option>192</option>
-<option>194</option>
-<option>195</option>
-<option>197</option>
-<option>199</option>
-<option>202</option>
-<option>204</option>
-<option>207</option>
-</select>
-
-<input type="number" id="qty" value="1">
-
-<button onclick="addSki()">Lägg till skidor</button>
-<button onclick="saveBooking()">Spara bokning</button>
+<div id="skiButtons"></div>
 
 <div id="cart"></div>
 
+<button id="saveBtn">Spara bokning</button>
+
 <h2>Aktiva bokningar</h2>
+
 <div id="rentals"></div>
 
-<script src="app.js?v=1"></script>
-
-<script>
-
-/* Auto reload när ny version finns */
-
-const VERSION="1"
-
-async function checkUpdate(){
-
-try{
-
-const res=await fetch(window.location.href+"?t="+Date.now())
-
-const text=await res.text()
-
-const match=text.match(/VERSION="(.*?)"/)
-
-if(!match)return
-
-const latest=match[1]
-
-if(latest!==VERSION){
-
-location.reload(true)
-
-}
-
-}catch(e){
-
-console.log("update check failed")
-
-}
-
-}
-
-setInterval(checkUpdate,30000)
-
-</script>
+<script src="app.js?v=3"></script>
 
 </body>
 </html>
