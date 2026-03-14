@@ -1,3 +1,7 @@
+document.addEventListener("DOMContentLoaded", init)
+
+function init(){
+
 const supabase = window.supabase.createClient(
 "https://ycasdixhobiaiizevgsi.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
@@ -5,6 +9,9 @@ const supabase = window.supabase.createClient(
 
 let cart=[]
 let rentals=[]
+
+document.getElementById("addBtn").onclick=addSki
+document.getElementById("saveBtn").onclick=saveBooking
 
 function addSki(){
 
@@ -56,24 +63,30 @@ let start=document.getElementById("start").value
 let end=document.getElementById("end").value
 
 if(!name||!start||!end||cart.length===0){
+
 alert("Fyll i alla fält")
 return
+
 }
 
 const {error}=await supabase
 .from("rentals")
 .insert([{
+
 name:name,
 phone:phone,
 start:start,
 end:end,
 items:JSON.stringify(cart),
 returned:false
+
 }])
 
 if(error){
+
 alert(error.message)
 return
+
 }
 
 cart=[]
@@ -85,11 +98,18 @@ loadBookings()
 
 async function loadBookings(){
 
-const {data}=await supabase
+const {data,error}=await supabase
 .from("rentals")
 .select("*")
 .eq("returned",false)
 .order("start",{ascending:true})
+
+if(error){
+
+console.log(error)
+return
+
+}
 
 rentals=data||[]
 
@@ -133,7 +153,7 @@ div.innerHTML+=html
 
 }
 
-async function returnBooking(id){
+window.returnBooking = async function(id){
 
 await supabase
 .from("rentals")
@@ -145,3 +165,5 @@ loadBookings()
 }
 
 loadBookings()
+
+}
