@@ -117,11 +117,15 @@ rentals.forEach(function(r){
 
 let html="<div class='card'>"
 
-html+="<strong>"+r.name+"</strong><br>"
-html+=r.phone+"<br>"
-html+=r.start+" - "+r.end+"<br>"
+html+="<strong>"+(r.name||"")+"</strong><br>"
+html+=(r.phone||"")+"<br>"
+html+=(r.start||"")+" - "+(r.end||"")+"<br>"
 
-let items=r.items||[]
+let items=[]
+
+if(Array.isArray(r.items)){
+items=r.items
+}
 
 items.forEach(function(it){
 html+=it.category+" "+it.length+" cm<br>"
