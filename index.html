@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="sv">
-
 <head>
 
 <meta charset="UTF-8">
@@ -8,7 +7,9 @@
 
 <title>Skiduthyrning</title>
 
-<link rel="stylesheet" href="style.css?v=5">
+<meta http-equiv="Cache-Control" content="no-cache">
+
+<link rel="stylesheet" href="style.css?v=1">
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
@@ -57,17 +58,17 @@
 <option>207</option>
 </select>
 
-<input type="number" id="qty" value="1" min="1">
+<input type="number" id="qty" value="1">
 
-<button onclick="addSki()">Lägg till skidor</button>
-<button onclick="saveBooking()">Spara bokning</button>
+<button id="addBtn">Lägg till skidor</button>
+<button id="saveBtn">Spara bokning</button>
 
 <div id="cart"></div>
 
 <h2>Aktiva bokningar</h2>
 <div id="rentals"></div>
 
-<script src="app.js?v=5"></script>
+<script src="app.js?v=1"></script>
 
 </body>
 </html>
