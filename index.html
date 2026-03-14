@@ -6,7 +6,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Skiduthyrning PRO</title>
+<title>Skiduthyrning</title>
 
 <link rel="stylesheet" href="style.css">
 
@@ -59,16 +59,21 @@
 
 <input type="number" id="qty" value="1" min="1">
 
-<button id="addBtn">Lägg till skidor</button>
-<button id="saveBtn">Spara bokning</button>
+<button onclick="addSki()">Lägg till skidor</button>
+<button onclick="saveBooking()">Spara bokning</button>
 
 <div id="cart"></div>
 
 <h2>Aktiva bokningar</h2>
 <div id="rentals"></div>
 
-<h2>Veckovy</h2>
-<div id="week"></div>
+<h2>Skidkalender</h2>
+
+<button onclick="changeWeek(-1)">⬅</button>
+<span id="weekLabel"></span>
+<button onclick="changeWeek(1)">➡</button>
+
+<div id="calendar"></div>
 
 <script src="app.js"></script>
 
