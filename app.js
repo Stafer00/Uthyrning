@@ -56,80 +56,44 @@ let start=document.getElementById("start").value
 let end=document.getElementById("end").value
 
 if(!name||!start||!end||cart.length===0){
-
 alert("Fyll i alla fält")
 return
-
 }
 
-try{
-
-const {data,error} = await supabase
+const {error}=await supabase
 .from("rentals")
 .insert([{
-
 name:name,
 phone:phone,
 start:start,
 end:end,
 items:JSON.stringify(cart),
 returned:false
-
 }])
 
 if(error){
-
-alert("Databasfel: "+error.message)
-console.log(error)
+alert(error.message)
 return
-
 }
-
-alert("Bokning sparad")
 
 cart=[]
 renderCart()
 
 loadBookings()
 
-}catch(err){
-
-alert("Tekniskt fel")
-console.log(err)
-
-}
-
 }
 
 async function loadBookings(){
 
-const {data,error} = await supabase
+const {data}=await supabase
 .from("rentals")
 .select("*")
 .eq("returned",false)
 .order("start",{ascending:true})
 
-if(error){
-
-console.log(error)
-return
-
-}
-
 rentals=data||[]
 
 renderRentals()
-
-}
-
-async function returnBooking(id){
-
-await supabase
-.from("rentals")
-.update({returned:true})
-.eq("id",id)
-
-loadBookings()
 
 }
 
@@ -151,9 +115,7 @@ let items=[]
 
 try{
 items=JSON.parse(r.items)
-}catch{
-items=[]
-}
+}catch{}
 
 items.forEach(function(it){
 
@@ -168,6 +130,17 @@ html+="</div>"
 div.innerHTML+=html
 
 })
+
+}
+
+async function returnBooking(id){
+
+await supabase
+.from("rentals")
+.update({returned:true})
+.eq("id",id)
+
+loadBookings()
 
 }
 
