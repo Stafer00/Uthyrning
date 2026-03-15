@@ -1,114 +1,112 @@
-alert("APP STARTAR")
-
-const VERSION="1";
-
-console.log("APP VERSION",VERSION);
-
 const supabase = window.supabase.createClient(
 "https://ycasdixhobiaiizevgsi.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
-);
+)
 
-let cart=[];
-let rentals=[];
+let cart=[]
+let rentals=[]
 
-const skis=[
-{cat:"Knatte",len:90},
-{cat:"Knatte",len:100},
-{cat:"Knatte",len:110},
-{cat:"Knatte",len:120},
-{cat:"Junior",len:130},
-{cat:"Junior",len:140},
-{cat:"Junior",len:150},
-{cat:"Junior",len:160},
-{cat:"Vuxen",len:170},
-{cat:"Vuxen",len:179},
-{cat:"Vuxen",len:190},
-{cat:"Vuxen",len:192},
-{cat:"Vuxen",len:194},
-{cat:"Vuxen",len:195},
-{cat:"Vuxen",len:197},
-{cat:"Vuxen",len:199},
-{cat:"Vuxen",len:202},
-{cat:"Vuxen",len:204},
-{cat:"Vuxen",len:207}
-];
+/* längder */
 
-document.addEventListener("DOMContentLoaded",init);
+const skiLengths=[
+90,100,110,120,
+130,140,150,160,
+170,179,190,192,
+194,195,197,199,
+202,204,207
+]
 
-function init(){
+/* antal per längd */
 
-renderButtons();
+const inventory={
+90:3,
+100:5,
+110:6,
+120:7,
+130:8,
+140:10,
+150:12,
+160:14,
+170:18,
+179:20,
+190:8,
+192:6,
+194:10,
+195:4,
+197:7,
+199:6,
+202:4,
+204:3,
+207:2
+}
 
-document
-.getElementById("saveBtn")
-.addEventListener("click",saveBooking);
+function renderWall(){
 
-loadBookings();
+const div=document.getElementById("skiWall")
+
+div.innerHTML=""
+
+skiLengths.forEach(length=>{
+
+for(let i=0;i<inventory[length];i++){
+
+const btn=document.createElement("div")
+
+btn.className="ski"
+
+btn.innerText=length
+
+btn.onclick=function(){
+addSki(length)
+}
+
+div.appendChild(btn)
 
 }
 
-function renderButtons(){
-
-const div=document.getElementById("skiButtons");
-
-div.innerHTML="";
-
-skis.forEach(s=>{
-
-const btn=document.createElement("button");
-
-btn.className="skiButton";
-
-btn.innerText=s.cat+" "+s.len+" cm";
-
-btn.onclick=()=>addSki(s);
-
-div.appendChild(btn);
-
-});
+})
 
 }
 
-function addSki(s){
+function addSki(length){
 
-cart.push(s);
+cart.push(length)
 
-renderCart();
+renderCart()
 
 }
 
 function renderCart(){
 
-const div=document.getElementById("cart");
+const div=document.getElementById("cart")
 
 if(cart.length===0){
-div.innerHTML="";
-return;
+div.innerHTML=""
+return
 }
 
-let html="";
+let html=""
 
-cart.forEach(s=>{
-html+=s.cat+" "+s.len+" cm<br>";
-});
+cart.forEach(len=>{
+html+=len+" cm<br>"
+})
 
-div.innerHTML=html;
+div.innerHTML=html
 
 }
 
 async function saveBooking(){
 
-let name=document.getElementById("customer").value;
-let phone=document.getElementById("phone").value;
-let start=document.getElementById("start").value;
-let end=document.getElementById("end").value;
+let name=document.getElementById("customer").value
+let phone=document.getElementById("phone").value
+let start=document.getElementById("start").value
+let end=document.getElementById("end").value
 
 if(!name||!start||!end||cart.length===0){
 
-alert("Fyll i alla fält");
+alert("Fyll i alla fält")
 
-return;
+return
 
 }
 
@@ -121,21 +119,21 @@ start:start,
 end:end,
 items:JSON.stringify(cart),
 returned:false
-});
+})
 
 if(error){
 
-alert(error.message);
+alert(error.message)
 
-return;
+return
 
 }
 
-cart=[];
+cart=[]
 
-renderCart();
+renderCart()
 
-loadBookings();
+loadBookings()
 
 }
 
@@ -144,50 +142,51 @@ async function loadBookings(){
 const {data,error}=await supabase
 .from("rentals")
 .select("*")
-.eq("returned",false);
+.eq("returned",false)
 
 if(error){
-
-console.log(error);
-
-return;
-
+console.log(error)
+return
 }
 
-rentals=data||[];
+rentals=data||[]
 
-renderRentals();
+renderRentals()
 
 }
 
 function renderRentals(){
 
-const div=document.getElementById("rentals");
+const div=document.getElementById("rentals")
 
-div.innerHTML="";
+div.innerHTML=""
 
 rentals.forEach(r=>{
 
-let html="<div class='card'>";
+let html="<div class='card'>"
 
-html+="<strong>"+r.name+"</strong><br>";
-html+=r.phone+"<br>";
-html+=r.start+" - "+r.end+"<br>";
+html+="<strong>"+r.name+"</strong><br>"
+html+=r.phone+"<br>"
+html+=r.start+" - "+r.end+"<br>"
 
-let items=[];
+let items=[]
 
 try{
-items=JSON.parse(r.items);
+items=JSON.parse(r.items)
 }catch{}
 
-items.forEach(it=>{
-html+=it.cat+" "+it.len+" cm<br>";
-});
+items.forEach(len=>{
+html+=len+" cm<br>"
+})
 
-html+="</div>";
+html+="</div>"
 
-div.innerHTML+=html;
+div.innerHTML+=html
 
-});
+})
 
 }
+
+renderWall()
+
+loadBookings()
