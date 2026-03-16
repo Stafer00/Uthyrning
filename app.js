@@ -1,78 +1,75 @@
-console.log("APP STARTAR")
-
 const supabase = window.supabase.createClient(
 "https://ycasdixhobiaiizevgsi.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
 )
 
+let skis=[]
 let cart=[]
 let rentals=[]
 
-const skiLengths=[
-90,100,110,120,
-130,140,150,160,
-170,179,190,192,
-194,195,197,199,
-202,204,207
-]
+document.getElementById("saveBtn").onclick=saveBooking
 
-const inventory={
-90:3,
-100:5,
-110:6,
-120:7,
-130:8,
-140:10,
-150:12,
-160:14,
-170:18,
-179:20,
-190:8,
-192:6,
-194:10,
-195:4,
-197:7,
-199:6,
-202:4,
-204:3,
-207:2
+loadSkis()
+loadBookings()
+
+async function loadSkis(){
+
+const {data,error}=await supabase
+.from("skis")
+.select("*")
+.order("length")
+
+if(error){
+console.log(error)
+return
+}
+
+skis=data
+
+renderWall()
+
 }
 
 function renderWall(){
 
-const div=document.getElementById("skiWall")
+const wall=document.getElementById("skiWall")
 
-div.innerHTML=""
+wall.innerHTML=""
 
-skiLengths.forEach(length=>{
+skis.forEach(ski=>{
 
-for(let i=0;i<inventory[length];i++){
+const div=document.createElement("div")
 
-const btn=document.createElement("div")
+div.className="ski"
 
-btn.className="ski"
-
-btn.innerText=length+" cm"
-
-btn.addEventListener("click",()=>{
-
-addSki(length)
-
-})
-
-div.appendChild(btn)
-
+if(ski.status==="rented"){
+div.classList.add("rented")
 }
 
-})
-
+if(cart.includes(ski.id)){
+div.classList.add("selected")
 }
 
-function addSki(length){
+div.innerText=ski.length
 
-cart.push(length)
+div.onclick=function(){
 
+if(ski.status==="rented")return
+
+if(cart.includes(ski.id)){
+cart=cart.filter(id=>id!==ski.id)
+}else{
+cart.push(ski.id)
+}
+
+renderWall()
 renderCart()
+
+}
+
+wall.appendChild(div)
+
+})
 
 }
 
@@ -80,29 +77,19 @@ function renderCart(){
 
 const div=document.getElementById("cart")
 
-if(cart.length===0){
-
 div.innerHTML=""
 
-return
+cart.forEach(id=>{
 
-}
+const ski=skis.find(s=>s.id===id)
 
-let html=""
-
-cart.forEach(len=>{
-
-html+=len+" cm<br>"
+div.innerHTML+=ski.length+" cm<br>"
 
 })
-
-div.innerHTML=html
 
 }
 
 async function saveBooking(){
-
-console.log("SAVE BOOKING")
 
 let name=document.getElementById("customer").value
 let phone=document.getElementById("phone").value
@@ -110,40 +97,46 @@ let start=document.getElementById("start").value
 let end=document.getElementById("end").value
 
 if(!name||!start||!end||cart.length===0){
-
 alert("Fyll i alla fält")
-
 return
-
 }
 
-const {error}=await supabase
+const {data,error}=await supabase
 .from("rentals")
 .insert({
 name:name,
 phone:phone,
 start:start,
-end:end,
-items:JSON.stringify(cart),
-returned:false
+end:end
 })
+.select()
 
 if(error){
-
 alert(error.message)
-
-console.log(error)
-
 return
+}
+
+const rentalId=data[0].id
+
+for(const skiId of cart){
+
+await supabase
+.from("rental_items")
+.insert({
+rental_id:rentalId,
+ski_id:skiId
+})
+
+await supabase
+.from("skis")
+.update({status:"rented"})
+.eq("id",skiId)
 
 }
 
-alert("Bokning sparad")
-
 cart=[]
 
-renderCart()
-
+loadSkis()
 loadBookings()
 
 }
@@ -153,17 +146,14 @@ async function loadBookings(){
 const {data,error}=await supabase
 .from("rentals")
 .select("*")
-.eq("returned",false)
+.order("start")
 
 if(error){
-
 console.log(error)
-
 return
-
 }
 
-rentals=data||[]
+rentals=data
 
 renderRentals()
 
@@ -180,18 +170,7 @@ rentals.forEach(r=>{
 let html="<div class='card'>"
 
 html+="<strong>"+r.name+"</strong><br>"
-html+=r.phone+"<br>"
 html+=r.start+" - "+r.end+"<br>"
-
-let items=[]
-
-try{
-items=JSON.parse(r.items)
-}catch{}
-
-items.forEach(len=>{
-html+=len+" cm<br>"
-})
 
 html+="</div>"
 
@@ -200,13 +179,3 @@ div.innerHTML+=html
 })
 
 }
-
-document.addEventListener("DOMContentLoaded",()=>{
-
-document.getElementById("saveBtn").addEventListener("click",saveBooking)
-
-renderWall()
-
-loadBookings()
-
-})
