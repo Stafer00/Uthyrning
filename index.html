@@ -7,7 +7,12 @@
 
 <title>Skiduthyrning</title>
 
-<link rel="stylesheet" href="style.css?v=7">
+<!-- STOPPA CACHE -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+
+<link rel="stylesheet" href="style.css?v=999">
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
@@ -42,7 +47,18 @@
 
 <div id="rentals"></div>
 
-<script src="app.js?v=7"></script>
+<!-- 🚀 LADDAR ALLTID NYASTE app.js -->
+<script>
+fetch("app.js?v=" + Date.now())
+.then(r => r.text())
+.then(code => {
+    console.log("Laddar app.js...");
+    eval(code);
+})
+.catch(err => {
+    alert("Fel att ladda app.js: " + err);
+});
+</script>
 
 </body>
 </html>
