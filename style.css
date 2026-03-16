@@ -1,48 +1,46 @@
 body{
 font-family:Arial;
 padding:20px;
-background:#f4f4f4;
+background:#f4f4f4
 }
 
 h1{
-text-align:center;
+text-align:center
 }
 
-input{
+input,button{
 width:100%;
 padding:10px;
-margin:5px 0;
-}
-
-button{
-width:100%;
-padding:12px;
-margin-top:10px;
-background:#1976d2;
-color:white;
-border:none;
-border-radius:6px;
-font-size:16px;
+margin:5px 0
 }
 
 #skiWall{
-margin-top:10px;
+display:grid;
+grid-template-columns:repeat(10,1fr);
+gap:6px;
+margin-top:10px
 }
 
 .ski{
-display:inline-block;
 background:#4caf50;
 color:white;
-padding:8px 10px;
-margin:4px;
-border-radius:5px;
-cursor:pointer;
-font-size:14px;
+padding:8px;
+text-align:center;
+border-radius:6px;
+cursor:pointer
+}
+
+.ski.rented{
+background:#f44336
+}
+
+.ski.selected{
+background:#ff9800
 }
 
 .card{
 background:white;
 padding:10px;
 margin-top:10px;
-border-radius:6px;
+border-radius:6px
 }
