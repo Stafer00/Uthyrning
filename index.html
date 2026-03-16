@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="sv">
+
 <head>
 
 <meta charset="UTF-8">
@@ -7,13 +8,24 @@
 
 <title>Skiduthyrning</title>
 
-<!-- STOPPA CACHE -->
+<!-- 🚫 STOPPA CACHE -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 
-<link rel="stylesheet" href="style.css?v=999">
+<!-- 🎨 PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2d6cdf">
 
+<!-- 📱 iPad / iPhone -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Skidor">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+<!-- CSS -->
+<link rel="stylesheet" href="style.css?v=5">
+
+<!-- Supabase -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 </head>
@@ -47,18 +59,28 @@
 
 <div id="rentals"></div>
 
-<!-- 🚀 LADDAR ALLTID NYASTE app.js -->
+<!-- 🚀 LADDAR ALLTID SENASTE JS -->
 <script>
 fetch("app.js?v=" + Date.now())
 .then(r => r.text())
 .then(code => {
-    console.log("Laddar app.js...");
-    eval(code);
+    console.log("Laddar app.js")
+    eval(code)
 })
 .catch(err => {
-    alert("Fel att ladda app.js: " + err);
-});
+    alert("Fel att ladda app.js: " + err)
+})
+</script>
+
+<!-- ⚙️ SERVICE WORKER -->
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js")
+    .then(() => console.log("SW registrerad"))
+    .catch(err => console.log("SW fel:", err))
+}
 </script>
 
 </body>
+
 </html>
