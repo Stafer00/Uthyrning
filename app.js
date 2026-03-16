@@ -9,23 +9,27 @@ let rentals=[]
 
 document.getElementById("saveBtn").onclick=saveBooking
 
-loadSkis()
-loadBookings()
+init()
+
+async function init(){
+await loadSkis()
+await loadBookings()
+}
 
 async function loadSkis(){
 
 const {data,error}=await supabase
 .from("skis")
 .select("*")
-.order("length")
+.order("length",{ascending:true})
 
 if(error){
+alert("Fel vid laddning av skidor")
 console.log(error)
 return
 }
 
 skis=data
-
 renderWall()
 
 }
@@ -33,14 +37,13 @@ renderWall()
 function renderWall(){
 
 const wall=document.getElementById("skiWall")
-
 wall.innerHTML=""
 
 skis.forEach(ski=>{
 
 const div=document.createElement("div")
-
 div.className="ski"
+div.innerText=ski.length
 
 if(ski.status==="rented"){
 div.classList.add("rented")
@@ -50,11 +53,9 @@ if(cart.includes(ski.id)){
 div.classList.add("selected")
 }
 
-div.innerText=ski.length
-
 div.onclick=function(){
 
-if(ski.status==="rented")return
+if(ski.status==="rented") return
 
 if(cart.includes(ski.id)){
 cart=cart.filter(id=>id!==ski.id)
@@ -76,15 +77,13 @@ wall.appendChild(div)
 function renderCart(){
 
 const div=document.getElementById("cart")
-
 div.innerHTML=""
 
 cart.forEach(id=>{
-
 const ski=skis.find(s=>s.id===id)
-
+if(ski){
 div.innerHTML+=ski.length+" cm<br>"
-
+}
 })
 
 }
@@ -106,13 +105,13 @@ const {data,error}=await supabase
 .insert({
 name:name,
 phone:phone,
-start:start,
-end:end
+start_date:start,
+end_date:end
 })
 .select()
 
 if(error){
-alert(error.message)
+alert("Fel: "+error.message)
 return
 }
 
@@ -136,8 +135,10 @@ await supabase
 
 cart=[]
 
-loadSkis()
-loadBookings()
+await loadSkis()
+await loadBookings()
+
+alert("Bokning sparad")
 
 }
 
@@ -146,7 +147,7 @@ async function loadBookings(){
 const {data,error}=await supabase
 .from("rentals")
 .select("*")
-.order("start")
+.order("start_date",{ascending:true})
 
 if(error){
 console.log(error)
@@ -154,7 +155,6 @@ return
 }
 
 rentals=data
-
 renderRentals()
 
 }
@@ -162,7 +162,6 @@ renderRentals()
 function renderRentals(){
 
 const div=document.getElementById("rentals")
-
 div.innerHTML=""
 
 rentals.forEach(r=>{
@@ -170,7 +169,7 @@ rentals.forEach(r=>{
 let html="<div class='card'>"
 
 html+="<strong>"+r.name+"</strong><br>"
-html+=r.start+" - "+r.end+"<br>"
+html+=r.start_date+" - "+r.end_date+"<br>"
 
 html+="</div>"
 
