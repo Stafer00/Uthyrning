@@ -1,51 +1,212 @@
-<!DOCTYPE html>
-<html lang="sv">
+console.log("APP STARTAR")
 
-<head>
+const supabase = window.supabase.createClient(
+"https://ycasdixhobiaiizevgsi.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
+)
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+let cart=[]
+let rentals=[]
 
-<title>Skiduthyrning</title>
+const skiLengths=[
+90,100,110,120,
+130,140,150,160,
+170,179,190,192,
+194,195,197,199,
+202,204,207
+]
 
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+const inventory={
+90:3,
+100:5,
+110:6,
+120:7,
+130:8,
+140:10,
+150:12,
+160:14,
+170:18,
+179:20,
+190:8,
+192:6,
+194:10,
+195:4,
+197:7,
+199:6,
+202:4,
+204:3,
+207:2
+}
 
-<link rel="stylesheet" href="style.css?v=2">
+function renderWall(){
 
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+const div=document.getElementById("skiWall")
 
-</head>
+div.innerHTML=""
 
-<body>
+skiLengths.forEach(length=>{
 
-<h1>Skiduthyrning</h1>
+for(let i=0;i<inventory[length];i++){
 
-<h2>Ny bokning</h2>
+const btn=document.createElement("div")
 
-<input id="customer" placeholder="Namn">
-<input id="phone" placeholder="Telefon">
+btn.className="ski"
 
-<label>Start</label>
-<input type="date" id="start">
+btn.innerText=length+" cm"
 
-<label>Slut</label>
-<input type="date" id="end">
+btn.addEventListener("click",()=>{
 
-<h2>Skidor</h2>
+addSki(length)
 
-<div id="skiWall"></div>
+})
 
-<h3>Valda skidor</h3>
+div.appendChild(btn)
 
-<div id="cart"></div>
+}
 
-<button id="saveBtn">Spara bokning</button>
+})
 
-<h2>Aktiva bokningar</h2>
+}
 
-<div id="rentals"></div>
+function addSki(length){
 
-<script src="app.js?v=2"></script>
+cart.push(length)
 
-</body>
-</html>
+renderCart()
+
+}
+
+function renderCart(){
+
+const div=document.getElementById("cart")
+
+if(cart.length===0){
+
+div.innerHTML=""
+
+return
+
+}
+
+let html=""
+
+cart.forEach(len=>{
+
+html+=len+" cm<br>"
+
+})
+
+div.innerHTML=html
+
+}
+
+async function saveBooking(){
+
+console.log("SAVE BOOKING")
+
+let name=document.getElementById("customer").value
+let phone=document.getElementById("phone").value
+let start=document.getElementById("start").value
+let end=document.getElementById("end").value
+
+if(!name||!start||!end||cart.length===0){
+
+alert("Fyll i alla fält")
+
+return
+
+}
+
+const {error}=await supabase
+.from("rentals")
+.insert({
+name:name,
+phone:phone,
+start:start,
+end:end,
+items:JSON.stringify(cart),
+returned:false
+})
+
+if(error){
+
+alert(error.message)
+
+console.log(error)
+
+return
+
+}
+
+alert("Bokning sparad")
+
+cart=[]
+
+renderCart()
+
+loadBookings()
+
+}
+
+async function loadBookings(){
+
+const {data,error}=await supabase
+.from("rentals")
+.select("*")
+.eq("returned",false)
+
+if(error){
+
+console.log(error)
+
+return
+
+}
+
+rentals=data||[]
+
+renderRentals()
+
+}
+
+function renderRentals(){
+
+const div=document.getElementById("rentals")
+
+div.innerHTML=""
+
+rentals.forEach(r=>{
+
+let html="<div class='card'>"
+
+html+="<strong>"+r.name+"</strong><br>"
+html+=r.phone+"<br>"
+html+=r.start+" - "+r.end+"<br>"
+
+let items=[]
+
+try{
+items=JSON.parse(r.items)
+}catch{}
+
+items.forEach(len=>{
+html+=len+" cm<br>"
+})
+
+html+="</div>"
+
+div.innerHTML+=html
+
+})
+
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+
+document.getElementById("saveBtn").addEventListener("click",saveBooking)
+
+renderWall()
+
+loadBookings()
+
+})
