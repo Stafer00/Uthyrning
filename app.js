@@ -5,57 +5,67 @@ const supabase = window.supabase.createClient(
 
 let skis=[]
 let cart=[]
-let rentals=[]
 
 document.getElementById("saveBtn").onclick=saveBooking
 
-init()
+startApp()
 
-async function init(){
+async function startApp(){
+
+console.log("APP STARTAR")
+
+try{
 await loadSkis()
-await loadBookings()
+}catch(e){
+alert("Fel vid start: "+e.message)
+console.log(e)
+}
+
 }
 
 async function loadSkis(){
 
+console.log("Laddar skidor...")
+
 const {data,error}=await supabase
 .from("skis")
 .select("*")
-.order("length",{ascending:true})
 
 if(error){
-alert("Fel vid laddning av skidor")
+alert("Supabase error: "+error.message)
 console.log(error)
 return
 }
 
-skis=data
+console.log("Skidor:",data)
+
+skis=data || []
+
 renderWall()
 
 }
 
 function renderWall(){
 
+console.log("Renderar skidvägg")
+
 const wall=document.getElementById("skiWall")
+
 wall.innerHTML=""
+
+if(skis.length===0){
+wall.innerHTML="INGA SKIDOR FUNNA"
+return
+}
 
 skis.forEach(ski=>{
 
 const div=document.createElement("div")
+
 div.className="ski"
 div.innerText=ski.length
 
-if(ski.status==="rented"){
-div.classList.add("rented")
-}
-
-if(cart.includes(ski.id)){
-div.classList.add("selected")
-}
-
 div.onclick=function(){
-
-if(ski.status==="rented") return
 
 if(cart.includes(ski.id)){
 cart=cart.filter(id=>id!==ski.id)
@@ -77,6 +87,7 @@ wall.appendChild(div)
 function renderCart(){
 
 const div=document.getElementById("cart")
+
 div.innerHTML=""
 
 cart.forEach(id=>{
@@ -90,91 +101,6 @@ div.innerHTML+=ski.length+" cm<br>"
 
 async function saveBooking(){
 
-let name=document.getElementById("customer").value
-let phone=document.getElementById("phone").value
-let start=document.getElementById("start").value
-let end=document.getElementById("end").value
-
-if(!name||!start||!end||cart.length===0){
-alert("Fyll i alla fält")
-return
-}
-
-const {data,error}=await supabase
-.from("rentals")
-.insert({
-name:name,
-phone:phone,
-start_date:start,
-end_date:end
-})
-.select()
-
-if(error){
-alert("Fel: "+error.message)
-return
-}
-
-const rentalId=data[0].id
-
-for(const skiId of cart){
-
-await supabase
-.from("rental_items")
-.insert({
-rental_id:rentalId,
-ski_id:skiId
-})
-
-await supabase
-.from("skis")
-.update({status:"rented"})
-.eq("id",skiId)
-
-}
-
-cart=[]
-
-await loadSkis()
-await loadBookings()
-
-alert("Bokning sparad")
-
-}
-
-async function loadBookings(){
-
-const {data,error}=await supabase
-.from("rentals")
-.select("*")
-.order("start_date",{ascending:true})
-
-if(error){
-console.log(error)
-return
-}
-
-rentals=data
-renderRentals()
-
-}
-
-function renderRentals(){
-
-const div=document.getElementById("rentals")
-div.innerHTML=""
-
-rentals.forEach(r=>{
-
-let html="<div class='card'>"
-
-html+="<strong>"+r.name+"</strong><br>"
-html+=r.start_date+" - "+r.end_date+"<br>"
-
-html+="</div>"
-
-div.innerHTML+=html
-
-})
+alert("Test: bokning funkar")
 
 }
