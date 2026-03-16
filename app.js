@@ -10,17 +10,12 @@ document.getElementById("saveBtn").onclick = saveBooking
 
 startApp()
 
+// =========================
+// START
+// =========================
+
 async function startApp(){
-
-alert("APP STARTAR")
-
-try{
 await loadSkis()
-}catch(e){
-alert("FEL I START: " + e.message)
-console.log(e)
-}
-
 }
 
 // =========================
@@ -29,22 +24,14 @@ console.log(e)
 
 async function loadSkis(){
 
-alert("Laddar skidor från Supabase...")
-
 const {data, error} = await supabase
 .from("skis")
 .select("*")
 
 if(error){
-alert("SUPABASE ERROR: " + error.message)
-console.log(error)
+alert("Fel från Supabase: " + error.message)
 return
 }
-
-// 🔍 VISA EXAKT VAD SOM KOMMER
-alert("DATA: " + JSON.stringify(data))
-
-console.log("DATA:", data)
 
 skis = data || []
 
@@ -53,32 +40,38 @@ renderWall()
 }
 
 // =========================
-// RITA SKIDOR
+// VISA ALLA SKIDOR
 // =========================
 
 function renderWall(){
 
 const wall = document.getElementById("skiWall")
-
 wall.innerHTML = ""
-
-if(skis.length === 0){
-wall.innerHTML = "<b>INGA SKIDOR FRÅN SUPABASE</b>"
-return
-}
 
 skis.forEach(ski => {
 
-const div = document.createElement("div")
+const btn = document.createElement("div")
 
-div.style.padding = "10px"
-div.style.margin = "5px"
-div.style.background = "#eee"
-div.style.display = "inline-block"
+btn.innerText = ski.length + " cm"
 
-div.innerText = ski.length + " cm"
+btn.style.display = "inline-block"
+btn.style.margin = "5px"
+btn.style.padding = "12px"
+btn.style.borderRadius = "8px"
+btn.style.cursor = "pointer"
+btn.style.minWidth = "60px"
+btn.style.textAlign = "center"
 
-div.onclick = function(){
+/* FÄRG */
+if(cart.includes(ski.id)){
+btn.style.background = "green"
+btn.style.color = "white"
+}else{
+btn.style.background = "#eee"
+}
+
+/* KLICK */
+btn.onclick = function(){
 
 if(cart.includes(ski.id)){
 cart = cart.filter(id => id !== ski.id)
@@ -86,24 +79,24 @@ cart = cart.filter(id => id !== ski.id)
 cart.push(ski.id)
 }
 
+renderWall()
 renderCart()
 
 }
 
-wall.appendChild(div)
+wall.appendChild(btn)
 
 })
 
 }
 
 // =========================
-// VISA VALDA
+// VISA VALDA SKIDOR
 // =========================
 
 function renderCart(){
 
 const div = document.getElementById("cart")
-
 div.innerHTML = ""
 
 cart.forEach(id => {
@@ -111,7 +104,19 @@ cart.forEach(id => {
 const ski = skis.find(s => s.id === id)
 
 if(ski){
-div.innerHTML += ski.length + " cm<br>"
+
+const item = document.createElement("div")
+
+item.innerText = ski.length + " cm"
+
+item.style.display = "inline-block"
+item.style.margin = "5px"
+item.style.padding = "8px"
+item.style.background = "#ddd"
+item.style.borderRadius = "6px"
+
+div.appendChild(item)
+
 }
 
 })
@@ -119,9 +124,9 @@ div.innerHTML += ski.length + " cm<br>"
 }
 
 // =========================
-// SPARA (TEST)
+// SPARA (placeholder)
 // =========================
 
 function saveBooking(){
-alert("KNAPP FUNKAR")
+alert("Nästa steg: spara bokning")
 }
