@@ -1,15 +1,24 @@
-const APP_VERSION = "5"
-console.log("APP VERSION:", APP_VERSION)
+console.log("JS FIL LADDAD")
+
+/* ========= SUPABASE ========= */
+
+if(!window.supabase){
+alert("Supabase laddades inte – kontrollera script i index.html")
+}
 
 const supabase = window.supabase.createClient(
 "https://ycasdixhobiaiizevgsi.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
 )
 
+/* ========= DATA ========= */
+
 let skis=[]
 let rentals=[]
 let cart=[]
 let weekOffset=0
+
+/* ========= START ========= */
 
 document.addEventListener("DOMContentLoaded", init)
 
@@ -17,48 +26,70 @@ async function init(){
 
 console.log("APP STARTAR")
 
+try{
+
 await loadSkis()
 await loadBookings()
+
+console.log("DATA LADDAD")
 
 renderWall()
 renderWeek()
 renderRentals()
 
+}catch(e){
+
+console.log("KRASH:", e)
+
+document.body.innerHTML += "<p style='color:red'>Fel i app.js – öppna konsol</p>"
+
 }
 
-/* DATA */
+}
+
+/* ========= LOAD ========= */
 
 async function loadSkis(){
+
+console.log("Laddar skidor...")
 
 const {data,error}=await supabase.from("skis").select("*")
 
 if(error){
-alert("Fel laddning skidor")
-return
+console.log("SKIS ERROR:", error)
+throw error
 }
 
 skis=data||[]
+
+console.log("Skidor:", skis.length)
 
 }
 
 async function loadBookings(){
 
+console.log("Laddar bokningar...")
+
 const {data,error}=await supabase.from("rentals").select("*")
 
 if(error){
-alert("Fel laddning bokningar")
-return
+console.log("RENTALS ERROR:", error)
+throw error
 }
 
 rentals=data||[]
 
+console.log("Bokningar:", rentals.length)
+
 }
 
-/* SKI WALL */
+/* ========= SKI WALL ========= */
 
 function renderWall(){
 
 const div=document.getElementById("skiWall")
+if(!div) return
+
 div.innerHTML=""
 
 skis.forEach(ski=>{
@@ -78,7 +109,7 @@ div.appendChild(btn)
 
 }
 
-/* CART */
+/* ========= CART ========= */
 
 function renderCart(){
 
@@ -102,7 +133,7 @@ div.innerHTML=html
 
 }
 
-/* SAVE */
+/* ========= SAVE ========= */
 
 async function saveBooking(){
 
@@ -142,11 +173,21 @@ renderRentals()
 
 }
 
-/* CALENDAR */
+/* ========= KALENDER ========= */
 
 function renderWeek(){
 
 const div=document.getElementById("calendar")
+
+if(!div){
+console.log("Hittar inte #calendar")
+return
+}
+
+if(!skis.length){
+div.innerHTML="<p>Inga skidor laddade</p>"
+return
+}
 
 let base=getMonday(new Date())
 base.setDate(base.getDate()+weekOffset*7)
@@ -217,11 +258,13 @@ showBooking(el.dataset.id)
 
 }
 
-/* BOOKINGS LIST */
+/* ========= LISTA ========= */
 
 function renderRentals(){
 
 const div=document.getElementById("rentals")
+if(!div) return
+
 div.innerHTML=""
 
 rentals.forEach(r=>{
@@ -252,7 +295,7 @@ div.innerHTML+=html
 
 }
 
-/* CLICK BOOKING */
+/* ========= POPUP ========= */
 
 function showBooking(id){
 
@@ -267,7 +310,7 @@ r.start+" - "+r.end
 
 }
 
-/* DATE */
+/* ========= DATUM ========= */
 
 function format(d){
 return d.toISOString().split("T")[0]
