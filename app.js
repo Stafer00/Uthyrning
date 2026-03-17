@@ -1,16 +1,12 @@
-/* ========= INIT ========= */
-
 const supabase = window.supabase.createClient(
 "https://ycasdixhobiaiizevgsi.supabase.co",
-"DIN_ANON_KEY_HÄR"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
 )
 
 let skis = []
 let rentals = []
 let cart = []
 let weekOffset = 0
-
-/* ========= START ========= */
 
 document.addEventListener("DOMContentLoaded", initApp)
 
@@ -27,7 +23,7 @@ renderWeek()
 
 }
 
-/* ========= LOADING UI ========= */
+/* LOADING */
 
 function showLoading(){
 document.getElementById("rentals").innerHTML = "<p>Laddar...</p>"
@@ -37,33 +33,25 @@ function showError(msg){
 document.getElementById("rentals").innerHTML = "<p style='color:red'>"+msg+"</p>"
 }
 
-/* ========= SAFE LOAD ========= */
+/* SAFE LOAD */
 
 async function safeLoadData(){
 
 try{
-
 await loadSkis()
 await loadBookings()
-
 }catch(e){
-
 console.log("FEL:", e)
 showError("Kunde inte ladda data")
-
 }
 
 }
 
-/* ========= LOAD DATA ========= */
+/* DATA */
 
 async function loadSkis(){
 
-console.log("Laddar skidor")
-
-const {data,error} = await supabase
-.from("skis")
-.select("*")
+const {data,error} = await supabase.from("skis").select("*")
 
 if(error){
 console.log(error)
@@ -72,17 +60,11 @@ throw error
 
 skis = data || []
 
-console.log("SKIS:", skis.length)
-
 }
 
 async function loadBookings(){
 
-console.log("Laddar bokningar")
-
-const {data,error} = await supabase
-.from("rentals")
-.select("*")
+const {data,error} = await supabase.from("rentals").select("*")
 
 if(error){
 console.log(error)
@@ -91,17 +73,13 @@ throw error
 
 rentals = data || []
 
-console.log("RENTALS:", rentals.length)
-
 }
 
-/* ========= SKI WALL ========= */
+/* SKIDOR */
 
 function renderWall(){
 
 const div = document.getElementById("skiWall")
-if(!div) return
-
 div.innerHTML = ""
 
 skis.forEach(ski=>{
@@ -121,7 +99,7 @@ div.appendChild(btn)
 
 }
 
-/* ========= CART ========= */
+/* CART */
 
 function renderCart(){
 
@@ -145,7 +123,7 @@ div.innerHTML = html
 
 }
 
-/* ========= SAVE ========= */
+/* SAVE */
 
 async function saveBooking(){
 
@@ -183,7 +161,7 @@ renderWeek()
 
 }
 
-/* ========= CALENDAR ========= */
+/* KALENDER */
 
 function renderWeek(){
 
@@ -263,7 +241,6 @@ html += "</table>"
 
 div.innerHTML = html
 
-// klick
 document.querySelectorAll(".booked").forEach(el=>{
 el.addEventListener("click", function(){
 showBooking(this.dataset.id)
@@ -272,7 +249,7 @@ showBooking(this.dataset.id)
 
 }
 
-/* ========= BOOKING POPUP ========= */
+/* POPUP */
 
 function showBooking(id){
 
@@ -287,7 +264,7 @@ r.start + " - " + r.end
 
 }
 
-/* ========= DATE HELPERS ========= */
+/* DATUM */
 
 function format(d){
 return d.toISOString().split("T")[0]
