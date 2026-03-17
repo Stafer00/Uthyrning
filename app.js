@@ -14,30 +14,69 @@ window.onload = init
 
 async function init(){
 
-  const btn = document.getElementById("saveBtn")
-  if(btn) btn.onclick = saveBooking
+  console.log("INIT START")
 
-  await loadSkis()
-  await loadBookings()
+  try {
 
-  renderWall()
-  renderCart()
-  renderWeek()
-  renderRentals()
+    const btn = document.getElementById("saveBtn")
+    if(btn) btn.onclick = saveBooking
+
+    await loadSkis()
+    await loadBookings()
+
+    renderAll()
+
+  } catch(e){
+    console.log("INIT ERROR", e)
+  }
+
 }
 
 /* ========= LOAD ========= */
 
 async function loadSkis(){
-  const {data,error} = await supabaseClient.from("skis").select("*")
-  if(error){ skis=[]; return }
-  skis = data || []
+
+  try{
+    const {data,error} = await supabaseClient.from("skis").select("*")
+
+    if(error){
+      console.log("SKIS ERROR", error)
+      return
+    }
+
+    if(data) skis = data
+
+  }catch(e){
+    console.log("LOAD SKIS CRASH", e)
+  }
+
 }
 
 async function loadBookings(){
-  const {data,error} = await supabaseClient.from("rentals").select("*")
-  if(error){ rentals=[]; return }
-  rentals = data || []
+
+  try{
+    const {data,error} = await supabaseClient.from("rentals").select("*")
+
+    if(error){
+      console.log("RENTALS ERROR", error)
+      return
+    }
+
+    if(data) rentals = data
+
+  }catch(e){
+    console.log("LOAD BOOKINGS CRASH", e)
+  }
+
+}
+
+/* ========= RENDER ========= */
+
+function renderAll(){
+  renderWall()
+  renderCart()
+  renderWeek()
+  renderRentals()
 }
 
 /* ========= SKIDOR ========= */
@@ -47,11 +86,11 @@ function renderWall(){
   const div = document.getElementById("skiWall")
   if(!div) return
 
-  div.innerHTML=""
+  div.innerHTML = ""
 
   skis.forEach(ski=>{
 
-    const el=document.createElement("div")
+    const el = document.createElement("div")
 
     el.style.display="inline-block"
     el.style.padding="10px"
@@ -59,9 +98,9 @@ function renderWall(){
     el.style.border="1px solid #ccc"
     el.style.cursor="pointer"
 
-    el.innerText=ski.length+" cm"
+    el.innerText = ski.length+" cm"
 
-    el.onclick=()=>{
+    el.onclick = ()=>{
       cart.push(ski.id)
       renderCart()
     }
@@ -69,34 +108,35 @@ function renderWall(){
     div.appendChild(el)
 
   })
+
 }
 
 /* ========= CART ========= */
 
 function renderCart(){
 
-  const div=document.getElementById("cart")
+  const div = document.getElementById("cart")
   if(!div) return
 
-  div.innerHTML="<strong>Valda:</strong><br>"
+  div.innerHTML = "<strong>Valda:</strong><br>"
 
   cart.forEach(id=>{
-    const ski=skis.find(s=>s.id===id)
+    const ski = skis.find(s=>s.id===id)
     if(ski){
-      div.innerHTML+=ski.length+" cm<br>"
+      div.innerHTML += ski.length+" cm<br>"
     }
   })
+
 }
 
 /* ========= DUBBELKOLL ========= */
 
-function isBooked(skiId, start, end){
+function isBooked(skiId,start,end){
 
   for(let r of rentals){
 
     if(r.returned) continue
 
-    // krock i datum
     if(!(end < r.start || start > r.end)){
 
       let items=[]
@@ -105,7 +145,6 @@ function isBooked(skiId, start, end){
       if(items.includes(skiId)){
         return r
       }
-
     }
   }
 
@@ -116,58 +155,64 @@ function isBooked(skiId, start, end){
 
 async function saveBooking(){
 
-  const name=document.getElementById("customer").value
-  const phone=document.getElementById("phone").value
-  const start=document.getElementById("start").value
-  const end=document.getElementById("end").value
+  console.log("SPARAR...")
 
-  if(!name||!start||!end||cart.length===0){
-    alert("Fyll i alla fält")
-    return
-  }
+  try{
 
-  // 🔥 KOLLA DUBBELBOKNING
-  for(let skiId of cart){
+    const name=document.getElementById("customer").value
+    const phone=document.getElementById("phone").value
+    const start=document.getElementById("start").value
+    const end=document.getElementById("end").value
 
-    const conflict = isBooked(skiId, start, end)
-
-    if(conflict){
-
-      const ski = skis.find(s=>s.id===skiId)
-
-      alert(
-        "Redan bokad:\n" +
-        ski.length+" cm\n\n" +
-        conflict.start+" → "+conflict.end
-      )
-
+    if(!name||!start||!end||cart.length===0){
+      alert("Fyll i alla fält")
       return
     }
+
+    // dubbelbokning
+    for(let skiId of cart){
+
+      const conflict = isBooked(skiId,start,end)
+
+      if(conflict){
+        const ski = skis.find(s=>s.id===skiId)
+
+        alert(
+          "Redan bokad:\n"+
+          ski.length+" cm\n"+
+          conflict.start+" → "+conflict.end
+        )
+        return
+      }
+    }
+
+    const {error} = await supabaseClient.from("rentals").insert({
+      name,
+      phone,
+      start,
+      end,
+      items:JSON.stringify(cart),
+      returned:false
+    })
+
+    if(error){
+      alert(error.message)
+      return
+    }
+
+    alert("Bokning sparad")
+
+    cart=[]
+
+    await loadBookings()
+
+    renderAll()
+
+  }catch(e){
+    console.log("SAVE ERROR", e)
+    alert("Fel vid bokning")
   }
 
-  const {error}=await supabaseClient.from("rentals").insert({
-    name,
-    phone,
-    start,
-    end,
-    items:JSON.stringify(cart),
-    returned:false
-  })
-
-  if(error){
-    alert(error.message)
-    return
-  }
-
-  alert("Bokning sparad")
-
-  cart=[]
-  renderCart()
-
-  await loadBookings()
-
-  renderWeek()
-  renderRentals()
 }
 
 /* ========= KALENDER ========= */
@@ -176,6 +221,11 @@ function renderWeek(){
 
   const div=document.getElementById("calendar")
   if(!div) return
+
+  if(!skis.length){
+    div.innerHTML="Inga skidor"
+    return
+  }
 
   let base=getMonday(new Date())
   base.setDate(base.getDate()+weekOffset*7)
@@ -265,15 +315,26 @@ async function returnBooking(id){
 
   if(!confirm("Markera som återlämnad?")) return
 
-  await supabaseClient
-    .from("rentals")
-    .update({returned:true})
-    .eq("id",id)
+  try{
 
-  await loadBookings()
+    const {error} = await supabaseClient
+      .from("rentals")
+      .update({returned:true})
+      .eq("id",id)
 
-  renderWeek()
-  renderRentals()
+    if(error){
+      alert(error.message)
+      return
+    }
+
+    await loadBookings()
+
+    renderAll()
+
+  }catch(e){
+    console.log("RETURN ERROR", e)
+  }
+
 }
 
 /* ========= NAV ========= */
