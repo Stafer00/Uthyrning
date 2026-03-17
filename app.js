@@ -26,6 +26,9 @@ async function init(){
 
 console.log("APP STARTAR")
 
+// 🔥 koppla knapp
+document.getElementById("saveBtn").onclick = saveBooking
+
 try{
 
 await loadSkis()
@@ -39,9 +42,8 @@ renderRentals()
 
 }catch(e){
 
-console.log("KRASH:", e)
-
-document.body.innerHTML += "<p style='color:red'>Fel i app.js – öppna konsol</p>"
+alert("KRASH: " + e.message)
+console.log(e)
 
 }
 
@@ -55,10 +57,7 @@ console.log("Laddar skidor...")
 
 const {data,error}=await supabase.from("skis").select("*")
 
-if(error){
-console.log("SKIS ERROR:", error)
-throw error
-}
+if(error) throw error
 
 skis=data||[]
 
@@ -72,10 +71,7 @@ console.log("Laddar bokningar...")
 
 const {data,error}=await supabase.from("rentals").select("*")
 
-if(error){
-console.log("RENTALS ERROR:", error)
-throw error
-}
+if(error) throw error
 
 rentals=data||[]
 
@@ -99,7 +95,7 @@ btn.className="ski"
 btn.innerText=ski.length+" cm"
 
 btn.onclick=()=>{
-cart.push(ski.id)
+cart.push(Number(ski.id))
 renderCart()
 }
 
@@ -123,7 +119,7 @@ return
 let html=""
 
 cart.forEach(id=>{
-let ski=skis.find(s=>s.id===id)
+let ski=skis.find(s=>Number(s.id)===Number(id))
 if(ski){
 html+=ski.length+" cm<br>"
 }
@@ -225,7 +221,7 @@ if(day>=r.start && day<=r.end){
 let items=[]
 try{items=JSON.parse(r.items)}catch{}
 
-if(items.includes(ski.id)){
+if(items.includes(Number(ski.id))){
 found=r
 break
 }
@@ -250,19 +246,30 @@ html+="</table>"
 
 div.innerHTML=html
 
+// 🔥 klick på bokning
 document.querySelectorAll(".booked").forEach(el=>{
-el.addEventListener("click",()=>{
-showBooking(el.dataset.id)
-})
+el.onclick=()=>showBooking(el.dataset.id)
 })
 
+}
+
+/* ========= VECKA NAV ========= */
+
+function nextWeek(){
+weekOffset++
+renderWeek()
+}
+
+function prevWeek(){
+weekOffset--
+renderWeek()
 }
 
 /* ========= LISTA ========= */
 
 function renderRentals(){
 
-const div=document.getElementById("rentals")
+const div=document.getElementById("bookingList")
 if(!div) return
 
 div.innerHTML=""
@@ -281,7 +288,7 @@ let items=[]
 try{items=JSON.parse(r.items)}catch{}
 
 items.forEach(id=>{
-let ski=skis.find(s=>s.id===id)
+let ski=skis.find(s=>Number(s.id)===Number(id))
 if(ski){
 html+=ski.length+" cm<br>"
 }
