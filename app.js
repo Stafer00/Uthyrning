@@ -3,7 +3,7 @@ console.log("JS FIL LADDAD")
 /* ========= SUPABASE ========= */
 
 if(!window.supabase){
-alert("Supabase laddades inte – kontrollera script i index.html")
+alert("Supabase saknas")
 }
 
 const supabase = window.supabase.createClient(
@@ -20,21 +20,30 @@ let weekOffset=0
 
 /* ========= START ========= */
 
-document.addEventListener("DOMContentLoaded", init)
+window.onload = init
 
 async function init(){
 
-console.log("APP STARTAR")
-
-// 🔥 koppla knapp
-document.getElementById("saveBtn").onclick = saveBooking
+alert("APP STARTAR") // 🔥 debug
 
 try{
 
+// 🔥 koppla knapp
+const btn = document.getElementById("saveBtn")
+if(btn){
+btn.onclick = saveBooking
+}else{
+alert("Hittar inte saveBtn")
+}
+
+// 🔥 kontrollera viktiga element
+if(!document.getElementById("calendar")){
+alert("Saknar #calendar i HTML")
+}
+
+// 🔥 ladda data
 await loadSkis()
 await loadBookings()
-
-console.log("DATA LADDAD")
 
 renderWall()
 renderWeek()
@@ -53,8 +62,6 @@ console.log(e)
 
 async function loadSkis(){
 
-console.log("Laddar skidor...")
-
 const {data,error}=await supabase.from("skis").select("*")
 
 if(error) throw error
@@ -67,8 +74,6 @@ console.log("Skidor:", skis.length)
 
 async function loadBookings(){
 
-console.log("Laddar bokningar...")
-
 const {data,error}=await supabase.from("rentals").select("*")
 
 if(error) throw error
@@ -79,7 +84,7 @@ console.log("Bokningar:", rentals.length)
 
 }
 
-/* ========= SKI WALL ========= */
+/* ========= SKIDOR ========= */
 
 function renderWall(){
 
@@ -174,14 +179,10 @@ renderRentals()
 function renderWeek(){
 
 const div=document.getElementById("calendar")
-
-if(!div){
-console.log("Hittar inte #calendar")
-return
-}
+if(!div) return
 
 if(!skis.length){
-div.innerHTML="<p>Inga skidor laddade</p>"
+div.innerHTML="Inga skidor"
 return
 }
 
@@ -231,7 +232,7 @@ break
 }
 
 if(found){
-html+=`<td class="booked" data-id="${found.id}">X</td>`
+html+=`<td class="booked" onclick="showBooking(${found.id})">X</td>`
 }else{
 html+=`<td class="free">Ledig</td>`
 }
@@ -246,14 +247,9 @@ html+="</table>"
 
 div.innerHTML=html
 
-// 🔥 klick på bokning
-document.querySelectorAll(".booked").forEach(el=>{
-el.onclick=()=>showBooking(el.dataset.id)
-})
-
 }
 
-/* ========= VECKA NAV ========= */
+/* ========= VECKA ========= */
 
 function nextWeek(){
 weekOffset++
@@ -278,23 +274,10 @@ rentals.forEach(r=>{
 
 if(r.returned) return
 
-let html="<div class='card'>"
+let html="<div>"
 
-html+="<strong>"+r.name+"</strong><br>"
-html+=r.phone+"<br>"
+html+="<b>"+r.name+"</b><br>"
 html+=r.start+" - "+r.end+"<br>"
-
-let items=[]
-try{items=JSON.parse(r.items)}catch{}
-
-items.forEach(id=>{
-let ski=skis.find(s=>Number(s.id)===Number(id))
-if(ski){
-html+=ski.length+" cm<br>"
-}
-})
-
-html+="</div>"
 
 div.innerHTML+=html
 
@@ -309,11 +292,7 @@ function showBooking(id){
 let r=rentals.find(x=>x.id==id)
 if(!r) return
 
-alert(
-r.name+"\n"+
-r.phone+"\n"+
-r.start+" - "+r.end
-)
+alert(r.name + "\n" + r.start + " - " + r.end)
 
 }
 
