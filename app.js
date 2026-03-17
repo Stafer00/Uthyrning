@@ -1,8 +1,9 @@
 alert("APP JS LADDAS")
 
-const supabase = window.supabase.createClient(
+// ✅ RÄTT SUPABASE INIT
+const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 )
 
 let skis = []
@@ -30,31 +31,30 @@ async function init() {
 
   } catch (e) {
     console.log("KRASH:", e)
-    alert("JS KRASH - kolla console")
+    alert("JS KRASH – kolla console")
   }
-
 }
 
 /* ========= LOAD ========= */
 
 async function loadSkis() {
-  try {
-    const { data } = await supabase.from("skis").select("*")
-    skis = data || []
-    console.log("Skidor:", skis.length)
-  } catch (e) {
-    console.log("Fel loadSkis", e)
+  const { data, error } = await supabaseClient.from("skis").select("*")
+  if (error) {
+    console.log(error)
+    skis = []
+    return
   }
+  skis = data || []
 }
 
 async function loadBookings() {
-  try {
-    const { data } = await supabase.from("rentals").select("*")
-    rentals = data || []
-    console.log("Bokningar:", rentals.length)
-  } catch (e) {
-    console.log("Fel loadBookings", e)
+  const { data, error } = await supabaseClient.from("rentals").select("*")
+  if (error) {
+    console.log(error)
+    rentals = []
+    return
   }
+  rentals = data || []
 }
 
 /* ========= SKI WALL ========= */
@@ -66,7 +66,7 @@ function renderWall() {
   div.innerHTML = ""
 
   skis.forEach(ski => {
-    let el = document.createElement("div")
+    const el = document.createElement("div")
     el.innerText = ski.length + " cm"
 
     el.onclick = () => {
@@ -87,7 +87,7 @@ function renderCart() {
   div.innerHTML = ""
 
   cart.forEach(id => {
-    let ski = skis.find(s => s.id === id)
+    const ski = skis.find(s => s.id === id)
     if (ski) div.innerHTML += ski.length + " cm<br>"
   })
 }
@@ -96,16 +96,16 @@ function renderCart() {
 
 async function saveBooking() {
 
-  let name = document.getElementById("customer")?.value
-  let start = document.getElementById("start")?.value
-  let end = document.getElementById("end")?.value
+  const name = document.getElementById("customer").value
+  const start = document.getElementById("start").value
+  const end = document.getElementById("end").value
 
   if (!name || !start || !end || cart.length === 0) {
-    alert("Fyll i allt")
+    alert("Fyll i alla fält")
     return
   }
 
-  await supabase.from("rentals").insert({
+  const { error } = await supabaseClient.from("rentals").insert({
     name,
     start,
     end,
@@ -113,11 +113,15 @@ async function saveBooking() {
     returned: false
   })
 
+  if (error) {
+    alert(error.message)
+    return
+  }
+
   cart = []
   renderCart()
 
   await loadBookings()
-
   renderWeek()
   renderRentals()
 }
