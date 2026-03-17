@@ -14,8 +14,6 @@ window.onload = init
 
 async function init(){
 
-  console.log("INIT")
-
   const btn = document.getElementById("saveBtn")
   if(btn) btn.onclick = saveBooking
 
@@ -26,37 +24,20 @@ async function init(){
   renderCart()
   renderWeek()
   renderRentals()
-
 }
 
 /* ========= LOAD ========= */
 
 async function loadSkis(){
-
   const {data,error} = await supabaseClient.from("skis").select("*")
-
-  if(error){
-    console.log(error)
-    skis = []
-    return
-  }
-
+  if(error){ skis=[]; return }
   skis = data || []
-
 }
 
 async function loadBookings(){
-
   const {data,error} = await supabaseClient.from("rentals").select("*")
-
-  if(error){
-    console.log(error)
-    rentals = []
-    return
-  }
-
+  if(error){ rentals=[]; return }
   rentals = data || []
-
 }
 
 /* ========= SKIDOR ========= */
@@ -66,21 +47,21 @@ function renderWall(){
   const div = document.getElementById("skiWall")
   if(!div) return
 
-  div.innerHTML = ""
+  div.innerHTML=""
 
   skis.forEach(ski=>{
 
-    const el = document.createElement("div")
+    const el=document.createElement("div")
 
-    el.style.display = "inline-block"
-    el.style.padding = "10px"
-    el.style.margin = "5px"
-    el.style.border = "1px solid #ccc"
-    el.style.cursor = "pointer"
+    el.style.display="inline-block"
+    el.style.padding="10px"
+    el.style.margin="5px"
+    el.style.border="1px solid #ccc"
+    el.style.cursor="pointer"
 
-    el.innerText = ski.length + " cm"
+    el.innerText=ski.length+" cm"
 
-    el.onclick = ()=>{
+    el.onclick=()=>{
       cart.push(ski.id)
       renderCart()
     }
@@ -88,47 +69,88 @@ function renderWall(){
     div.appendChild(el)
 
   })
-
 }
 
-/* ========= KORG ========= */
+/* ========= CART ========= */
 
 function renderCart(){
 
-  const div = document.getElementById("cart")
+  const div=document.getElementById("cart")
   if(!div) return
 
-  div.innerHTML = "<strong>Valda skidor:</strong><br>"
+  div.innerHTML="<strong>Valda:</strong><br>"
 
   cart.forEach(id=>{
-    const ski = skis.find(s=>s.id===id)
+    const ski=skis.find(s=>s.id===id)
     if(ski){
-      div.innerHTML += ski.length + " cm<br>"
+      div.innerHTML+=ski.length+" cm<br>"
     }
   })
-
 }
 
-/* ========= SPARA ========= */
+/* ========= DUBBELKOLL ========= */
+
+function isBooked(skiId, start, end){
+
+  for(let r of rentals){
+
+    if(r.returned) continue
+
+    // krock i datum
+    if(!(end < r.start || start > r.end)){
+
+      let items=[]
+      try{ items=JSON.parse(r.items) }catch{}
+
+      if(items.includes(skiId)){
+        return r
+      }
+
+    }
+  }
+
+  return null
+}
+
+/* ========= SAVE ========= */
 
 async function saveBooking(){
 
-  const name = document.getElementById("customer").value
-  const phone = document.getElementById("phone").value
-  const start = document.getElementById("start").value
-  const end = document.getElementById("end").value
+  const name=document.getElementById("customer").value
+  const phone=document.getElementById("phone").value
+  const start=document.getElementById("start").value
+  const end=document.getElementById("end").value
 
-  if(!name || !start || !end || cart.length===0){
+  if(!name||!start||!end||cart.length===0){
     alert("Fyll i alla fält")
     return
   }
 
-  const {error} = await supabaseClient.from("rentals").insert({
+  // 🔥 KOLLA DUBBELBOKNING
+  for(let skiId of cart){
+
+    const conflict = isBooked(skiId, start, end)
+
+    if(conflict){
+
+      const ski = skis.find(s=>s.id===skiId)
+
+      alert(
+        "Redan bokad:\n" +
+        ski.length+" cm\n\n" +
+        conflict.start+" → "+conflict.end
+      )
+
+      return
+    }
+  }
+
+  const {error}=await supabaseClient.from("rentals").insert({
     name,
     phone,
     start,
     end,
-    items: JSON.stringify(cart),
+    items:JSON.stringify(cart),
     returned:false
   })
 
@@ -139,166 +161,119 @@ async function saveBooking(){
 
   alert("Bokning sparad")
 
-  cart = []
+  cart=[]
   renderCart()
 
   await loadBookings()
 
   renderWeek()
   renderRentals()
-
 }
 
 /* ========= KALENDER ========= */
 
 function renderWeek(){
 
-  const div = document.getElementById("calendar")
+  const div=document.getElementById("calendar")
   if(!div) return
 
-  if(!skis.length){
-    div.innerHTML = "Inga skidor"
-    return
-  }
+  let base=getMonday(new Date())
+  base.setDate(base.getDate()+weekOffset*7)
 
-  let base = getMonday(new Date())
-  base.setDate(base.getDate() + weekOffset * 7)
-
-  let dates = []
-
+  let dates=[]
   for(let i=0;i<7;i++){
-    let d = new Date(base)
+    let d=new Date(base)
     d.setDate(base.getDate()+i)
     dates.push(format(d))
   }
 
-  let html = "<table style='width:100%; border-collapse:collapse'>"
-
-  html += "<tr><th>Skida</th>"
+  let html="<table style='width:100%'><tr><th>Skida</th>"
 
   dates.forEach(d=>{
-    html += "<th>" + d.substring(5) + "</th>"
+    html+="<th>"+d.substring(5)+"</th>"
   })
 
-  html += "</tr>"
+  html+="</tr>"
 
   skis.forEach(ski=>{
 
-    html += "<tr><td>"+ski.length+" cm</td>"
+    html+="<tr><td>"+ski.length+" cm</td>"
 
     dates.forEach(day=>{
 
-      let booked = false
-      let booking = null
+      let booked=false
 
       rentals.forEach(r=>{
-
         if(r.returned) return
 
-        if(day >= r.start && day <= r.end){
+        if(day>=r.start && day<=r.end){
 
-          let items = []
-          try{ items = JSON.parse(r.items) }catch{}
+          let items=[]
+          try{items=JSON.parse(r.items)}catch{}
 
           if(items.includes(ski.id)){
-            booked = true
-            booking = r
+            booked=true
           }
-
         }
-
       })
 
-      if(booked){
-
-        html += `<td style="background:#f44336;color:white;cursor:pointer"
-          onclick="showBooking('${booking.id}')">X</td>`
-
-      }else{
-
-        html += `<td style="background:#4caf50;color:white">Ledig</td>`
-
-      }
+      html+= booked
+        ? "<td style='background:#f44336;color:white'>X</td>"
+        : "<td style='background:#4caf50;color:white'>Ledig</td>"
 
     })
 
-    html += "</tr>"
-
+    html+="</tr>"
   })
 
-  html += "</table>"
+  html+="</table>"
 
-  div.innerHTML = html
-
+  div.innerHTML=html
 }
 
 /* ========= LISTA ========= */
 
 function renderRentals(){
 
-  const div = document.getElementById("rentals")
+  const div=document.getElementById("rentals")
   if(!div) return
 
-  div.innerHTML = "<h3>Aktiva bokningar</h3>"
+  div.innerHTML="<h3>Aktiva bokningar</h3>"
 
   rentals.forEach(r=>{
 
     if(r.returned) return
 
-    div.innerHTML += `
+    div.innerHTML+=`
     <div style="border:1px solid #ccc;padding:10px;margin:5px">
       <strong>${r.name}</strong><br>
       ${r.phone}<br>
       ${r.start} → ${r.end}<br><br>
 
       <button onclick="returnBooking('${r.id}')"
-        style="background:#2196f3;color:white;padding:8px;border:none;border-radius:6px">
-        Returnerad
+      style="background:#2196f3;color:white;padding:8px;border:none;border-radius:6px">
+      Returnerad
       </button>
     </div>
     `
-
   })
-
 }
 
-/* ========= RETURNERA ========= */
+/* ========= RETURN ========= */
 
 async function returnBooking(id){
 
-  const ok = confirm("Markera som återlämnad?")
-  if(!ok) return
+  if(!confirm("Markera som återlämnad?")) return
 
-  const {error} = await supabaseClient
+  await supabaseClient
     .from("rentals")
     .update({returned:true})
-    .eq("id", id)
-
-  if(error){
-    alert(error.message)
-    return
-  }
+    .eq("id",id)
 
   await loadBookings()
 
   renderWeek()
   renderRentals()
-
-}
-
-/* ========= POPUP ========= */
-
-function showBooking(id){
-
-  const r = rentals.find(x=>x.id==id)
-  if(!r) return
-
-  alert(
-    "Namn: " + r.name + "\n" +
-    "Telefon: " + (r.phone||"") + "\n" +
-    "Datum: " + r.start + " → " + r.end
-  )
-
 }
 
 /* ========= NAV ========= */
@@ -320,8 +295,8 @@ function format(d){
 }
 
 function getMonday(d){
-  d = new Date(d)
-  let day = d.getDay()
-  let diff = d.getDate() - (day==0?6:day-1)
+  d=new Date(d)
+  let day=d.getDay()
+  let diff=d.getDate()-(day==0?6:day-1)
   return new Date(d.setDate(diff))
 }
