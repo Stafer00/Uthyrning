@@ -1,3 +1,4 @@
+alert("APP JS LADDAS")
 console.log("APP STARTAR")
 
 /* ========= SUPABASE ========= */
