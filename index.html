@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="sv">
-
 <head>
 
 <meta charset="UTF-8">
@@ -8,24 +7,10 @@
 
 <title>Skiduthyrning</title>
 
-<!-- STOPPA CACHE -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
 
-<!-- PWA -->
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#2d6cdf">
+<link rel="stylesheet" href="style.css?v=5">
 
-<!-- iPad -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Skidor">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-
-<!-- CSS -->
-<link rel="stylesheet" href="style.css?v=6">
-
-<!-- Supabase -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 </head>
@@ -33,10 +18,6 @@
 <body>
 
 <h1>Skiduthyrning</h1>
-
-<!-- ========================= -->
-<!-- NY BOKNING -->
-<!-- ========================= -->
 
 <h2>Ny bokning</h2>
 
@@ -55,46 +36,15 @@
 <h3>Valda skidor</h3>
 <div id="cart"></div>
 
-<button id="saveBtn">Spara bokning</button>
-
-<!-- ========================= -->
-<!-- 📅 KALENDER (NY) -->
-<!-- ========================= -->
+<button onclick="saveBooking()">Spara bokning</button>
 
 <h2>Kalender</h2>
+<div id="calendar"></div>
+
+<h2>Aktiva bokningar</h2>
 <div id="rentals"></div>
 
-<!-- ========================= -->
-<!-- SCRIPT -->
-<!-- ========================= -->
+<script src="app.js?v=5"></script>
 
-<script>
-fetch("app.js?v=" + Date.now())
-.then(r => r.text())
-.then(code => {
-    console.log("Laddar app.js")
-    eval(code)
-})
-.catch(err => {
-    alert("Fel att ladda app.js: " + err)
-})
-</script>
-
-<!-- SERVICE WORKER -->
-<script>
-if ("serviceWorker" in navigator) {
-
-navigator.serviceWorker.register("sw.js")
-.then(reg => {
-
-console.log("SW registrerad")
-
-// 🔥 AUTO UPDATE
-setInterval(() => {
-  reg.update()
-  console.log("Kollar ny version...")
-}, 5000)
-
-})
-}
-</script>
+</body>
+</html>
