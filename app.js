@@ -1,9 +1,8 @@
 alert("APP JS LADDAS")
 
-// ✅ RÄTT SUPABASE INIT
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
 )
 
 let skis = []
@@ -25,6 +24,8 @@ async function init() {
     await loadSkis()
     await loadBookings()
 
+    console.log("SKIS DATA:", skis)
+
     renderWall()
     renderWeek()
     renderRentals()
@@ -38,23 +39,39 @@ async function init() {
 /* ========= LOAD ========= */
 
 async function loadSkis() {
-  const { data, error } = await supabaseClient.from("skis").select("*")
-  if (error) {
-    console.log(error)
+  try {
+    const { data, error } = await supabaseClient.from("skis").select("*")
+
+    if (error) {
+      console.log("SKIS ERROR:", error)
+      skis = []
+      return
+    }
+
+    skis = data || []
+
+  } catch (e) {
+    console.log("LOAD SKIS CRASH:", e)
     skis = []
-    return
   }
-  skis = data || []
 }
 
 async function loadBookings() {
-  const { data, error } = await supabaseClient.from("rentals").select("*")
-  if (error) {
-    console.log(error)
+  try {
+    const { data, error } = await supabaseClient.from("rentals").select("*")
+
+    if (error) {
+      console.log("RENTALS ERROR:", error)
+      rentals = []
+      return
+    }
+
+    rentals = data || []
+
+  } catch (e) {
+    console.log("LOAD BOOKINGS CRASH:", e)
     rentals = []
-    return
   }
-  rentals = data || []
 }
 
 /* ========= SKI WALL ========= */
@@ -67,6 +84,11 @@ function renderWall() {
 
   skis.forEach(ski => {
     const el = document.createElement("div")
+    el.style.padding = "10px"
+    el.style.border = "1px solid #ccc"
+    el.style.margin = "5px"
+    el.style.cursor = "pointer"
+
     el.innerText = ski.length + " cm"
 
     el.onclick = () => {
@@ -134,14 +156,17 @@ function renderWeek() {
   if (!div) return
 
   if (!skis.length) {
-    div.innerHTML = "Inga skidor"
+    div.innerHTML = "<p>❌ Inga skidor laddade</p>"
     return
   }
 
-  let html = "<table border='1'>"
+  let html = "<table border='1' style='margin-top:10px'>"
 
   skis.forEach(ski => {
-    html += "<tr><td>" + ski.length + "</td><td>OK</td></tr>"
+    html += `<tr>
+      <td>${ski.length} cm</td>
+      <td style="color:green">Ledig</td>
+    </tr>`
   })
 
   html += "</table>"
