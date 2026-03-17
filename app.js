@@ -14,9 +14,7 @@ window.onload = init
 
 async function init(){
 
-  console.log("INIT START")
-
-  try {
+  try{
 
     const btn = document.getElementById("saveBtn")
     if(btn) btn.onclick = saveBooking
@@ -26,50 +24,21 @@ async function init(){
 
     renderAll()
 
-  } catch(e){
+  }catch(e){
     console.log("INIT ERROR", e)
   }
-
 }
 
 /* ========= LOAD ========= */
 
 async function loadSkis(){
-
-  try{
-    const {data,error} = await supabaseClient.from("skis").select("*")
-
-    if(error){
-      console.log("SKIS ERROR", error)
-      skis=[]
-      return
-    }
-
-    skis = data || []
-
-  }catch(e){
-    console.log("LOAD SKIS CRASH", e)
-  }
-
+  const {data,error} = await supabaseClient.from("skis").select("*")
+  if(!error && data) skis = data
 }
 
 async function loadBookings(){
-
-  try{
-    const {data,error} = await supabaseClient.from("rentals").select("*")
-
-    if(error){
-      console.log("RENTALS ERROR", error)
-      rentals=[]
-      return
-    }
-
-    rentals = data || []
-
-  }catch(e){
-    console.log("LOAD BOOKINGS CRASH", e)
-  }
-
+  const {data,error} = await supabaseClient.from("rentals").select("*")
+  if(!error && data) rentals = data
 }
 
 /* ========= RENDER ========= */
@@ -108,9 +77,7 @@ function renderWall(){
     }
 
     div.appendChild(el)
-
   })
-
 }
 
 /* ========= CART ========= */
@@ -120,15 +87,53 @@ function renderCart(){
   const div = document.getElementById("cart")
   if(!div) return
 
-  div.innerHTML = "<strong>Valda:</strong><br>"
+  if(cart.length === 0){
+    div.innerHTML = "<strong>Valda:</strong><br>Inga skidor"
+    return
+  }
 
-  cart.forEach(id=>{
+  let html = "<strong>Valda:</strong><br>"
+
+  cart.forEach((id,index)=>{
     const ski = skis.find(s=>s.id===id)
+
     if(ski){
-      div.innerHTML += ski.length+" cm<br>"
+      html += `
+      <div>
+        ${ski.length} cm
+        <button onclick="removeFromCart(${index})"
+          style="margin-left:10px;background:#f44336;color:white;border:none">
+          X
+        </button>
+      </div>
+      `
     }
   })
 
+  html += `
+    <br>
+    <button onclick="undoLast()">Ångra senaste</button>
+    <button onclick="clearCart()">Rensa alla</button>
+  `
+
+  div.innerHTML = html
+}
+
+function removeFromCart(index){
+  cart.splice(index,1)
+  renderCart()
+}
+
+function clearCart(){
+  if(confirm("Rensa alla?")){
+    cart=[]
+    renderCart()
+  }
+}
+
+function undoLast(){
+  cart.pop()
+  renderCart()
 }
 
 /* ========= DUBBELKOLL ========= */
@@ -157,64 +162,53 @@ function isBooked(skiId,start,end){
 
 async function saveBooking(){
 
-  console.log("SPARAR...")
+  const name=document.getElementById("customer").value
+  const phone=document.getElementById("phone").value
+  const start=document.getElementById("start").value
+  const end=document.getElementById("end").value
 
-  try{
-
-    const name=document.getElementById("customer").value
-    const phone=document.getElementById("phone").value
-    const start=document.getElementById("start").value
-    const end=document.getElementById("end").value
-
-    if(!name||!start||!end||cart.length===0){
-      alert("Fyll i alla fält")
-      return
-    }
-
-    // dubbelbokning
-    for(let skiId of cart){
-
-      const conflict = isBooked(skiId,start,end)
-
-      if(conflict){
-        const ski = skis.find(s=>s.id===skiId)
-
-        alert(
-          "Redan bokad:\n"+
-          ski.length+" cm\n"+
-          conflict.start+" → "+conflict.end
-        )
-        return
-      }
-    }
-
-    const {error} = await supabaseClient.from("rentals").insert({
-      name,
-      phone,
-      start,
-      end,
-      items:JSON.stringify(cart),
-      returned:false
-    })
-
-    if(error){
-      alert(error.message)
-      return
-    }
-
-    alert("Bokning sparad")
-
-    cart=[]
-
-    await loadBookings()
-
-    renderAll()
-
-  }catch(e){
-    console.log("SAVE ERROR", e)
-    alert("Fel vid bokning")
+  if(!name||!start||!end||cart.length===0){
+    alert("Fyll i alla fält")
+    return
   }
 
+  for(let skiId of cart){
+
+    const conflict = isBooked(skiId,start,end)
+
+    if(conflict){
+      const ski = skis.find(s=>s.id===skiId)
+
+      alert(
+        "Redan bokad:\n"+
+        ski.length+" cm\n"+
+        conflict.start+" → "+conflict.end
+      )
+      return
+    }
+  }
+
+  const {error} = await supabaseClient.from("rentals").insert({
+    name,
+    phone,
+    start,
+    end,
+    items:JSON.stringify(cart),
+    returned:false
+  })
+
+  if(error){
+    alert(error.message)
+    return
+  }
+
+  alert("Bokning sparad")
+
+  cart=[]
+
+  await loadBookings()
+
+  renderAll()
 }
 
 /* ========= KALENDER ========= */
@@ -278,9 +272,7 @@ function renderWeek(){
               bookedCount++
             }
           })
-
         }
-
       })
 
       let free = total - bookedCount
@@ -320,9 +312,8 @@ function renderRentals(){
       ${r.phone}<br>
       ${r.start} → ${r.end}<br><br>
 
-      <button onclick="returnBooking('${r.id}')"
-      style="background:#2196f3;color:white;padding:8px;border:none;border-radius:6px">
-      Returnerad
+      <button onclick="returnBooking('${r.id}')">
+        Returnerad
       </button>
     </div>
     `
@@ -335,26 +326,14 @@ async function returnBooking(id){
 
   if(!confirm("Markera som återlämnad?")) return
 
-  try{
+  await supabaseClient
+    .from("rentals")
+    .update({returned:true})
+    .eq("id",id)
 
-    const {error} = await supabaseClient
-      .from("rentals")
-      .update({returned:true})
-      .eq("id",id)
+  await loadBookings()
 
-    if(error){
-      alert(error.message)
-      return
-    }
-
-    await loadBookings()
-
-    renderAll()
-
-  }catch(e){
-    console.log("RETURN ERROR", e)
-  }
-
+  renderAll()
 }
 
 /* ========= NAV ========= */
