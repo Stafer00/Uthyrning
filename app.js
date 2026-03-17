@@ -1,4 +1,4 @@
-alert("APP JS LADDAS")
+alert("APP STARTAR")
 
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
@@ -14,15 +14,13 @@ window.onload = init
 
 async function init(){
 
-  console.log("INIT START")
+  console.log("INIT")
 
   const btn = document.getElementById("saveBtn")
   if(btn) btn.onclick = saveBooking
 
   await loadSkis()
   await loadBookings()
-
-  console.log("SKIS:", skis)
 
   renderWall()
   renderCart()
@@ -38,7 +36,7 @@ async function loadSkis(){
   const {data,error} = await supabaseClient.from("skis").select("*")
 
   if(error){
-    console.log("SKIS ERROR", error)
+    console.log(error)
     skis = []
     return
   }
@@ -52,7 +50,7 @@ async function loadBookings(){
   const {data,error} = await supabaseClient.from("rentals").select("*")
 
   if(error){
-    console.log("RENTALS ERROR", error)
+    console.log(error)
     rentals = []
     return
   }
@@ -61,7 +59,7 @@ async function loadBookings(){
 
 }
 
-/* ========= SKI WALL ========= */
+/* ========= SKIDOR ========= */
 
 function renderWall(){
 
@@ -74,10 +72,10 @@ function renderWall(){
 
     const el = document.createElement("div")
 
+    el.style.display = "inline-block"
     el.style.padding = "10px"
     el.style.margin = "5px"
     el.style.border = "1px solid #ccc"
-    el.style.display = "inline-block"
     el.style.cursor = "pointer"
 
     el.innerText = ski.length + " cm"
@@ -93,14 +91,14 @@ function renderWall(){
 
 }
 
-/* ========= CART ========= */
+/* ========= KORG ========= */
 
 function renderCart(){
 
   const div = document.getElementById("cart")
   if(!div) return
 
-  div.innerHTML = "<strong>Valda:</strong><br>"
+  div.innerHTML = "<strong>Valda skidor:</strong><br>"
 
   cart.forEach(id=>{
     const ski = skis.find(s=>s.id===id)
@@ -111,7 +109,7 @@ function renderCart(){
 
 }
 
-/* ========= SAVE ========= */
+/* ========= SPARA ========= */
 
 async function saveBooking(){
 
@@ -251,11 +249,40 @@ function renderRentals(){
     <div style="border:1px solid #ccc;padding:10px;margin:5px">
       <strong>${r.name}</strong><br>
       ${r.phone}<br>
-      ${r.start} → ${r.end}
+      ${r.start} → ${r.end}<br><br>
+
+      <button onclick="returnBooking('${r.id}')"
+        style="background:#2196f3;color:white;padding:8px;border:none;border-radius:6px">
+        Returnerad
+      </button>
     </div>
     `
 
   })
+
+}
+
+/* ========= RETURNERA ========= */
+
+async function returnBooking(id){
+
+  const ok = confirm("Markera som återlämnad?")
+  if(!ok) return
+
+  const {error} = await supabaseClient
+    .from("rentals")
+    .update({returned:true})
+    .eq("id", id)
+
+  if(error){
+    alert(error.message)
+    return
+  }
+
+  await loadBookings()
+
+  renderWeek()
+  renderRentals()
 
 }
 
@@ -268,7 +295,7 @@ function showBooking(id){
 
   alert(
     "Namn: " + r.name + "\n" +
-    "Telefon: " + (r.phone || "") + "\n" +
+    "Telefon: " + (r.phone||"") + "\n" +
     "Datum: " + r.start + " → " + r.end
   )
 
