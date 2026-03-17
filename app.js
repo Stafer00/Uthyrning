@@ -303,3 +303,5 @@ renderWeek()
 renderWall()
 
 }
+window.showBooking = showBooking
+window.returnBooking = returnBooking
