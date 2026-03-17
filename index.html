@@ -1,12 +1,20 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <title>Skiduthyrning</title>
+
+<!-- stoppa cache -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<link rel="stylesheet" href="style.css?v=9000">
+
+<link rel="stylesheet" href="style.css?v=2">
+
+<!-- Supabase -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
 </head>
 
 <body>
@@ -14,6 +22,7 @@
 <h1>Skiduthyrning</h1>
 
 <h2>Ny bokning</h2>
+
 <input id="customer" placeholder="Namn">
 <input id="phone" placeholder="Telefon">
 
@@ -32,15 +41,19 @@
 <button id="saveBtn">Spara bokning</button>
 
 <h2>Kalender</h2>
+
+<div>
 <button onclick="prevWeek()">←</button>
 <button onclick="nextWeek()">→</button>
+</div>
 
 <div id="calendar"></div>
 
 <h2>Aktiva bokningar</h2>
 <div id="rentals"></div>
 
-<script src="./app.js?v=99999"></script>
+<!-- VIKTIGT: sist -->
+<script src="app.js?v=2"></script>
 
 </body>
 </html>
