@@ -1,45 +1,53 @@
 function renderWeek(){
 
-const div=document.getElementById("rentals")
-div.innerHTML=""
+const div = document.getElementById("rentals")
+div.innerHTML = ""
 
-let base=getMonday(new Date())
-base.setDate(base.getDate()+weekOffset*7)
+let base = getMonday(new Date())
+base.setDate(base.getDate() + weekOffset*7)
 
-let dates=[]
+let dates = []
+
 for(let i=0;i<7;i++){
-let d=new Date(base)
+let d = new Date(base)
 d.setDate(base.getDate()+i)
 dates.push(format(d))
 }
 
-let html="<h3>Vecka "+getWeekNumber(base)+"</h3>"
-
-html+="<table><tr><th>Skida</th>"
+let html = "<h3>Vecka "+getWeekNumber(base)+"</h3>"
+html += "<table><tr><th>Skida</th>"
 
 dates.forEach(d=>{
-html+="<th>"+d.substring(5)+"</th>"
+html += "<th>"+d.substring(5)+"</th>"
 })
 
-html+="</tr>"
+html += "</tr>"
 
 skis.forEach(ski=>{
 
-html+="<tr><td>"+ski.length+" cm</td>"
+html += "<tr><td>"+ski.length+" cm</td>"
 
 dates.forEach(day=>{
 
-let found=null
+let found = null
 
 for(let r of rentals){
 
-if(day>=r.start && day<=r.end){
+if(r.returned) continue
 
-let items=[]
-try{items=JSON.parse(r.items)}catch{}
+if(day >= r.start && day <= r.end){
+
+let items = []
+
+try{
+items = JSON.parse(r.items)
+}catch(e){
+items = []
+}
 
 if(items.includes(ski.id)){
-found=r
+found = r
+break
 }
 
 }
@@ -48,22 +56,30 @@ found=r
 
 if(found){
 
-html+=`<td class="booked" onclick="showBooking('${found.id}')">X</td>`
+html += `<td class="booked" data-id="${found.id}">X</td>`
 
 }else{
 
-html+=`<td class="free">Ledig</td>`
+html += `<td class="free">Ledig</td>`
 
 }
 
 })
 
-html+="</tr>"
+html += "</tr>"
 
 })
 
-html+="</table>"
+html += "</table>"
 
-div.innerHTML=html
+div.innerHTML = html
+
+// 🔥 EVENT LISTENERS (säkrare än onclick)
+document.querySelectorAll(".booked").forEach(el=>{
+el.addEventListener("click", function(){
+const id = this.getAttribute("data-id")
+showBooking(id)
+})
+})
 
 }
