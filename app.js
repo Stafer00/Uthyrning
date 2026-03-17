@@ -41,10 +41,11 @@ async function loadSkis(){
 
     if(error){
       console.log("SKIS ERROR", error)
+      skis=[]
       return
     }
 
-    if(data) skis = data
+    skis = data || []
 
   }catch(e){
     console.log("LOAD SKIS CRASH", e)
@@ -59,10 +60,11 @@ async function loadBookings(){
 
     if(error){
       console.log("RENTALS ERROR", error)
+      rentals=[]
       return
     }
 
-    if(data) rentals = data
+    rentals = data || []
 
   }catch(e){
     console.log("LOAD BOOKINGS CRASH", e)
@@ -137,10 +139,10 @@ function isBooked(skiId,start,end){
 
     if(r.returned) continue
 
-    if(!(end < r.start || start > r.end)){
+    if(!(new Date(end) < new Date(r.start) || new Date(start) > new Date(r.end))){
 
       let items=[]
-      try{ items=JSON.parse(r.items) }catch{}
+      try{ items=JSON.parse(r.items || "[]") }catch{}
 
       if(items.includes(skiId)){
         return r
@@ -237,7 +239,7 @@ function renderWeek(){
     dates.push(format(d))
   }
 
-  let html="<table style='width:100%'><tr><th>Skida</th>"
+  let html="<table style='width:100%'><tr><th>Längd</th>"
 
   dates.forEach(d=>{
     html+="<th>"+d.substring(5)+"</th>"
@@ -245,31 +247,49 @@ function renderWeek(){
 
   html+="</tr>"
 
-  skis.forEach(ski=>{
+  let groups={}
 
-    html+="<tr><td>"+ski.length+" cm</td>"
+  skis.forEach(s=>{
+    if(!groups[s.length]) groups[s.length]=[]
+    groups[s.length].push(s)
+  })
+
+  Object.keys(groups).forEach(length=>{
+
+    html+="<tr><td><strong>"+length+" cm</strong></td>"
 
     dates.forEach(day=>{
 
-      let booked=false
+      let total = groups[length].length
+      let bookedCount = 0
 
       rentals.forEach(r=>{
+
         if(r.returned) return
 
-        if(day>=r.start && day<=r.end){
+        if(new Date(day) >= new Date(r.start) && new Date(day) <= new Date(r.end)){
 
           let items=[]
-          try{items=JSON.parse(r.items)}catch{}
+          try{items=JSON.parse(r.items || "[]")}catch{}
 
-          if(items.includes(ski.id)){
-            booked=true
-          }
+          items.forEach(id=>{
+            let ski = skis.find(s=>s.id===id)
+            if(ski && ski.length == length){
+              bookedCount++
+            }
+          })
+
         }
+
       })
 
-      html+= booked
-        ? "<td style='background:#f44336;color:white'>X</td>"
-        : "<td style='background:#4caf50;color:white'>Ledig</td>"
+      let free = total - bookedCount
+
+      if(free <= 0){
+        html += `<td style="background:#f44336;color:white">FULLT</td>`
+      }else{
+        html += `<td style="background:#4caf50;color:white">${free} kvar</td>`
+      }
 
     })
 
