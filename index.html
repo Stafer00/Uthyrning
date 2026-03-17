@@ -9,10 +9,10 @@
 
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 
-<link rel="stylesheet" href="style.css?v=3">
+<link rel="stylesheet" href="style.css?v=5">
 
-<!-- ✅ FIXAD SUPABASE -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<!-- ✅ FUNGERANDE SUPABASE -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 </head>
 
@@ -20,24 +20,40 @@
 
 <h1>Skiduthyrning</h1>
 
+<h2>Ny bokning</h2>
+
 <input id="customer" placeholder="Namn">
 <input id="phone" placeholder="Telefon">
 
+<label>Start</label>
 <input type="date" id="start">
+
+<label>Slut</label>
 <input type="date" id="end">
 
+<h2>Skidor</h2>
 <div id="skiWall"></div>
+
+<h3>Valda skidor</h3>
 <div id="cart"></div>
 
-<button id="saveBtn">Spara</button>
+<button id="saveBtn">Spara bokning</button>
+
+<h2>Kalender</h2>
+
+<button onclick="prevWeek()">←</button>
+<button onclick="nextWeek()">→</button>
 
 <div id="calendar"></div>
+
+<h2>Aktiva bokningar</h2>
 <div id="rentals"></div>
 
 <script>
 alert("INDEX HTML FUNKAR")
 </script>
 
+<!-- ✅ VIKTIGT -->
 <script src="/app.js?v=9999"></script>
 
 </body>
