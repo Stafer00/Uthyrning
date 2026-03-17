@@ -14,53 +14,113 @@ document.addEventListener("DOMContentLoaded", init)
 
 async function init(){
 
-document.getElementById("saveBtn").onclick = saveBooking
+console.log("INIT START")
 
-await loadSkis()
-await loadBookings()
+const btn = document.getElementById("saveBtn")
+if(btn) btn.onclick = saveBooking
 
+// visa direkt så sidan inte känns död
+setHTML("skiWall","Laddar skidor...")
+setHTML("calendar","Laddar kalender...")
+
+try{
+
+// timeout-skydd (5 sek)
+const timeout = new Promise((_, reject) =>
+  setTimeout(() => reject("Timeout"), 5000)
+)
+
+await Promise.race([
+  Promise.all([loadSkis(), loadBookings()]),
+  timeout
+])
+
+console.log("DATA LADDAD")
+
+}catch(e){
+
+console.log("SUPABASE FEL:", e)
+
+// fallback – appen fungerar ändå
+skis = [
+{id:1,length:100},
+{id:2,length:120},
+{id:3,length:140},
+{id:4,length:160}
+]
+
+rentals = []
+
+}
+
+// rendera alltid
 renderWall()
 renderWeek()
 renderRentals()
 
 }
 
-/* LOAD */
+/* ========= LOAD ========= */
 
 async function loadSkis(){
-const {data}=await supabase.from("skis").select("*")
+
+const {data,error}=await supabase.from("skis").select("*")
+
+if(error){
+console.log("SKIS ERROR:", error)
+throw error
+}
+
 skis=data||[]
+
 }
 
 async function loadBookings(){
-const {data}=await supabase.from("rentals").select("*")
-rentals=data||[]
+
+const {data,error}=await supabase.from("rentals").select("*")
+
+if(error){
+console.log("RENTALS ERROR:", error)
+throw error
 }
 
-/* SKIDOR */
+rentals=data||[]
+
+}
+
+/* ========= SKI WALL ========= */
 
 function renderWall(){
+
 const div=document.getElementById("skiWall")
+if(!div) return
+
 div.innerHTML=""
 
 skis.forEach(ski=>{
-let el=document.createElement("div")
-el.className="ski"
-el.innerText=ski.length+" cm"
 
-el.onclick=()=>{
+let btn=document.createElement("div")
+btn.className="ski"
+btn.innerText=ski.length+" cm"
+
+btn.onclick=()=>{
 cart.push(ski.id)
 renderCart()
 }
 
-div.appendChild(el)
+div.appendChild(btn)
+
 })
+
 }
 
-/* CART */
+/* ========= CART ========= */
 
 function renderCart(){
+
 const div=document.getElementById("cart")
+if(!div) return
+
 div.innerHTML=""
 
 cart.forEach(id=>{
@@ -69,23 +129,24 @@ if(ski){
 div.innerHTML+=ski.length+" cm<br>"
 }
 })
+
 }
 
-/* SAVE */
+/* ========= SAVE ========= */
 
 async function saveBooking(){
 
-let name=document.getElementById("customer").value
-let phone=document.getElementById("phone").value
-let start=document.getElementById("start").value
-let end=document.getElementById("end").value
+let name=document.getElementById("customer")?.value
+let phone=document.getElementById("phone")?.value
+let start=document.getElementById("start")?.value
+let end=document.getElementById("end")?.value
 
 if(!name||!start||!end||cart.length===0){
-alert("Fyll i allt")
+alert("Fyll i alla fält")
 return
 }
 
-await supabase.from("rentals").insert({
+const {error}=await supabase.from("rentals").insert({
 name,
 phone,
 start,
@@ -93,6 +154,13 @@ end,
 items:JSON.stringify(cart),
 returned:false
 })
+
+if(error){
+alert("Fel: "+error.message)
+return
+}
+
+alert("Bokning sparad")
 
 cart=[]
 renderCart()
@@ -104,11 +172,17 @@ renderRentals()
 
 }
 
-/* KALENDER */
+/* ========= KALENDER ========= */
 
 function renderWeek(){
 
 const div=document.getElementById("calendar")
+if(!div) return
+
+if(!skis.length){
+div.innerHTML="Inga skidor"
+return
+}
 
 let base=getMonday(new Date())
 base.setDate(base.getDate()+weekOffset*7)
@@ -137,12 +211,20 @@ dates.forEach(day=>{
 let booked=false
 
 rentals.forEach(r=>{
+
+if(r.returned) return
+
 if(day>=r.start && day<=r.end){
-let items=JSON.parse(r.items||"[]")
+
+let items=[]
+try{items=JSON.parse(r.items)}catch{}
+
 if(items.includes(ski.id)){
 booked=true
 }
+
 }
+
 })
 
 html+= booked
@@ -161,25 +243,32 @@ div.innerHTML=html
 
 }
 
-/* LISTA */
+/* ========= LISTA ========= */
 
 function renderRentals(){
 
-const div=document.getElementById("rentals")
+const div=document.getElementById("bookingList")
+if(!div) return
+
 div.innerHTML=""
 
 rentals.forEach(r=>{
+
+if(r.returned) return
+
 div.innerHTML+=`
-<div>
+<div class="card">
 <strong>${r.name}</strong><br>
+${r.phone}<br>
 ${r.start} - ${r.end}
-</div><br>
+</div>
 `
+
 })
 
 }
 
-/* NAV */
+/* ========= NAV ========= */
 
 function prevWeek(){
 weekOffset--
@@ -191,7 +280,7 @@ weekOffset++
 renderWeek()
 }
 
-/* DATUM */
+/* ========= HELPERS ========= */
 
 function format(d){
 return d.toISOString().split("T")[0]
@@ -202,4 +291,9 @@ d=new Date(d)
 let day=d.getDay()
 let diff=d.getDate()-(day==0?6:day-1)
 return new Date(d.setDate(diff))
+}
+
+function setHTML(id,text){
+let el=document.getElementById(id)
+if(el) el.innerHTML=text
 }
