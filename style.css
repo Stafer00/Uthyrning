@@ -5,34 +5,45 @@ padding:10px;
 background:#f4f4f4;
 }
 
+/* rubriker */
 h1,h2,h3{
 margin:10px 0;
 }
 
-/* gör allt bredare */
-.container{
+/* kalender wrapper (viktigt på iPad) */
+#rentals{
 width:100%;
-max-width:100%;
+overflow-x:auto;
 }
 
-/* kalender */
+/* tabell */
 table{
 width:100%;
 border-collapse:collapse;
 margin-top:10px;
 table-layout:fixed;
+background:white;
 }
 
+/* rubriker */
+th{
+background:#1976d2;
+color:white;
+font-weight:bold;
+padding:12px;
+}
+
+/* celler */
 th,td{
 border:1px solid #ccc;
-padding:12px;
 text-align:center;
 font-size:14px;
 }
 
 /* större klickytor */
 td{
-height:50px;
+height:60px;
+padding:10px;
 }
 
 /* färger */
@@ -49,9 +60,20 @@ font-weight:bold;
 cursor:pointer;
 }
 
-/* gör skidor scrollbara */
+/* hover (bra på desktop, ignoreras på iPad) */
+.booked:hover{
+opacity:0.8;
+}
+
+/* första kolumn (skidlängd) */
+td:first-child{
+font-weight:bold;
+background:#fafafa;
+}
+
+/* skidor */
 #skiWall{
 display:flex;
 flex-wrap:wrap;
-gap:6px;
+gap:8px;
 }
