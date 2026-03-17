@@ -7,15 +7,25 @@
 
 <title>Skiduthyrning</title>
 
+<!-- 🔥 stoppar cache -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 
-<link rel="stylesheet" href="style.css?v=5">
+<link rel="stylesheet" href="style.css?v=999">
 
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
+
+<!-- Supabase -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 </head>
 
 <body>
+
+<div class="container">
 
 <h1>Skiduthyrning</h1>
 
@@ -31,20 +41,45 @@
 <input type="date" id="end">
 
 <h2>Skidor</h2>
+
 <div id="skiWall"></div>
 
 <h3>Valda skidor</h3>
 <div id="cart"></div>
 
-<button onclick="saveBooking()">Spara bokning</button>
+<button id="saveBtn">Spara bokning</button>
 
 <h2>Kalender</h2>
-<div id="calendar"></div>
+<div id="calendarNav">
+<button onclick="prevWeek()">←</button>
+<button onclick="nextWeek()">→</button>
+</div>
 
-<h2>Aktiva bokningar</h2>
 <div id="rentals"></div>
 
-<script src="app.js?v=5"></script>
+<h2>Aktiva bokningar</h2>
+<div id="bookingList"></div>
+
+</div>
+
+<!-- 🔥 LADDAR ALLTID SENASTE JS -->
+<script src="app.js?v=999"></script>
+
+<!-- 🔥 SERVICE WORKER FIX -->
+<script>
+if ('serviceWorker' in navigator) {
+
+  // ❌ ta bort ALLA gamla (viktigt!)
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    for (let reg of regs) {
+      reg.unregister()
+    }
+  })
+
+  // ✅ registrera ny
+  navigator.serviceWorker.register('/sw.js?v=999')
+}
+</script>
 
 </body>
 </html>
