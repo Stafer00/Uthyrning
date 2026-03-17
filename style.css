@@ -1,48 +1,57 @@
 body{
 font-family:Arial;
-padding:20px;
-background:#f4f4f4
+margin:0;
+padding:10px;
+background:#f4f4f4;
 }
 
-h1{
-text-align:center
+h1,h2,h3{
+margin:10px 0;
 }
 
-input,button{
+/* gör allt bredare */
+.container{
 width:100%;
+max-width:100%;
+}
+
+/* kalender */
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:10px;
+table-layout:fixed;
+}
+
+th,td{
+border:1px solid #ccc;
 padding:12px;
-margin:6px 0;
-font-size:16px
+text-align:center;
+font-size:14px;
 }
 
-#skiWall{
-display:grid;
-grid-template-columns:repeat(auto-fill,minmax(60px,1fr));
-gap:8px;
-margin-top:10px
+/* större klickytor */
+td{
+height:50px;
 }
 
-.ski{
+/* färger */
+.free{
 background:#4caf50;
 color:white;
-padding:10px;
-text-align:center;
-border-radius:8px;
 font-weight:bold;
-font-size:14px
 }
 
-.ski.rented{
-background:#f44336
+.booked{
+background:#f44336;
+color:white;
+font-weight:bold;
+cursor:pointer;
 }
 
-.ski.selected{
-background:#ff9800
-}
-
-.card{
-background:white;
-padding:10px;
-margin-top:10px;
-border-radius:8px
+/* gör skidor scrollbara */
+#skiWall{
+display:flex;
+flex-wrap:wrap;
+gap:6px;
 }
