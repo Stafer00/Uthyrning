@@ -13,31 +13,25 @@ let weekOffset = 0
 window.onload = init
 
 async function init(){
+  const btn = document.getElementById("saveBtn")
+  if(btn) btn.onclick = saveBooking
 
-  try{
-    const btn = document.getElementById("saveBtn")
-    if(btn) btn.onclick = saveBooking
+  await loadSkis()
+  await loadBookings()
 
-    await loadSkis()
-    await loadBookings()
-
-    renderAll()
-
-  }catch(e){
-    console.log("INIT ERROR", e)
-  }
+  renderAll()
 }
 
 /* ========= LOAD ========= */
 
 async function loadSkis(){
-  const {data,error} = await supabaseClient.from("skis").select("*")
-  if(!error && data) skis = data
+  const {data} = await supabaseClient.from("skis").select("*")
+  skis = data || []
 }
 
 async function loadBookings(){
-  const {data,error} = await supabaseClient.from("rentals").select("*")
-  if(!error && data) rentals = data
+  const {data} = await supabaseClient.from("rentals").select("*")
+  rentals = data || []
 }
 
 /* ========= RENDER ========= */
@@ -54,23 +48,15 @@ function renderAll(){
 function renderWall(){
 
   const div = document.getElementById("skiWall")
-  if(!div) return
-
-  div.innerHTML = ""
+  div.innerHTML=""
 
   skis.forEach(ski=>{
-
-    const el = document.createElement("div")
-
-    el.style.display="inline-block"
-    el.style.padding="10px"
-    el.style.margin="5px"
-    el.style.border="1px solid #ccc"
-    el.style.cursor="pointer"
-
+    const el=document.createElement("div")
     el.innerText = ski.length+" cm"
 
-    el.onclick = ()=>{
+    el.style.cssText="display:inline-block;padding:10px;margin:5px;border:1px solid #ccc;cursor:pointer"
+
+    el.onclick=()=>{
       cart.push(ski.id)
       renderCart()
     }
@@ -83,40 +69,34 @@ function renderWall(){
 
 function renderCart(){
 
-  const div = document.getElementById("cart")
-  if(!div) return
+  const div=document.getElementById("cart")
 
-  if(cart.length === 0){
-    div.innerHTML = "<strong>Valda:</strong><br>Inga skidor"
+  if(cart.length===0){
+    div.innerHTML="Inga skidor"
     return
   }
 
-  let html = "<strong>Valda:</strong><br>"
+  let html=""
 
-  cart.forEach((id,index)=>{
-    const ski = skis.find(s=>s.id===id)
-
+  cart.forEach((id,i)=>{
+    const ski=skis.find(s=>s.id===id)
     if(ski){
-      html += `
-      <div>
-        ${ski.length} cm
-        <button onclick="removeFromCart(${index})">X</button>
-      </div>
+      html+=`
+      ${ski.length} cm 
+      <button onclick="removeFromCart(${i})">X</button><br>
       `
     }
   })
 
-  html += `
-    <br>
-    <button onclick="undoLast()">Ångra senaste</button>
-    <button onclick="clearCart()">Rensa alla</button>
-  `
+  html+=`<br>
+  <button onclick="undoLast()">Ångra</button>
+  <button onclick="clearCart()">Rensa</button>`
 
-  div.innerHTML = html
+  div.innerHTML=html
 }
 
-function removeFromCart(index){
-  cart.splice(index,1)
+function removeFromCart(i){
+  cart.splice(i,1)
   renderCart()
 }
 
@@ -126,13 +106,11 @@ function undoLast(){
 }
 
 function clearCart(){
-  if(confirm("Rensa alla?")){
-    cart=[]
-    renderCart()
-  }
+  cart=[]
+  renderCart()
 }
 
-/* ========= DUBBELKOLL ========= */
+/* ========= DUBBELBOKNING ========= */
 
 function isBooked(skiId,start,end){
 
@@ -140,10 +118,9 @@ function isBooked(skiId,start,end){
 
     if(r.returned) continue
 
-    if(!(new Date(end) < new Date(r.start) || new Date(start) > new Date(r.end))){
+    if(!(new Date(end)<new Date(r.start)||new Date(start)>new Date(r.end))){
 
-      let items=[]
-      try{ items=JSON.parse(r.items || "[]") }catch{}
+      let items=JSON.parse(r.items||"[]")
 
       if(items.includes(skiId)){
         return r
@@ -159,7 +136,6 @@ function isBooked(skiId,start,end){
 async function saveBooking(){
 
   const name=document.getElementById("customer").value
-  const phone=document.getElementById("phone").value
   const start=document.getElementById("start").value
   const end=document.getElementById("end").value
 
@@ -168,79 +144,25 @@ async function saveBooking(){
     return
   }
 
-  for(let skiId of cart){
-
-    const conflict = isBooked(skiId,start,end)
-
-    if(conflict){
-      const ski = skis.find(s=>s.id===skiId)
-
-      alert(
-        "Redan bokad:\n"+
-        ski.length+" cm\n"+
-        conflict.start+" → "+conflict.end
-      )
+  for(let id of cart){
+    if(isBooked(id,start,end)){
+      alert("En skida är redan bokad")
       return
     }
   }
 
-  const {error} = await supabaseClient.from("rentals").insert({
+  await supabaseClient.from("rentals").insert({
     name,
-    phone,
     start,
     end,
     items:JSON.stringify(cart),
     returned:false
   })
 
-  if(error){
-    alert(error.message)
-    return
-  }
-
   cart=[]
 
   await loadBookings()
-
   renderAll()
-}
-
-/* ========= SNABB BOKNING ========= */
-
-async function quickBook(length, day){
-
-  const name = document.getElementById("customer").value
-
-  if(!name){
-    alert("Skriv namn först")
-    return
-  }
-
-  const available = skis.filter(s=>s.length == length)
-
-  for(let ski of available){
-
-    const conflict = isBooked(ski.id, day, day)
-
-    if(!conflict){
-
-      await supabaseClient.from("rentals").insert({
-        name,
-        phone:"",
-        start:day,
-        end:day,
-        items:JSON.stringify([ski.id]),
-        returned:false
-      })
-
-      await loadBookings()
-      renderAll()
-
-      return
-    }
-  }
-
-  alert("Inga lediga")
 }
 
 /* ========= KALENDER ========= */
@@ -248,7 +170,6 @@ async function quickBook(length, day){
 function renderWeek(){
 
   const div=document.getElementById("calendar")
-  if(!div) return
 
   let base=getMonday(new Date())
   base.setDate(base.getDate()+weekOffset*7)
@@ -260,7 +181,7 @@ function renderWeek(){
     dates.push(format(d))
   }
 
-  let html="<table style='width:100%'><tr><th>Längd</th>"
+  let html="<table><tr><th>Längd</th>"
 
   dates.forEach(d=>{
     html+="<th>"+d.substring(5)+"</th>"
@@ -281,37 +202,31 @@ function renderWeek(){
 
     dates.forEach(day=>{
 
-      let total = groups[length].length
-      let bookedCount = 0
+      let total=groups[length].length
+      let booked=0
 
       rentals.forEach(r=>{
 
         if(r.returned) return
 
-        if(new Date(day) >= new Date(r.start) && new Date(day) <= new Date(r.end)){
+        if(day>=r.start && day<=r.end){
 
-          let items=[]
-          try{items=JSON.parse(r.items || "[]")}catch{}
+          let items=JSON.parse(r.items||"[]")
 
           items.forEach(id=>{
-            let ski = skis.find(s=>s.id===id)
-            if(ski && ski.length == length){
-              bookedCount++
+            let ski=skis.find(s=>s.id===id)
+            if(ski && ski.length==length){
+              booked++
             }
           })
         }
       })
 
-      let free = total - bookedCount
+      let free=total-booked
 
-      if(free <= 0){
-        html += `<td style="background:#f44336;color:white">FULLT</td>`
-      }else{
-        html += `<td style="background:#4caf50;color:white;cursor:pointer"
-        onclick="quickBook('${length}','${day}')">
-        ${free} kvar
-        </td>`
-      }
+      html+= free<=0
+        ? "<td style='background:red;color:white'>FULLT</td>"
+        : "<td style='background:green;color:white'>"+free+"</td>"
 
     })
 
@@ -328,58 +243,86 @@ function renderWeek(){
 function renderRentals(){
 
   const div=document.getElementById("rentals")
-  if(!div) return
-
-  div.innerHTML="<h3>Aktiva bokningar</h3>"
+  div.innerHTML=""
 
   rentals.forEach(r=>{
 
     if(r.returned) return
 
-    let items=[]
-    try{items=JSON.parse(r.items || "[]")}catch{}
+    let items=JSON.parse(r.items||"[]")
 
-    let counts={}
+    let html="<div style='border:1px solid #ccc;padding:10px;margin:5px'>"
 
-    items.forEach(id=>{
-      const ski = skis.find(s=>s.id===id)
+    html+=`<strong>${r.name}</strong><br>`
+    html+=`${r.start} → ${r.end}<br><br>`
+
+    items.forEach((id,i)=>{
+      let ski=skis.find(s=>s.id===id)
       if(ski){
-        counts[ski.length] = (counts[ski.length]||0)+1
+        html+=`
+        ${ski.length} cm 
+        <button onclick="returnOne('${r.id}',${i})">Returnera</button><br>
+        `
       }
     })
 
-    let list=""
-
-    Object.keys(counts).forEach(l=>{
-      list += `${l} cm (${counts[l]} st)<br>`
-    })
-
-    div.innerHTML+=`
-    <div style="border:1px solid #ccc;padding:10px;margin:5px">
-      <strong>${r.name}</strong><br>
-      ${r.phone || ""}<br>
-      ${r.start} → ${r.end}<br><br>
-
-      <strong>Skidor:</strong><br>
-      ${list}<br>
-
-      <button onclick="returnBooking('${r.id}')">
-        Returnerad
-      </button>
-    </div>
+    html+=`<br>
+    <button onclick="extendBooking('${r.id}')">Förläng</button>
+    <button onclick="returnAll('${r.id}')">Allt returnerat</button>
     `
+
+    html+="</div>"
+
+    div.innerHTML+=html
   })
 }
 
-/* ========= RETURN ========= */
+/* ========= RETURN DEL ========= */
 
-async function returnBooking(id){
+async function returnOne(rentalId,index){
 
-  if(!confirm("Returnera?")) return
+  let r=rentals.find(x=>x.id==rentalId)
 
-  await supabaseClient
-    .from("rentals")
+  let items=JSON.parse(r.items||"[]")
+
+  items.splice(index,1)
+
+  if(items.length===0){
+    await supabaseClient.from("rentals").update({returned:true}).eq("id",rentalId)
+  }else{
+    await supabaseClient.from("rentals").update({
+      items:JSON.stringify(items)
+    }).eq("id",rentalId)
+  }
+
+  await loadBookings()
+  renderAll()
+}
+
+/* ========= RETURN ALL ========= */
+
+async function returnAll(id){
+
+  await supabaseClient.from("rentals")
     .update({returned:true})
+    .eq("id",id)
+
+  await loadBookings()
+  renderAll()
+}
+
+/* ========= FÖRLÄNG ========= */
+
+async function extendBooking(id){
+
+  let r=rentals.find(x=>x.id==id)
+
+  let newEnd=prompt("Nytt slutdatum (YYYY-MM-DD)", r.end)
+
+  if(!newEnd) return
+
+  await supabaseClient.from("rentals")
+    .update({end:newEnd})
     .eq("id",id)
 
   await loadBookings()
