@@ -7,16 +7,11 @@
 
 <title>Skiduthyrning</title>
 
-<!-- 🔥 stoppar cache -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
 
-<link rel="stylesheet" href="style.css?v=2000">
+<link rel="stylesheet" href="style.css?v=5000">
 
-<!-- PWA -->
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#000000">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 </head>
 
@@ -47,35 +42,20 @@
 
 <h2>Kalender</h2>
 
-<div id="calendarNav">
+<div>
 <button onclick="prevWeek()">←</button>
 <button onclick="nextWeek()">→</button>
 </div>
 
+<!-- 🔥 VIKTIG -->
 <div id="calendar"></div>
 
 <h2>Aktiva bokningar</h2>
-<div id="bookingList"></div>
+<div id="rentals"></div>
 
 </div>
 
-<!-- 🔥 scripts längst ner = stabilt -->
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="app.js?v=2000"></script>
-
-<!-- 🔥 SERVICE WORKER RESET -->
-<script>
-if ('serviceWorker' in navigator) {
-
-  navigator.serviceWorker.getRegistrations().then(regs => {
-    for (let reg of regs) {
-      reg.unregister()
-    }
-  })
-
-  navigator.serviceWorker.register('/sw.js?v=2000')
-}
-</script>
+<script src="app.js?v=5000"></script>
 
 </body>
 </html>
