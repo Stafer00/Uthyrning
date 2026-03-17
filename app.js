@@ -12,10 +12,6 @@ document.getElementById("saveBtn").onclick = saveBooking
 
 start()
 
-// =====================
-// START
-// =====================
-
 async function start(){
 await loadSkis()
 await loadBookings()
@@ -24,7 +20,7 @@ renderWeek()
 }
 
 // =====================
-// LADDA DATA
+// DATA
 // =====================
 
 async function loadSkis(){
@@ -33,7 +29,11 @@ skis = data || []
 }
 
 async function loadBookings(){
-const {data} = await supabase.from("rentals").select("*").eq("returned",false)
+const {data} = await supabase
+.from("rentals")
+.select("*")
+.eq("returned",false)
+
 rentals = data || []
 }
 
@@ -41,16 +41,38 @@ rentals = data || []
 // SKIDOR
 // =====================
 
+function isBooked(skiId,start,end){
+
+for(let r of rentals){
+
+if(r.returned) continue
+
+if(!(end < r.start || start > r.end)){
+
+let items=[]
+try{items=JSON.parse(r.items)}catch{}
+
+if(items.includes(skiId)) return true
+
+}
+
+}
+
+return false
+}
+
 function renderWall(){
 
-const wall = document.getElementById("skiWall")
-wall.innerHTML = ""
+const wall=document.getElementById("skiWall")
+wall.innerHTML=""
 
-skis.forEach(ski => {
+let start=document.getElementById("start").value
+let end=document.getElementById("end").value
 
-const btn = document.createElement("div")
+skis.forEach(ski=>{
 
-btn.innerText = ski.length + " cm"
+const btn=document.createElement("div")
+btn.innerText=ski.length+" cm"
 
 btn.style.display="inline-block"
 btn.style.margin="5px"
@@ -58,17 +80,29 @@ btn.style.padding="10px"
 btn.style.borderRadius="8px"
 btn.style.cursor="pointer"
 
-if(cart.includes(ski.id)){
+let blocked=false
+
+if(start && end){
+blocked = isBooked(ski.id,start,end)
+}
+
+if(blocked){
+btn.style.background="red"
+btn.style.color="white"
+btn.style.cursor="not-allowed"
+}else if(cart.includes(ski.id)){
 btn.style.background="green"
 btn.style.color="white"
 }else{
 btn.style.background="#eee"
 }
 
-btn.onclick = () => {
+btn.onclick=()=>{
+
+if(blocked) return
 
 if(cart.includes(ski.id)){
-cart = cart.filter(id => id !== ski.id)
+cart=cart.filter(id=>id!==ski.id)
 }else{
 cart.push(ski.id)
 }
@@ -86,26 +120,28 @@ wall.appendChild(btn)
 
 function renderCart(){
 
-const div = document.getElementById("cart")
+const div=document.getElementById("cart")
 div.innerHTML=""
 
 cart.forEach(id=>{
-const ski = skis.find(s=>s.id===id)
 
-const el = document.createElement("div")
-el.innerText = ski.length + " cm"
+let ski=skis.find(s=>s.id===id)
+
+let el=document.createElement("div")
+el.innerText=ski.length+" cm"
 el.style.display="inline-block"
 el.style.margin="5px"
 el.style.padding="5px"
 el.style.background="#ddd"
 
 div.appendChild(el)
+
 })
 
 }
 
 // =====================
-// SPARA BOKNING
+// SPARA
 // =====================
 
 async function saveBooking(){
@@ -120,50 +156,25 @@ alert("Fyll i alla fält")
 return
 }
 
+for(let id of cart){
+if(isBooked(id,start,end)){
+alert("En skida är redan bokad!")
+return
+}
+}
+
 await supabase.from("rentals").insert({
-name:name,
-phone:phone,
-start:start,
-end:end,
+name,phone,start,end,
 items:JSON.stringify(cart),
 returned:false
 })
 
 cart=[]
 renderCart()
+
 await loadBookings()
 renderWeek()
-
-}
-
-// =====================
-// DATUM / VECKA
-// =====================
-
-function getMonday(d){
-
-d=new Date(d)
-
-let day=d.getDay()
-let diff=d.getDate()-(day===0?6:day-1)
-
-return new Date(d.setDate(diff))
-
-}
-
-function format(d){
-return d.toISOString().split("T")[0]
-}
-
-function getWeekNumber(d){
-
-d=new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
-d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7))
-
-let yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1))
-let weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7)
-
-return weekNo
+renderWall()
 
 }
 
@@ -171,23 +182,41 @@ return weekNo
 // KALENDER
 // =====================
 
+function getMonday(d){
+d=new Date(d)
+let day=d.getDay()
+let diff=d.getDate()-(day===0?6:day-1)
+return new Date(d.setDate(diff))
+}
+
+function format(d){
+return d.toISOString().split("T")[0]
+}
+
+function getWeekNumber(d){
+d=new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
+d.setUTCDate(d.getUTCDate()+4-(d.getUTCDay()||7))
+let yearStart=new Date(Date.UTC(d.getUTCFullYear(),0,1))
+return Math.ceil((((d-yearStart)/86400000)+1)/7)
+}
+
 function renderWeek(){
 
-const div = document.getElementById("rentals")
+const div=document.getElementById("rentals")
 div.innerHTML=""
 
-let base = getMonday(new Date())
+let base=getMonday(new Date())
 base.setDate(base.getDate()+weekOffset*7)
 
 let dates=[]
-
 for(let i=0;i<7;i++){
 let d=new Date(base)
 d.setDate(base.getDate()+i)
 dates.push(format(d))
 }
 
-let html="<table><tr><th>Skida</th>"
+let html="<h3>Vecka "+getWeekNumber(base)+"</h3>"
+html+="<table><tr><th>Skida</th>"
 
 dates.forEach(d=>{
 html+="<th>"+d.substring(5)+"</th>"
@@ -195,35 +224,32 @@ html+="<th>"+d.substring(5)+"</th>"
 
 html+="</tr>"
 
-// veckonummer
-html="<h3>Vecka "+getWeekNumber(base)+"</h3>"+html
-
 skis.forEach(ski=>{
 
 html+="<tr><td>"+ski.length+"</td>"
 
 dates.forEach(day=>{
 
-let booked=false
+let found=null
 
-rentals.forEach(r=>{
+for(let r of rentals){
 
 if(day>=r.start && day<=r.end){
 
 let items=[]
-
 try{items=JSON.parse(r.items)}catch{}
 
 if(items.includes(ski.id)){
-booked=true
+found=r
 }
 
 }
 
-})
+}
 
-if(booked){
-html+="<td style='background:red;color:white'>X</td>"
+if(found){
+html+=`<td style="background:red;color:white;cursor:pointer"
+onclick="showBooking('${found.id}')">X</td>`
 }else{
 html+="<td style='background:#4caf50;color:white'>Ledig</td>"
 }
@@ -237,5 +263,43 @@ html+="</tr>"
 html+="</table>"
 
 div.innerHTML=html
+
+}
+
+// =====================
+// VISA BOKNING
+// =====================
+
+function showBooking(id){
+
+let r=rentals.find(x=>x.id==id)
+
+if(!r) return
+
+let text =
+r.name + "\n" +
+r.phone + "\n" +
+r.start + " - " + r.end
+
+if(confirm(text + "\n\nMarkera som återlämnad?")){
+returnBooking(id)
+}
+
+}
+
+// =====================
+// ÅTERLÄMNA
+// =====================
+
+async function returnBooking(id){
+
+await supabase
+.from("rentals")
+.update({returned:true})
+.eq("id",id)
+
+await loadBookings()
+renderWeek()
+renderWall()
 
 }
