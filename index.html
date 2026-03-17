@@ -8,22 +8,22 @@
 
 <title>Skiduthyrning</title>
 
-<!-- 🚫 STOPPA CACHE -->
+<!-- STOPPA CACHE -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 
-<!-- 🎨 PWA -->
+<!-- PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2d6cdf">
 
-<!-- 📱 iPad / iPhone -->
+<!-- iPad -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Skidor">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
 <!-- CSS -->
-<link rel="stylesheet" href="style.css?v=5">
+<link rel="stylesheet" href="style.css?v=6">
 
 <!-- Supabase -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -33,6 +33,10 @@
 <body>
 
 <h1>Skiduthyrning</h1>
+
+<!-- ========================= -->
+<!-- NY BOKNING -->
+<!-- ========================= -->
 
 <h2>Ny bokning</h2>
 
@@ -46,20 +50,24 @@
 <input type="date" id="end">
 
 <h2>Skidor</h2>
-
 <div id="skiWall"></div>
 
 <h3>Valda skidor</h3>
-
 <div id="cart"></div>
 
 <button id="saveBtn">Spara bokning</button>
 
-<h2>Aktiva bokningar</h2>
+<!-- ========================= -->
+<!-- 📅 KALENDER (NY) -->
+<!-- ========================= -->
 
+<h2>Kalender</h2>
 <div id="rentals"></div>
 
-<!-- 🚀 LADDAR ALLTID SENASTE JS -->
+<!-- ========================= -->
+<!-- SCRIPT -->
+<!-- ========================= -->
+
 <script>
 fetch("app.js?v=" + Date.now())
 .then(r => r.text())
@@ -72,12 +80,10 @@ fetch("app.js?v=" + Date.now())
 })
 </script>
 
-<!-- ⚙️ SERVICE WORKER -->
+<!-- SERVICE WORKER -->
 <script>
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js")
-    .then(() => console.log("SW registrerad"))
-    .catch(err => console.log("SW fel:", err))
 }
 </script>
 
