@@ -7,16 +7,16 @@
 
 <title>Skiduthyrning</title>
 
+<!-- 🔥 stoppar cache -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 
-<link rel="stylesheet" href="style.css?v=999">
+<link rel="stylesheet" href="style.css?v=2000">
 
+<!-- PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#000000">
-
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 </head>
 
@@ -52,7 +52,6 @@
 <button onclick="nextWeek()">→</button>
 </div>
 
-<!-- 🔥 FIX -->
 <div id="calendar"></div>
 
 <h2>Aktiva bokningar</h2>
@@ -60,8 +59,11 @@
 
 </div>
 
-<script src="app.js?v=1000"></script>
+<!-- 🔥 scripts längst ner = stabilt -->
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="app.js?v=2000"></script>
 
+<!-- 🔥 SERVICE WORKER RESET -->
 <script>
 if ('serviceWorker' in navigator) {
 
@@ -71,9 +73,9 @@ if ('serviceWorker' in navigator) {
     }
   })
 
-  navigator.serviceWorker.register('/sw.js?v=999')
+  navigator.serviceWorker.register('/sw.js?v=2000')
 }
 </script>
 
 </body>
-</html> 
+</html>
