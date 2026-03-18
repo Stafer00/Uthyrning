@@ -58,14 +58,6 @@ function getAvailableCount(length,start,end){
     }
   })
 
-  // 🔥 minus det som redan ligger i cart
-  cart.forEach(id=>{
-    let ski=skis.find(s=>s.id===id)
-    if(ski && ski.length==length){
-      booked++
-    }
-  })
-
   return total - booked
 }
 
@@ -116,8 +108,13 @@ function renderWall(){
 
       el.onclick=()=>{
 
-        if(getAvailableCount(ski.length,start,end)<=0){
-          alert("Slut i lager")
+        let countInCart = cart.filter(id=>{
+          let s = skis.find(x=>x.id===id)
+          return s && s.length==ski.length
+        }).length
+
+        if(countInCart >= available){
+          alert("Inga fler finns i lager")
           return
         }
 
@@ -126,6 +123,7 @@ function renderWall(){
       }
 
     }else{
+
       el.innerText=ski.length+" cm"
 
       el.onclick=()=>{
