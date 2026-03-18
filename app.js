@@ -5,16 +5,16 @@ const supabaseClient = window.supabase.createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
 )
 
-let skis = []
-let rentals = []
-let cart = []
-let weekOffset = 0
+let skis=[]
+let rentals=[]
+let cart=[]
+let weekOffset=0
 
-window.onload = init
+window.onload=init
 
 async function init(){
-  const btn = document.getElementById("saveBtn")
-  if(btn) btn.onclick = saveBooking
+
+  document.getElementById("saveBtn").onclick=saveBooking
 
   await loadSkis()
   await loadBookings()
@@ -22,19 +22,19 @@ async function init(){
   renderAll()
 }
 
-/* ========= LOAD ========= */
+/* LOAD */
 
 async function loadSkis(){
-  const {data} = await supabaseClient.from("skis").select("*")
-  skis = data || []
+  const {data}=await supabaseClient.from("skis").select("*")
+  skis=data||[]
 }
 
 async function loadBookings(){
-  const {data} = await supabaseClient.from("rentals").select("*")
-  rentals = data || []
+  const {data}=await supabaseClient.from("rentals").select("*")
+  rentals=data||[]
 }
 
-/* ========= RENDER ========= */
+/* RENDER */
 
 function renderAll(){
   renderWall()
@@ -43,18 +43,17 @@ function renderAll(){
   renderRentals()
 }
 
-/* ========= SKIDOR ========= */
+/* SKIDOR */
 
 function renderWall(){
 
-  const div = document.getElementById("skiWall")
+  const div=document.getElementById("skiWall")
   div.innerHTML=""
 
   skis.forEach(ski=>{
-    const el=document.createElement("div")
-    el.innerText = ski.length+" cm"
 
-    el.style.cssText="display:inline-block;padding:10px;margin:5px;border:1px solid #ccc;cursor:pointer"
+    let el=document.createElement("div")
+    el.innerText=ski.length+" cm"
 
     el.onclick=()=>{
       cart.push(ski.id)
@@ -65,7 +64,7 @@ function renderWall(){
   })
 }
 
-/* ========= CART ========= */
+/* CART */
 
 function renderCart(){
 
@@ -79,28 +78,25 @@ function renderCart(){
   let html=""
 
   cart.forEach((id,i)=>{
-    const ski=skis.find(s=>s.id===id)
-    if(ski){
-      html+=`
-      ${ski.length} cm 
-      <button onclick="removeFromCart(${i})">X</button><br>
-      `
-    }
+    let ski=skis.find(s=>s.id===id)
+
+    html+=`${ski.length} cm 
+    <button onclick="removeItem(${i})">X</button><br>`
   })
 
   html+=`<br>
-  <button onclick="undoLast()">Ångra</button>
+  <button onclick="undo()">Ångra</button>
   <button onclick="clearCart()">Rensa</button>`
 
   div.innerHTML=html
 }
 
-function removeFromCart(i){
+function removeItem(i){
   cart.splice(i,1)
   renderCart()
 }
 
-function undoLast(){
+function undo(){
   cart.pop()
   renderCart()
 }
@@ -110,34 +106,33 @@ function clearCart(){
   renderCart()
 }
 
-/* ========= DUBBELBOKNING ========= */
+/* BOOKING */
 
-function isBooked(skiId,start,end){
+function isBooked(id,start,end){
 
   for(let r of rentals){
 
     if(r.returned) continue
 
-    if(!(new Date(end)<new Date(r.start)||new Date(start)>new Date(r.end))){
+    if(!(end<r.start||start>r.end)){
 
       let items=JSON.parse(r.items||"[]")
 
-      if(items.includes(skiId)){
-        return r
+      if(items.includes(id)){
+        return true
       }
     }
   }
 
-  return null
+  return false
 }
-
-/* ========= SAVE ========= */
 
 async function saveBooking(){
 
-  const name=document.getElementById("customer").value
-  const start=document.getElementById("start").value
-  const end=document.getElementById("end").value
+  let name=document.getElementById("customer").value
+  let phone=document.getElementById("phone").value
+  let start=document.getElementById("start").value
+  let end=document.getElementById("end").value
 
   if(!name||!start||!end||cart.length===0){
     alert("Fyll i alla fält")
@@ -146,13 +141,14 @@ async function saveBooking(){
 
   for(let id of cart){
     if(isBooked(id,start,end)){
-      alert("En skida är redan bokad")
+      alert("Skida redan bokad")
       return
     }
   }
 
   await supabaseClient.from("rentals").insert({
     name,
+    phone,
     start,
     end,
     items:JSON.stringify(cart),
@@ -165,27 +161,24 @@ async function saveBooking(){
   renderAll()
 }
 
-/* ========= KALENDER ========= */
+/* KALENDER */
 
 function renderWeek(){
 
   const div=document.getElementById("calendar")
 
-  let base=getMonday(new Date())
-  base.setDate(base.getDate()+weekOffset*7)
+  let html="<table><tr><th>Längd</th>"
 
   let dates=[]
+  let base=new Date()
+
   for(let i=0;i<7;i++){
     let d=new Date(base)
     d.setDate(base.getDate()+i)
-    dates.push(format(d))
+    let f=d.toISOString().split("T")[0]
+    dates.push(f)
+    html+="<th>"+f.substring(5)+"</th>"
   }
-
-  let html="<table><tr><th>Längd</th>"
-
-  dates.forEach(d=>{
-    html+="<th>"+d.substring(5)+"</th>"
-  })
 
   html+="</tr>"
 
@@ -198,7 +191,7 @@ function renderWeek(){
 
   Object.keys(groups).forEach(length=>{
 
-    html+="<tr><td>"+length+" cm</td>"
+    html+="<tr><td>"+length+"</td>"
 
     dates.forEach(day=>{
 
@@ -225,8 +218,8 @@ function renderWeek(){
       let free=total-booked
 
       html+= free<=0
-        ? "<td style='background:red;color:white'>FULLT</td>"
-        : "<td style='background:green;color:white'>"+free+"</td>"
+        ? "<td class='full'>FULLT</td>"
+        : "<td class='free'>"+free+"</td>"
 
     })
 
@@ -238,7 +231,7 @@ function renderWeek(){
   div.innerHTML=html
 }
 
-/* ========= LISTA ========= */
+/* LISTA */
 
 function renderRentals(){
 
@@ -251,24 +244,21 @@ function renderRentals(){
 
     let items=JSON.parse(r.items||"[]")
 
-    let html="<div style='border:1px solid #ccc;padding:10px;margin:5px'>"
+    let html="<div class='card'>"
 
     html+=`<strong>${r.name}</strong><br>`
     html+=`${r.start} → ${r.end}<br><br>`
 
     items.forEach((id,i)=>{
       let ski=skis.find(s=>s.id===id)
-      if(ski){
-        html+=`
-        ${ski.length} cm 
-        <button onclick="returnOne('${r.id}',${i})">Returnera</button><br>
-        `
-      }
+
+      html+=`${ski.length} cm 
+      <button onclick="returnOne('${r.id}',${i})">X</button><br>`
     })
 
     html+=`<br>
-    <button onclick="extendBooking('${r.id}')">Förläng</button>
-    <button onclick="returnAll('${r.id}')">Allt returnerat</button>
+    <button onclick="extend('${r.id}')">Förläng</button>
+    <button onclick="returnAll('${r.id}')">Allt klart</button>
     `
 
     html+="</div>"
@@ -277,79 +267,58 @@ function renderRentals(){
   })
 }
 
-/* ========= RETURN DEL ========= */
+/* RETURN */
 
-async function returnOne(rentalId,index){
+async function returnOne(id,index){
 
-  let r=rentals.find(x=>x.id==rentalId)
-
+  let r=rentals.find(x=>x.id==id)
   let items=JSON.parse(r.items||"[]")
 
   items.splice(index,1)
 
   if(items.length===0){
-    await supabaseClient.from("rentals").update({returned:true}).eq("id",rentalId)
+    await supabaseClient.from("rentals").update({returned:true}).eq("id",id)
   }else{
     await supabaseClient.from("rentals").update({
       items:JSON.stringify(items)
-    }).eq("id",rentalId)
+    }).eq("id",id)
   }
 
   await loadBookings()
   renderAll()
 }
 
-/* ========= RETURN ALL ========= */
-
 async function returnAll(id){
 
   await supabaseClient.from("rentals")
-    .update({returned:true})
-    .eq("id",id)
+  .update({returned:true})
+  .eq("id",id)
 
   await loadBookings()
   renderAll()
 }
 
-/* ========= FÖRLÄNG ========= */
+/* FÖRLÄNG */
 
-async function extendBooking(id){
+async function extend(id){
 
   let r=rentals.find(x=>x.id==id)
 
-  let newEnd=prompt("Nytt slutdatum (YYYY-MM-DD)", r.end)
+  let ny=prompt("Nytt slutdatum",r.end)
 
-  if(!newEnd) return
+  if(!ny) return
 
   await supabaseClient.from("rentals")
-    .update({end:newEnd})
-    .eq("id",id)
+  .update({end:ny})
+  .eq("id",id)
 
   await loadBookings()
   renderAll()
 }
 
-/* ========= NAV ========= */
+/* FORM */
 
-function prevWeek(){
-  weekOffset--
-  renderWeek()
-}
-
-function nextWeek(){
-  weekOffset++
-  renderWeek()
-}
-
-/* ========= DATUM ========= */
-
-function format(d){
-  return d.toISOString().split("T")[0]
-}
-
-function getMonday(d){
-  d=new Date(d)
-  let day=d.getDay()
-  let diff=d.getDate()-(day==0?6:day-1)
-  return new Date(d.setDate(diff))
+function clearForm(){
+  document.getElementById("customer").value=""
+  document.getElementById("phone").value=""
 }
