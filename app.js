@@ -7,8 +7,8 @@ const supabaseClient = window.supabase.createClient(
 
 let skis=[]
 let rentals=[]
-let cart=[] // sparar IDs
-let selections={} // {length: antal}
+let cart=[]
+let selections={}
 
 /* ========= INIT ========= */
 
@@ -24,7 +24,12 @@ async function init(){
 /* ========= LOAD ========= */
 
 async function loadSkis(){
-  const {data}=await supabaseClient.from("skis").select("*")
+  const {data,error}=await supabaseClient.from("skis").select("*")
+  if(error){
+    alert("Fel laddning skidor")
+    skis=[]
+    return
+  }
   skis=data||[]
 }
 
@@ -37,10 +42,11 @@ async function loadBookings(){
 
 function getAvailableCount(length,start,end){
 
-  let total = skis.filter(s=>s.length==length).length
-  let booked = 0
+  let total=skis.filter(s=>s.length==length).length
+  let booked=0
 
   rentals.forEach(r=>{
+
     if(r.returned) return
 
     if(!(end < r.start || start > r.end)){
@@ -57,7 +63,7 @@ function getAvailableCount(length,start,end){
     }
   })
 
-  return total - booked
+  return total-booked
 }
 
 /* ========= RENDER ========= */
@@ -69,7 +75,7 @@ function renderAll(){
   renderRentals()
 }
 
-/* ========= SKIDOR (DROPDOWN) ========= */
+/* ========= SKIDOR ========= */
 
 function renderWall(){
 
@@ -93,32 +99,32 @@ function renderWall(){
       : groups[length].length
 
     let row=document.createElement("div")
-    row.style.margin="10px"
-    row.style.padding="10px"
-    row.style.border="1px solid #ccc"
-    row.style.borderRadius="10px"
+    row.style.cssText="margin:10px;padding:12px;border:1px solid #ccc;border-radius:12px;font-size:18px"
 
     let label=document.createElement("div")
+
+    let color="#4caf50"
+    if(available<=0) color="#ccc"
+    else if(available==1) color="#ff9800"
+
     label.innerHTML=`<strong>${length} cm</strong> (${available} kvar)`
+    label.style.color=color
 
     let select=document.createElement("select")
-    select.style.fontSize="18px"
-    select.style.padding="8px"
+    select.style.cssText="font-size:18px;padding:10px;margin-top:5px"
 
-    let max=Math.max(available,0)
-
-    for(let i=0;i<=max;i++){
+    for(let i=0;i<=available;i++){
       let opt=document.createElement("option")
       opt.value=i
       opt.text=i+" st"
       select.appendChild(opt)
     }
 
-    select.value = selections[length] || 0
+    select.value=selections[length]||0
 
     select.onchange=()=>{
       selections[length]=parseInt(select.value)
-      buildCartFromSelections()
+      buildCart()
       renderCart()
     }
 
@@ -129,27 +135,22 @@ function renderWall(){
   })
 }
 
-/* ========= BUILD CART ========= */
+/* ========= CART ========= */
 
-function buildCartFromSelections(){
+function buildCart(){
 
   cart=[]
 
   Object.keys(selections).forEach(length=>{
 
     let count=selections[length]
-
-    let skisOfLength=skis.filter(s=>s.length==length)
+    let list=skis.filter(s=>s.length==length)
 
     for(let i=0;i<count;i++){
-      if(skisOfLength[i]){
-        cart.push(skisOfLength[i].id)
-      }
+      if(list[i]) cart.push(list[i].id)
     }
   })
 }
-
-/* ========= CART ========= */
 
 function renderCart(){
 
@@ -162,9 +163,9 @@ function renderCart(){
 
   let html="<strong>Valt:</strong><br>"
 
-  Object.keys(selections).forEach(length=>{
-    if(selections[length]>0){
-      html+=`${length} cm: ${selections[length]} st<br>`
+  Object.keys(selections).forEach(l=>{
+    if(selections[l]>0){
+      html+=`${l} cm: ${selections[l]} st<br>`
     }
   })
 
@@ -220,9 +221,9 @@ function renderWeek(){
 
   const div=document.getElementById("calendar")
 
-  let base=getMonday(new Date())
-
   const days=["Mån","Tis","Ons","Tor","Fre","Lör","Sön"]
+
+  let base=getMonday(new Date())
 
   let dates=[]
 
@@ -232,7 +233,8 @@ function renderWeek(){
     dates.push(d)
   }
 
-  let html="<table><tr><th>Längd</th>"
+  let html="<table style='width:100%;border-collapse:collapse'>"
+  html+="<tr><th>Längd</th>"
 
   dates.forEach((d,i)=>{
     html+=`<th>${days[i]}<br>${d.getDate()}/${d.getMonth()+1}</th>`
@@ -249,11 +251,22 @@ function renderWeek(){
 
   Object.keys(groups).forEach(length=>{
 
-    html+=`<tr><td>${length}</td>`
+    html+=`<tr><td>${length} cm</td>`
 
     dates.forEach(d=>{
-      let free=getAvailableCount(length,format(d),format(d))
-      html+=`<td>${free}</td>`
+
+      let day=formatLocal(d)
+
+      let free=getAvailableCount(length,day,day)
+
+      let color="#4caf50"
+      if(free<=0) color="#f44336"
+      else if(free==1) color="#ff9800"
+
+      html+=`
+      <td style="background:${color};color:white">
+        ${free<=0?"FULLT":free}
+      </td>`
     })
 
     html+="</tr>"
@@ -277,22 +290,22 @@ function renderRentals(){
 
     let items=JSON.parse(r.items||"[]")
 
+    let count={}
+
+    items.forEach(id=>{
+      let ski=skis.find(s=>s.id===id)
+      if(ski){
+        count[ski.length]=(count[ski.length]||0)+1
+      }
+    })
+
     let html="<div style='border:1px solid #ccc;padding:10px;margin:5px'>"
 
     html+=`<strong>${r.name}</strong><br>`
     html+=`${r.start} → ${r.end}<br><br>`
 
-    let lengths={}
-
-    items.forEach(id=>{
-      let ski=skis.find(s=>s.id===id)
-      if(ski){
-        lengths[ski.length]=(lengths[ski.length]||0)+1
-      }
-    })
-
-    Object.keys(lengths).forEach(l=>{
-      html+=`${l} cm: ${lengths[l]} st<br>`
+    Object.keys(count).forEach(l=>{
+      html+=`${l} cm: ${count[l]} st<br>`
     })
 
     html+="</div>"
@@ -303,8 +316,11 @@ function renderRentals(){
 
 /* ========= DATUM ========= */
 
-function format(d){
-  return d.toISOString().split("T")[0]
+function formatLocal(d){
+  let y=d.getFullYear()
+  let m=(d.getMonth()+1).toString().padStart(2,"0")
+  let day=d.getDate().toString().padStart(2,"0")
+  return `${y}-${m}-${day}`
 }
 
 function getMonday(d){
