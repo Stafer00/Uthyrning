@@ -46,9 +46,18 @@ button {
   padding: 10px 14px;
 }
 
-/* Lager toggle */
 #inventorySection {
   display: none;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+td, th {
+  padding: 6px;
+  text-align: center;
 }
 
 </style>
@@ -81,7 +90,6 @@ button {
 <div class="section">
 
 <h2>Välj skidor</h2>
-
 <div id="skiWall"></div>
 
 <h3>Valda skidor</h3>
@@ -115,7 +123,7 @@ button {
 
 </div>
 
-<!-- ========= LAGER (GÖMT) ========= -->
+<!-- ========= LAGER ========= -->
 <div class="section">
 
 <button class="small-btn" onclick="toggleInventory()">
@@ -130,15 +138,13 @@ button {
 </div>
 
 <script>
-
 function toggleInventory(){
   const div = document.getElementById("inventorySection")
   div.style.display = div.style.display === "none" ? "block" : "none"
 }
-
 </script>
 
-<script src="/app.js?v=11000"></script>
+<script src="/app.js?v=12000"></script>
 
 </body>
 </html>
