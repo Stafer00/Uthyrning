@@ -8,23 +8,37 @@ const supabaseClient = window.supabase.createClient(
 let skis=[]
 let rentals=[]
 let cart=[]
-let selections={}
-
-/* ========= INIT ========= */
+let weekOffset=0
 
 window.onload=init
 
 async function init(){
-  document.getElementById("saveBtn").onclick=saveBooking
-  await loadSkis()
-  await loadBookings()
-  renderAll()
+
+  try{
+
+    document.getElementById("saveBtn").onclick=saveBooking
+
+    await loadSkis()
+    await loadBookings()
+
+    renderAll()
+
+  }catch(e){
+    console.log(e)
+    alert("Fel vid start")
+  }
+
 }
 
 /* ========= LOAD ========= */
 
 async function loadSkis(){
-  const {data}=await supabaseClient.from("skis").select("*")
+  const {data,error}=await supabaseClient.from("skis").select("*")
+  if(error){
+    alert("Fel laddning skidor")
+    skis=[]
+    return
+  }
   skis=data||[]
 }
 
@@ -33,7 +47,208 @@ async function loadBookings(){
   rentals=data||[]
 }
 
+/* ========= RENDER ========= */
+
+function renderAll(){
+  renderWall()
+  renderCart()
+  renderWeek()
+  renderRentals()
+  renderInventory()
+}
+
+/* ========= SKIDOR ========= */
+
+function renderWall(){
+
+  const div=document.getElementById("skiWall")
+  div.innerHTML=""
+
+  skis.forEach(ski=>{
+
+    const el=document.createElement("button")
+    el.innerText=ski.length+" cm"
+
+    el.onclick=()=>{
+      cart.push(ski.id)
+      renderCart()
+    }
+
+    div.appendChild(el)
+
+  })
+}
+
+/* ========= CART ========= */
+
+function renderCart(){
+
+  const div=document.getElementById("cart")
+
+  if(cart.length===0){
+    div.innerHTML="Inga skidor"
+    return
+  }
+
+  let html=""
+
+  cart.forEach((id,i)=>{
+    let ski=skis.find(s=>s.id===id)
+    html+=`
+    ${ski.length} cm 
+    <button onclick="removeItem(${i})">X</button><br>
+    `
+  })
+
+  div.innerHTML=html
+}
+
+function removeItem(i){
+  cart.splice(i,1)
+  renderCart()
+}
+
+/* ========= SAVE ========= */
+
+async function saveBooking(){
+
+  let name=document.getElementById("customer").value
+  let phone=document.getElementById("phone").value
+  let start=document.getElementById("start").value
+  let end=document.getElementById("end").value
+
+  if(!name||!start||!end||cart.length===0){
+    alert("Fyll i alla fält")
+    return
+  }
+
+  await supabaseClient.from("rentals").insert({
+    name,
+    phone,
+    start,
+    end,
+    items:JSON.stringify(cart),
+    returned:false
+  })
+
+  cart=[]
+
+  await loadBookings()
+  renderAll()
+}
+
+/* ========= KALENDER ========= */
+
+function renderWeek(){
+
+  const div=document.getElementById("calendar")
+
+  const days=["Mån","Tis","Ons","Tor","Fre","Lör","Sön"]
+
+  let base=getMonday(new Date())
+  base.setDate(base.getDate()+weekOffset*7)
+
+  let dates=[]
+
+  for(let i=0;i<7;i++){
+    let d=new Date(base)
+    d.setDate(base.getDate()+i)
+    dates.push(d)
+  }
+
+  let html="<table><tr><th>Längd</th>"
+
+  dates.forEach((d,i)=>{
+    html+=`<th>${days[i]}<br>${d.getDate()}/${d.getMonth()+1}</th>`
+  })
+
+  html+="</tr>"
+
+  let groups={}
+
+  skis.forEach(s=>{
+    if(!groups[s.length]) groups[s.length]=[]
+    groups[s.length].push(s)
+  })
+
+  Object.keys(groups).forEach(length=>{
+
+    html+=`<tr><td>${length} cm</td>`
+
+    dates.forEach(d=>{
+
+      let free=getAvailableCount(length,formatLocal(d),formatLocal(d))
+
+      let color="#4caf50"
+      if(free<=0) color="#f44336"
+      else if(free==1) color="#ff9800"
+
+      html+=`<td style="background:${color};color:white">${free<=0?"FULLT":free}</td>`
+    })
+
+    html+="</tr>"
+  })
+
+  html+="</table>"
+
+  div.innerHTML=html
+}
+
 /* ========= LAGER ========= */
+
+function renderInventory(){
+
+  const div=document.getElementById("inventory")
+  if(!div) return
+
+  let groups={}
+
+  skis.forEach(s=>{
+    if(!groups[s.length]) groups[s.length]=0
+    groups[s.length]++
+  })
+
+  let html=""
+
+  Object.keys(groups).forEach(length=>{
+    html+=`${length} cm: ${groups[length]} st<br>`
+  })
+
+  div.innerHTML=html
+}
+
+/* ========= RENTALS ========= */
+
+function renderRentals(){
+
+  const div=document.getElementById("rentals")
+  div.innerHTML=""
+
+  rentals.forEach(r=>{
+    if(r.returned) return
+
+    div.innerHTML+=`
+    <div>
+      <strong>${r.name}</strong><br>
+      ${r.start} → ${r.end}
+    </div><br>
+    `
+  })
+}
+
+/* ========= NAV ========= */
+
+function prevWeek(){
+  weekOffset--
+  renderWeek()
+}
+
+function nextWeek(){
+  weekOffset++
+  renderWeek()
+}
+
+/* ========= LAGERLOGIK ========= */
 
 function getAvailableCount(length,start,end){
 
@@ -59,290 +274,6 @@ function getAvailableCount(length,start,end){
   })
 
   return total-booked
-}
-
-/* ========= RENDER ========= */
-
-function renderAll(){
-  renderInventory()
-  renderWall()
-  renderCart()
-  renderWeek()
-  renderRentals()
-}
-
-/* ========= INVENTORY ADMIN ========= */
-
-function renderInventory(){
-
-  const div=document.getElementById("inventory")
-  if(!div) return
-
-  let groups={}
-
-  skis.forEach(s=>{
-    if(!groups[s.length]) groups[s.length]=0
-    groups[s.length]++
-  })
-
-  let html="<h3>Lager</h3>"
-
-  Object.keys(groups).sort((a,b)=>a-b).forEach(length=>{
-
-    html+=`
-    ${length} cm: ${groups[length]} st
-    <button onclick="addSki(${length})">+</button>
-    <button onclick="removeSki(${length})">−</button>
-    <br>
-    `
-  })
-
-  html+=`
-  <br>
-  <input id="newLength" placeholder="Ny längd (cm)">
-  <button onclick="createNewLength()">Lägg till ny längd</button>
-  `
-
-  div.innerHTML=html
-}
-
-/* ========= ADD SKI ========= */
-
-async function addSki(length){
-
-  await supabaseClient.from("skis").insert({
-    length:parseInt(length)
-  })
-
-  await loadSkis()
-  renderAll()
-}
-
-/* ========= REMOVE SKI ========= */
-
-async function removeSki(length){
-
-  let ski = skis.find(s=>s.length==length)
-
-  if(!ski){
-    alert("Finns inga att ta bort")
-    return
-  }
-
-  // kontroll: ej bokad
-  let used=false
-
-  rentals.forEach(r=>{
-    let items=[]
-    try{items=JSON.parse(r.items||"[]")}catch{}
-
-    if(items.includes(ski.id)){
-      used=true
-    }
-  })
-
-  if(used){
-    alert("Skidan är bokad – kan ej tas bort")
-    return
-  }
-
-  await supabaseClient.from("skis")
-    .delete()
-    .eq("id",ski.id)
-
-  await loadSkis()
-  renderAll()
-}
-
-/* ========= NY LÄNGD ========= */
-
-async function createNewLength(){
-
-  let val=document.getElementById("newLength").value
-
-  if(!val){
-    alert("Ange längd")
-    return
-  }
-
-  await supabaseClient.from("skis").insert({
-    length:parseInt(val)
-  })
-
-  document.getElementById("newLength").value=""
-
-  await loadSkis()
-  renderAll()
-}
-
-/* ========= SKIDOR ========= */
-
-function renderWall(){
-
-  const div=document.getElementById("skiWall")
-  div.innerHTML=""
-
-  let start=document.getElementById("start").value
-  let end=document.getElementById("end").value
-
-  let groups={}
-
-  skis.forEach(s=>{
-    if(!groups[s.length]) groups[s.length]=[]
-    groups[s.length].push(s)
-  })
-
-  Object.keys(groups).sort((a,b)=>a-b).forEach(length=>{
-
-    let available=(start&&end)
-      ? getAvailableCount(length,start,end)
-      : groups[length].length
-
-    let row=document.createElement("div")
-
-    row.innerHTML=`${length} cm (${available} kvar)`
-
-    let select=document.createElement("select")
-
-    for(let i=0;i<=available;i++){
-      let opt=document.createElement("option")
-      opt.value=i
-      opt.text=i+" st"
-      select.appendChild(opt)
-    }
-
-    select.value=selections[length]||0
-
-    select.onchange=()=>{
-      selections[length]=parseInt(select.value)
-      buildCart()
-      renderCart()
-    }
-
-    row.appendChild(select)
-    div.appendChild(row)
-  })
-}
-
-/* ========= CART ========= */
-
-function buildCart(){
-
-  cart=[]
-
-  Object.keys(selections).forEach(length=>{
-
-    let count=selections[length]
-    let list=skis.filter(s=>s.length==length)
-
-    for(let i=0;i<count;i++){
-      if(list[i]) cart.push(list[i].id)
-    }
-  })
-}
-
-function renderCart(){
-
-  const div=document.getElementById("cart")
-
-  if(cart.length===0){
-    div.innerHTML="Inga skidor"
-    return
-  }
-
-  let html="Valt:<br>"
-
-  Object.keys(selections).forEach(l=>{
-    if(selections[l]>0){
-      html+=`${l} cm: ${selections[l]} st<br>`
-    }
-  })
-
-  html+=`<button onclick="clearCart()">Rensa</button>`
-
-  div.innerHTML=html
-}
-
-function clearCart(){
-  cart=[]
-  selections={}
-  renderAll()
-}
-
-/* ========= SAVE ========= */
-
-async function saveBooking(){
-
-  let name=document.getElementById("customer").value
-  let start=document.getElementById("start").value
-  let end=document.getElementById("end").value
-
-  if(!name||!start||!end||cart.length===0){
-    alert("Fyll i alla fält")
-    return
-  }
-
-  await supabaseClient.from("rentals").insert({
-    name,
-    start,
-    end,
-    items:JSON.stringify(cart),
-    returned:false
-  })
-
-  cart=[]
-  selections={}
-
-  await loadBookings()
-  renderAll()
-}
-
-/* ========= KALENDER ========= */
-
-function renderWeek(){
-
-  const div=document.getElementById("calendar")
-
-  let base=getMonday(new Date())
-
-  let html="<table><tr><th>Längd</th><th>Idag</th></tr>"
-
-  let groups={}
-
-  skis.forEach(s=>{
-    if(!groups[s.length]) groups[s.length]=[]
-    groups[s.length].push(s)
-  })
-
-  Object.keys(groups).forEach(length=>{
-
-    let free=getAvailableCount(length,formatLocal(new Date()),formatLocal(new Date()))
-
-    html+=`<tr><td>${length}</td><td>${free}</td></tr>`
-  })
-
-  html+="</table>"
-
-  div.innerHTML=html
-}
-
-/* ========= RENTALS ========= */
-
-function renderRentals(){
-
-  const div=document.getElementById("rentals")
-  div.innerHTML=""
-
-  rentals.forEach(r=>{
-    if(r.returned) return
-
-    div.innerHTML+=`
-    <div>
-      <strong>${r.name}</strong><br>
-      ${r.start} → ${r.end}
-    </div><br>
-    `
-  })
 }
 
 /* ========= DATUM ========= */
