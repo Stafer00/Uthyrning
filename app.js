@@ -24,12 +24,7 @@ async function init(){
 /* ========= LOAD ========= */
 
 async function loadSkis(){
-  const {data,error}=await supabaseClient.from("skis").select("*")
-  if(error){
-    alert("Fel laddning skidor")
-    skis=[]
-    return
-  }
+  const {data}=await supabaseClient.from("skis").select("*")
   skis=data||[]
 }
 
@@ -94,7 +89,7 @@ function renderWall(){
 
   Object.keys(groups).sort((a,b)=>a-b).forEach(length=>{
 
-    let available = (start && end)
+    let available=(start&&end)
       ? getAvailableCount(length,start,end)
       : groups[length].length
 
@@ -102,16 +97,9 @@ function renderWall(){
     row.style.cssText="margin:10px;padding:12px;border:1px solid #ccc;border-radius:12px;font-size:18px"
 
     let label=document.createElement("div")
-
-    let color="#4caf50"
-    if(available<=0) color="#ccc"
-    else if(available==1) color="#ff9800"
-
     label.innerHTML=`<strong>${length} cm</strong> (${available} kvar)`
-    label.style.color=color
 
     let select=document.createElement("select")
-    select.style.cssText="font-size:18px;padding:10px;margin-top:5px"
 
     for(let i=0;i<=available;i++){
       let opt=document.createElement("option")
@@ -130,7 +118,6 @@ function renderWall(){
 
     row.appendChild(label)
     row.appendChild(select)
-
     div.appendChild(row)
   })
 }
@@ -233,8 +220,7 @@ function renderWeek(){
     dates.push(d)
   }
 
-  let html="<table style='width:100%;border-collapse:collapse'>"
-  html+="<tr><th>Längd</th>"
+  let html="<table style='width:100%'><tr><th>Längd</th>"
 
   dates.forEach((d,i)=>{
     html+=`<th>${days[i]}<br>${d.getDate()}/${d.getMonth()+1}</th>`
@@ -255,18 +241,13 @@ function renderWeek(){
 
     dates.forEach(d=>{
 
-      let day=formatLocal(d)
-
-      let free=getAvailableCount(length,day,day)
+      let free=getAvailableCount(length,formatLocal(d),formatLocal(d))
 
       let color="#4caf50"
       if(free<=0) color="#f44336"
       else if(free==1) color="#ff9800"
 
-      html+=`
-      <td style="background:${color};color:white">
-        ${free<=0?"FULLT":free}
-      </td>`
+      html+=`<td style="background:${color};color:white">${free<=0?"FULLT":free}</td>`
     })
 
     html+="</tr>"
@@ -290,28 +271,80 @@ function renderRentals(){
 
     let items=JSON.parse(r.items||"[]")
 
-    let count={}
-
-    items.forEach(id=>{
-      let ski=skis.find(s=>s.id===id)
-      if(ski){
-        count[ski.length]=(count[ski.length]||0)+1
-      }
-    })
-
     let html="<div style='border:1px solid #ccc;padding:10px;margin:5px'>"
 
     html+=`<strong>${r.name}</strong><br>`
     html+=`${r.start} → ${r.end}<br><br>`
 
-    Object.keys(count).forEach(l=>{
-      html+=`${l} cm: ${count[l]} st<br>`
+    items.forEach((id,i)=>{
+      let ski=skis.find(s=>s.id===id)
+      html+=`
+      ${ski.length} cm 
+      <button onclick="returnOne('${r.id}',${i})">X</button><br>
+      `
     })
+
+    html+=`
+    <br>
+    <button onclick="returnAll('${r.id}')">Återlämna alla</button>
+    <button onclick="extendBooking('${r.id}')">Förläng</button>
+    `
 
     html+="</div>"
 
     div.innerHTML+=html
   })
+}
+
+/* ========= DELRETUR ========= */
+
+async function returnOne(id,index){
+
+  let r=rentals.find(x=>x.id==id)
+  let items=JSON.parse(r.items||"[]")
+
+  items.splice(index,1)
+
+  if(items.length===0){
+    await supabaseClient.from("rentals").update({returned:true}).eq("id",id)
+  }else{
+    await supabaseClient.from("rentals")
+    .update({items:JSON.stringify(items)})
+    .eq("id",id)
+  }
+
+  await loadBookings()
+  renderAll()
+}
+
+/* ========= FULL RETUR ========= */
+
+async function returnAll(id){
+
+  await supabaseClient.from("rentals")
+  .update({returned:true})
+  .eq("id",id)
+
+  await loadBookings()
+  renderAll()
+}
+
+/* ========= FÖRLÄNG ========= */
+
+async function extendBooking(id){
+
+  let r=rentals.find(x=>x.id==id)
+
+  let ny=prompt("Nytt slutdatum (YYYY-MM-DD)",r.end)
+
+  if(!ny) return
+
+  await supabaseClient.from("rentals")
+  .update({end:ny})
+  .eq("id",id)
+
+  await loadBookings()
+  renderAll()
 }
 
 /* ========= DATUM ========= */
