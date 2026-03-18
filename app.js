@@ -2,12 +2,13 @@ alert("APP STARTAR")
 
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nz33NTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
 )
 
 let skis=[]
 let rentals=[]
 let cart=[]
+let weekOffset=0
 
 window.onload=init
 
@@ -227,18 +228,27 @@ function renderWeek(){
 
   const div=document.getElementById("calendar")
 
-  let html="<table><tr><th>Längd</th>"
+  let base=getMonday(new Date())
+  base.setDate(base.getDate()+weekOffset*7)
+
+  const days=["Mån","Tis","Ons","Tor","Fre","Lör","Sön"]
 
   let dates=[]
-  let base=new Date()
 
   for(let i=0;i<7;i++){
     let d=new Date(base)
     d.setDate(base.getDate()+i)
-    let f=d.toISOString().split("T")[0]
-    dates.push(f)
-    html+="<th>"+f.substring(5)+"</th>"
+    dates.push(d)
   }
+
+  let weekNr=getWeekNumber(base)
+
+  let html=`<h3>Vecka ${weekNr}</h3>`
+  html+="<table><tr><th>Längd</th>"
+
+  dates.forEach((d,i)=>{
+    html+=`<th>${days[i]}<br>${d.getDate()}/${d.getMonth()+1}</th>`
+  })
 
   html+="</tr>"
 
@@ -251,15 +261,16 @@ function renderWeek(){
 
   Object.keys(groups).forEach(length=>{
 
-    html+="<tr><td>"+length+" cm</td>"
+    html+=`<tr><td>${length} cm</td>`
 
-    dates.forEach(day=>{
+    dates.forEach(d=>{
 
+      let day=format(d)
       let free=getAvailableCount(length,day,day)
 
       html+= free<=0
         ? "<td style='background:red;color:white'>FULLT</td>"
-        : "<td style='background:green;color:white'>"+free+"</td>"
+        : `<td style="background:green;color:white">${free}</td>`
     })
 
     html+="</tr>"
@@ -362,4 +373,24 @@ async function extend(id){
 function clearForm(){
   document.getElementById("customer").value=""
   document.getElementById("phone").value=""
+}
+
+/* ========= DATUM ========= */
+
+function format(d){
+  return d.toISOString().split("T")[0]
+}
+
+function getMonday(d){
+  d=new Date(d)
+  let day=d.getDay()
+  let diff=d.getDate()-(day==0?6:day-1)
+  return new Date(d.setDate(diff))
+}
+
+function getWeekNumber(d){
+  d=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()))
+  d.setUTCDate(d.getUTCDate()+4-(d.getUTCDay()||7))
+  let yearStart=new Date(Date.UTC(d.getUTCFullYear(),0,1))
+  return Math.ceil((((d-yearStart)/86400000)+1)/7)
 }
