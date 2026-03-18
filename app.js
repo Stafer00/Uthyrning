@@ -21,7 +21,7 @@ async function init(){
   renderAll()
 }
 
-/* LOAD */
+/* ========= LOAD ========= */
 
 async function loadSkis(){
   const {data}=await supabaseClient.from("skis").select("*")
@@ -33,22 +33,11 @@ async function loadBookings(){
   rentals=data||[]
 }
 
-/* RENDER */
-
-function renderAll(){
-  cleanCart()
-  renderWall()
-  renderCart()
-  renderWeek()
-  renderRentals()
-}
-
 /* ========= LAGER ========= */
 
 function getAvailableCount(length,start,end){
 
   let total = skis.filter(s=>s.length==length).length
-
   let booked = 0
 
   rentals.forEach(r=>{
@@ -69,7 +58,24 @@ function getAvailableCount(length,start,end){
     }
   })
 
+  // 🔥 minus det som redan ligger i cart
+  cart.forEach(id=>{
+    let ski=skis.find(s=>s.id===id)
+    if(ski && ski.length==length){
+      booked++
+    }
+  })
+
   return total - booked
+}
+
+/* ========= RENDER ========= */
+
+function renderAll(){
+  renderWall()
+  renderCart()
+  renderWeek()
+  renderRentals()
 }
 
 /* ========= SKIDOR ========= */
@@ -84,20 +90,19 @@ function renderWall(){
 
   skis.forEach(ski=>{
 
-    let available = start && end
-      ? getAvailableCount(ski.length,start,end)
-      : null
-
     let el=document.createElement("div")
 
     el.style.cssText="display:inline-block;padding:14px;margin:6px;border-radius:10px;border:1px solid #ccc"
 
-    if(available!==null){
+    if(start && end){
+
+      let available=getAvailableCount(ski.length,start,end)
 
       if(available<=0){
         el.style.background="#ccc"
         el.innerText=ski.length+" cm\nFULLT"
-        return div.appendChild(el)
+        div.appendChild(el)
+        return
       }
 
       if(available==1){
@@ -109,13 +114,24 @@ function renderWall(){
         el.innerText=ski.length+" cm\n"+available+" kvar"
       }
 
+      el.onclick=()=>{
+
+        if(getAvailableCount(ski.length,start,end)<=0){
+          alert("Slut i lager")
+          return
+        }
+
+        cart.push(ski.id)
+        renderAll()
+      }
+
     }else{
       el.innerText=ski.length+" cm"
-    }
 
-    el.onclick=()=>{
-      cart.push(ski.id)
-      renderCart()
+      el.onclick=()=>{
+        cart.push(ski.id)
+        renderCart()
+      }
     }
 
     div.appendChild(el)
@@ -155,36 +171,17 @@ function renderCart(){
 
 function removeItem(i){
   cart.splice(i,1)
-  renderCart()
+  renderAll()
 }
 
 function undo(){
   cart.pop()
-  renderCart()
+  renderAll()
 }
 
 function clearCart(){
   cart=[]
-  renderCart()
-}
-
-/* ========= CLEAN CART ========= */
-
-function cleanCart(){
-
-  let start=document.getElementById("start").value
-  let end=document.getElementById("end").value
-
-  if(!start||!end) return
-
-  cart = cart.filter(id=>{
-
-    let ski=skis.find(s=>s.id===id)
-
-    let available=getAvailableCount(ski.length,start,end)
-
-    return available > 0
-  })
+  renderAll()
 }
 
 /* ========= SAVE ========= */
@@ -201,7 +198,6 @@ async function saveBooking(){
     return
   }
 
-  // 🔥 sista kontroll
   for(let id of cart){
 
     let ski=skis.find(s=>s.id===id)
