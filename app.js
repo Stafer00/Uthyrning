@@ -2,7 +2,7 @@ alert("APP STARTAR")
 
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nz33NTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
 )
 
 let skis=[]
@@ -14,23 +14,49 @@ window.onload=init
 
 async function init(){
 
-  document.getElementById("saveBtn").onclick=saveBooking
+  try{
 
-  await loadSkis()
-  await loadBookings()
+    document.getElementById("saveBtn").onclick=saveBooking
 
-  renderAll()
+    await loadSkis()
+    await loadBookings()
+
+    renderAll()
+
+  }catch(e){
+    console.log("INIT ERROR", e)
+    alert("Fel vid start – kolla internet/databas")
+  }
 }
 
 /* ========= LOAD ========= */
 
 async function loadSkis(){
-  const {data}=await supabaseClient.from("skis").select("*")
+
+  const {data,error} = await supabaseClient.from("skis").select("*")
+
+  if(error){
+    console.log("SKIS ERROR", error)
+    alert("Kunde inte ladda skidor")
+    skis=[]
+    return
+  }
+
   skis=data||[]
+  console.log("Skidor laddade:", skis.length)
 }
 
 async function loadBookings(){
-  const {data}=await supabaseClient.from("rentals").select("*")
+
+  const {data,error} = await supabaseClient.from("rentals").select("*")
+
+  if(error){
+    console.log("RENTALS ERROR", error)
+    alert("Kunde inte ladda bokningar")
+    rentals=[]
+    return
+  }
+
   rentals=data||[]
 }
 
@@ -85,7 +111,7 @@ function renderWall(){
 
     let el=document.createElement("div")
 
-    el.style.cssText="display:inline-block;padding:14px;margin:6px;border-radius:10px;border:1px solid #ccc"
+    el.style.cssText="display:inline-block;padding:16px;margin:6px;border-radius:12px;border:1px solid #ccc;font-size:18px"
 
     if(start && end){
 
@@ -110,11 +136,11 @@ function renderWall(){
       el.onclick=()=>{
 
         let countInCart = cart.filter(id=>{
-          let s = skis.find(x=>x.id===id)
+          let s=skis.find(x=>x.id===id)
           return s && s.length==ski.length
         }).length
 
-        if(countInCart >= available){
+        if(countInCart>=available){
           alert("Inga fler finns i lager")
           return
         }
@@ -155,7 +181,7 @@ function renderCart(){
 
     html+=`
     ${ski.length} cm 
-    <button onclick="removeItem(${i})">X</button><br>
+    <button onclick="removeItem(${i})">❌</button><br>
     `
   })
 
@@ -207,7 +233,7 @@ async function saveBooking(){
     }
   }
 
-  await supabaseClient.from("rentals").insert({
+  const {error}=await supabaseClient.from("rentals").insert({
     name,
     phone,
     start,
@@ -215,6 +241,11 @@ async function saveBooking(){
     items:JSON.stringify(cart),
     returned:false
   })
+
+  if(error){
+    alert(error.message)
+    return
+  }
 
   cart=[]
 
@@ -294,7 +325,7 @@ function renderRentals(){
 
     let items=JSON.parse(r.items||"[]")
 
-    let html="<div class='card'>"
+    let html="<div style='border:1px solid #ccc;padding:10px;margin:5px'>"
 
     html+=`<strong>${r.name}</strong><br>`
     html+=`${r.start} → ${r.end}<br><br>`
@@ -310,7 +341,7 @@ function renderRentals(){
 
     html+=`<br>
     <button onclick="extend('${r.id}')">Förläng</button>
-    <button onclick="returnAll('${r.id}')">Allt klart</button>
+    <button onclick="returnAll('${r.id}')">Klart</button>
     `
 
     html+="</div>"
@@ -366,13 +397,6 @@ async function extend(id){
 
   await loadBookings()
   renderAll()
-}
-
-/* ========= FORM ========= */
-
-function clearForm(){
-  document.getElementById("customer").value=""
-  document.getElementById("phone").value=""
 }
 
 /* ========= DATUM ========= */
