@@ -7,56 +7,29 @@ const supabaseClient = window.supabase.createClient(
 
 let skis=[]
 let rentals=[]
-let cart=[]
-let weekOffset=0
+let cart=[] // sparar IDs
+let selections={} // {length: antal}
+
+/* ========= INIT ========= */
 
 window.onload=init
 
 async function init(){
-
-  try{
-
-    document.getElementById("saveBtn").onclick=saveBooking
-
-    await loadSkis()
-    await loadBookings()
-
-    renderAll()
-
-  }catch(e){
-    console.log("INIT ERROR", e)
-    alert("Fel vid start – kolla internet/databas")
-  }
+  document.getElementById("saveBtn").onclick=saveBooking
+  await loadSkis()
+  await loadBookings()
+  renderAll()
 }
 
 /* ========= LOAD ========= */
 
 async function loadSkis(){
-
-  const {data,error} = await supabaseClient.from("skis").select("*")
-
-  if(error){
-    console.log("SKIS ERROR", error)
-    alert("Kunde inte ladda skidor")
-    skis=[]
-    return
-  }
-
+  const {data}=await supabaseClient.from("skis").select("*")
   skis=data||[]
-  console.log("Skidor laddade:", skis.length)
 }
 
 async function loadBookings(){
-
-  const {data,error} = await supabaseClient.from("rentals").select("*")
-
-  if(error){
-    console.log("RENTALS ERROR", error)
-    alert("Kunde inte ladda bokningar")
-    rentals=[]
-    return
-  }
-
+  const {data}=await supabaseClient.from("rentals").select("*")
   rentals=data||[]
 }
 
@@ -68,7 +41,6 @@ function getAvailableCount(length,start,end){
   let booked = 0
 
   rentals.forEach(r=>{
-
     if(r.returned) return
 
     if(!(end < r.start || start > r.end)){
@@ -97,7 +69,7 @@ function renderAll(){
   renderRentals()
 }
 
-/* ========= SKIDOR ========= */
+/* ========= SKIDOR (DROPDOWN) ========= */
 
 function renderWall(){
 
@@ -107,59 +79,73 @@ function renderWall(){
   let start=document.getElementById("start").value
   let end=document.getElementById("end").value
 
-  skis.forEach(ski=>{
+  let groups={}
 
-    let el=document.createElement("div")
+  skis.forEach(s=>{
+    if(!groups[s.length]) groups[s.length]=[]
+    groups[s.length].push(s)
+  })
 
-    el.style.cssText="display:inline-block;padding:16px;margin:6px;border-radius:12px;border:1px solid #ccc;font-size:18px"
+  Object.keys(groups).sort((a,b)=>a-b).forEach(length=>{
 
-    if(start && end){
+    let available = (start && end)
+      ? getAvailableCount(length,start,end)
+      : groups[length].length
 
-      let available=getAvailableCount(ski.length,start,end)
+    let row=document.createElement("div")
+    row.style.margin="10px"
+    row.style.padding="10px"
+    row.style.border="1px solid #ccc"
+    row.style.borderRadius="10px"
 
-      if(available<=0){
-        el.style.background="#ccc"
-        el.innerText=ski.length+" cm\nFULLT"
-        div.appendChild(el)
-        return
-      }
+    let label=document.createElement("div")
+    label.innerHTML=`<strong>${length} cm</strong> (${available} kvar)`
 
-      if(available==1){
-        el.style.background="#ff9800"
-        el.innerText=ski.length+" cm\n1 kvar"
-      }else{
-        el.style.background="#4caf50"
-        el.style.color="white"
-        el.innerText=ski.length+" cm\n"+available+" kvar"
-      }
+    let select=document.createElement("select")
+    select.style.fontSize="18px"
+    select.style.padding="8px"
 
-      el.onclick=()=>{
+    let max=Math.max(available,0)
 
-        let countInCart = cart.filter(id=>{
-          let s=skis.find(x=>x.id===id)
-          return s && s.length==ski.length
-        }).length
-
-        if(countInCart>=available){
-          alert("Inga fler finns i lager")
-          return
-        }
-
-        cart.push(ski.id)
-        renderAll()
-      }
-
-    }else{
-
-      el.innerText=ski.length+" cm"
-
-      el.onclick=()=>{
-        cart.push(ski.id)
-        renderCart()
-      }
+    for(let i=0;i<=max;i++){
+      let opt=document.createElement("option")
+      opt.value=i
+      opt.text=i+" st"
+      select.appendChild(opt)
     }
 
-    div.appendChild(el)
+    select.value = selections[length] || 0
+
+    select.onchange=()=>{
+      selections[length]=parseInt(select.value)
+      buildCartFromSelections()
+      renderCart()
+    }
+
+    row.appendChild(label)
+    row.appendChild(select)
+
+    div.appendChild(row)
+  })
+}
+
+/* ========= BUILD CART ========= */
+
+function buildCartFromSelections(){
+
+  cart=[]
+
+  Object.keys(selections).forEach(length=>{
+
+    let count=selections[length]
+
+    let skisOfLength=skis.filter(s=>s.length==length)
+
+    for(let i=0;i<count;i++){
+      if(skisOfLength[i]){
+        cart.push(skisOfLength[i].id)
+      }
+    }
   })
 }
 
@@ -174,38 +160,22 @@ function renderCart(){
     return
   }
 
-  let html=""
+  let html="<strong>Valt:</strong><br>"
 
-  cart.forEach((id,i)=>{
-    let ski=skis.find(s=>s.id===id)
-
-    html+=`
-    ${ski.length} cm 
-    <button onclick="removeItem(${i})">❌</button><br>
-    `
+  Object.keys(selections).forEach(length=>{
+    if(selections[length]>0){
+      html+=`${length} cm: ${selections[length]} st<br>`
+    }
   })
 
-  html+=`
-  <br>
-  <button onclick="undo()">Ångra</button>
-  <button onclick="clearCart()">Rensa</button>
-  `
+  html+=`<br><button onclick="clearCart()">Rensa</button>`
 
   div.innerHTML=html
 }
 
-function removeItem(i){
-  cart.splice(i,1)
-  renderAll()
-}
-
-function undo(){
-  cart.pop()
-  renderAll()
-}
-
 function clearCart(){
   cart=[]
+  selections={}
   renderAll()
 }
 
@@ -223,16 +193,6 @@ async function saveBooking(){
     return
   }
 
-  for(let id of cart){
-
-    let ski=skis.find(s=>s.id===id)
-
-    if(getAvailableCount(ski.length,start,end)<=0){
-      alert("Slut i lager: "+ski.length+" cm")
-      return
-    }
-  }
-
   const {error}=await supabaseClient.from("rentals").insert({
     name,
     phone,
@@ -248,6 +208,7 @@ async function saveBooking(){
   }
 
   cart=[]
+  selections={}
 
   await loadBookings()
   renderAll()
@@ -260,7 +221,6 @@ function renderWeek(){
   const div=document.getElementById("calendar")
 
   let base=getMonday(new Date())
-  base.setDate(base.getDate()+weekOffset*7)
 
   const days=["Mån","Tis","Ons","Tor","Fre","Lör","Sön"]
 
@@ -272,10 +232,7 @@ function renderWeek(){
     dates.push(d)
   }
 
-  let weekNr=getWeekNumber(base)
-
-  let html=`<h3>Vecka ${weekNr}</h3>`
-  html+="<table><tr><th>Längd</th>"
+  let html="<table><tr><th>Längd</th>"
 
   dates.forEach((d,i)=>{
     html+=`<th>${days[i]}<br>${d.getDate()}/${d.getMonth()+1}</th>`
@@ -292,16 +249,11 @@ function renderWeek(){
 
   Object.keys(groups).forEach(length=>{
 
-    html+=`<tr><td>${length} cm</td>`
+    html+=`<tr><td>${length}</td>`
 
     dates.forEach(d=>{
-
-      let day=format(d)
-      let free=getAvailableCount(length,day,day)
-
-      html+= free<=0
-        ? "<td style='background:red;color:white'>FULLT</td>"
-        : `<td style="background:green;color:white">${free}</td>`
+      let free=getAvailableCount(length,format(d),format(d))
+      html+=`<td>${free}</td>`
     })
 
     html+="</tr>"
@@ -330,73 +282,23 @@ function renderRentals(){
     html+=`<strong>${r.name}</strong><br>`
     html+=`${r.start} → ${r.end}<br><br>`
 
-    items.forEach((id,i)=>{
-      let ski=skis.find(s=>s.id===id)
+    let lengths={}
 
-      html+=`
-      ${ski.length} cm 
-      <button onclick="returnOne('${r.id}',${i})">X</button><br>
-      `
+    items.forEach(id=>{
+      let ski=skis.find(s=>s.id===id)
+      if(ski){
+        lengths[ski.length]=(lengths[ski.length]||0)+1
+      }
     })
 
-    html+=`<br>
-    <button onclick="extend('${r.id}')">Förläng</button>
-    <button onclick="returnAll('${r.id}')">Klart</button>
-    `
+    Object.keys(lengths).forEach(l=>{
+      html+=`${l} cm: ${lengths[l]} st<br>`
+    })
 
     html+="</div>"
 
     div.innerHTML+=html
   })
-}
-
-/* ========= RETURN ========= */
-
-async function returnOne(id,index){
-
-  let r=rentals.find(x=>x.id==id)
-  let items=JSON.parse(r.items||"[]")
-
-  items.splice(index,1)
-
-  if(items.length===0){
-    await supabaseClient.from("rentals").update({returned:true}).eq("id",id)
-  }else{
-    await supabaseClient.from("rentals").update({
-      items:JSON.stringify(items)
-    }).eq("id",id)
-  }
-
-  await loadBookings()
-  renderAll()
-}
-
-async function returnAll(id){
-
-  await supabaseClient.from("rentals")
-  .update({returned:true})
-  .eq("id",id)
-
-  await loadBookings()
-  renderAll()
-}
-
-/* ========= FÖRLÄNG ========= */
-
-async function extend(id){
-
-  let r=rentals.find(x=>x.id==id)
-
-  let ny=prompt("Nytt slutdatum",r.end)
-
-  if(!ny) return
-
-  await supabaseClient.from("rentals")
-  .update({end:ny})
-  .eq("id",id)
-
-  await loadBookings()
-  renderAll()
 }
 
 /* ========= DATUM ========= */
@@ -410,11 +312,4 @@ function getMonday(d){
   let day=d.getDay()
   let diff=d.getDate()-(day==0?6:day-1)
   return new Date(d.setDate(diff))
-}
-
-function getWeekNumber(d){
-  d=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()))
-  d.setUTCDate(d.getUTCDate()+4-(d.getUTCDay()||7))
-  let yearStart=new Date(Date.UTC(d.getUTCFullYear(),0,1))
-  return Math.ceil((((d-yearStart)/86400000)+1)/7)
 }
