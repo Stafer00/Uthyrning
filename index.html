@@ -13,8 +13,10 @@
 <meta http-equiv="Expires" content="0">
 
 <style>
+
 body{
   font-family:-apple-system, Arial;
+  margin:0;
   padding:10px;
   background:#f5f5f5;
 }
@@ -22,75 +24,55 @@ body{
 /* SECTIONS */
 .section{
   background:white;
-  padding:10px;
-  border-radius:10px;
-  margin-bottom:10px;
+  padding:12px;
+  border-radius:12px;
+  margin-bottom:12px;
 }
 
 /* INPUT */
 input{
-  font-size:16px;
-  padding:10px;
-  margin:4px 0;
+  font-size:18px;
+  padding:12px;
+  margin:6px 0;
   width:100%;
-  border-radius:8px;
+  border-radius:10px;
   border:1px solid #ccc;
 }
 
 /* BUTTON */
 button{
-  font-size:14px;
-  padding:6px 8px;
-  margin:3px;
-  border-radius:8px;
+  font-size:16px;
+  padding:10px;
+  margin:5px;
+  border-radius:10px;
   border:none;
   background:#2e7dff;
   color:white;
 }
 
-/* 🔥 5 KOLUMNER – FUNKAR ALLTID */
+/* SPECIAL KNAPPAR */
+.clearBtn{
+  background:#777;
+}
+
+.saveBtn{
+  background:#2e7dff;
+}
+
+/* GRID – 5 KOLUMNER */
 .grid{
   display:grid;
-  grid-template-columns:repeat(5, minmax(0, 1fr));
-  gap:6px;
+  grid-template-columns:repeat(5, 1fr);
+  gap:8px;
 }
 
-/* 🔥 KRITISK FIX */
+/* SKIDKORT */
 .card{
-  width:100%;
-  box-sizing:border-box;
   border:1px solid #ddd;
-  padding:6px;
-  border-radius:10px;
+  border-radius:12px;
+  padding:8px;
   text-align:center;
-  background:#fff;
-  font-size:12px;
-}
-
-/* RUBRIK */
-.card h4{
-  margin:2px 0;
   font-size:13px;
-}
-
-/* ANTAL */
-.count{
-  font-size:14px;
-  margin:2px 0;
-}
-
-/* KNAPPAR */
-.controls{
-  display:flex;
-  justify-content:center;
-  gap:4px;
-}
-
-.card button{
-  width:28px;
-  height:28px;
-  font-size:14px;
-  padding:0;
 }
 
 /* KALENDER */
@@ -101,10 +83,16 @@ button{
 }
 
 #calendar th, #calendar td{
-  padding:4px;
-  font-size:11px;
+  padding:6px;
+  font-size:12px;
   text-align:center;
 }
+
+/* RUBRIKER */
+h3, h4{
+  margin:5px 0;
+}
+
 </style>
 
 <!-- SUPABASE -->
@@ -116,8 +104,9 @@ button{
 
 <h3>Skiduthyrning</h3>
 
-<!-- BOKNING -->
+<!-- KUND -->
 <div class="section">
+
 <input id="customer" placeholder="Namn">
 <input id="phone" placeholder="Telefon">
 
@@ -126,18 +115,21 @@ button{
 
 <label>Slut</label>
 <input type="date" id="end">
+
 </div>
 
 <!-- SKIDOR -->
 <div class="section">
 
 <h4>Välj skidor</h4>
+
 <div id="skiWall" class="grid"></div>
 
 <h4>Valda</h4>
 <div id="cart"></div>
 
-<button id="saveBtn">Spara bokning</button>
+<button id="saveBtn" class="saveBtn">Spara bokning</button>
+<button onclick="clearForm()" class="clearBtn">Rensa</button>
 
 </div>
 
@@ -157,11 +149,12 @@ button{
 <div class="section">
 
 <h4>Bokningar</h4>
+
 <div id="rentals"></div>
 
 </div>
 
-<!-- RENSAR SERVICE WORKERS -->
+<!-- 🔥 RENSAR SERVICE WORKER -->
 <script>
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(regs => {
@@ -170,7 +163,7 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 
-<!-- CACHE KILL -->
+<!-- 🔥 CACHE-KILL -->
 <script>
 const script = document.createElement("script")
 script.src = "/app.js?v=" + Date.now()
