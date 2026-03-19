@@ -7,73 +7,69 @@
 
 <title>Skiduthyrning</title>
 
+<!-- 🔥 STOPPAR ALL CACHE -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 
 <style>
-
-body {
-  font-family: -apple-system, Arial;
-  padding: 20px;
-  background: #f5f5f5;
+body{
+  font-family:-apple-system,Arial;
+  padding:15px;
+  background:#f5f5f5;
 }
 
-h1 { font-size: 34px; }
-
-.section {
-  background: white;
-  padding: 15px;
-  border-radius: 15px;
-  margin-bottom: 20px;
+.section{
+  background:white;
+  padding:12px;
+  border-radius:12px;
+  margin-bottom:15px;
 }
 
-input, select, button {
-  font-size: 18px;
-  padding: 14px;
-  margin: 5px 0;
-  border-radius: 10px;
-  border: 1px solid #ccc;
-  width: 100%;
+button{
+  font-size:18px;
+  padding:12px;
+  margin:5px;
+  border-radius:10px;
+  border:none;
+  background:#2e7dff;
+  color:white;
 }
 
-button {
-  background: #2e7dff;
-  color: white;
-  border: none;
+input{
+  font-size:18px;
+  padding:12px;
+  margin:5px 0;
+  width:100%;
+  border-radius:10px;
+  border:1px solid #ccc;
 }
 
-.small-btn {
-  width: auto;
-  padding: 10px 14px;
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
 }
 
-#inventorySection {
-  display: none;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-td, th {
-  padding: 6px;
-  text-align: center;
+.card{
+  border:1px solid #ccc;
+  padding:10px;
+  border-radius:10px;
+  text-align:center;
 }
 
 </style>
 
+<!-- 🔥 SUPABASE -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 </head>
 
 <body>
 
-<h1>Skiduthyrning</h1>
+<h2>Skiduthyrning</h2>
 
-<!-- ========= BOKNING ========= -->
 <div class="section">
-
-<h2>Ny bokning</h2>
 
 <input id="customer" placeholder="Namn">
 <input id="phone" placeholder="Telefon">
@@ -86,65 +82,43 @@ td, th {
 
 </div>
 
-<!-- ========= SKIDOR ========= -->
 <div class="section">
 
-<h2>Välj skidor</h2>
-<div id="skiWall"></div>
+<h3>Välj skidor</h3>
+<div id="skiWall" class="grid"></div>
 
-<h3>Valda skidor</h3>
-<div id="cart">Inga skidor</div>
+<h3>Valt</h3>
+<div id="cart"></div>
 
 <button id="saveBtn">Spara bokning</button>
 
 </div>
 
-<!-- ========= KALENDER ========= -->
 <div class="section">
 
-<h2>Kalender</h2>
+<h3>Kalender</h3>
 
-<div style="display:flex; gap:10px;">
-  <button onclick="prevWeek()">←</button>
-  <button onclick="nextWeek()">→</button>
-</div>
-
-<br>
+<button onclick="prevWeek()">←</button>
+<button onclick="nextWeek()">→</button>
 
 <div id="calendar"></div>
 
 </div>
 
-<!-- ========= BOKNINGAR ========= -->
 <div class="section">
 
-<h2>Aktiva bokningar</h2>
+<h3>Bokningar</h3>
 <div id="rentals"></div>
 
 </div>
 
-<!-- ========= LAGER ========= -->
-<div class="section">
-
-<button class="small-btn" onclick="toggleInventory()">
-⚙️ Lagerhantering
-</button>
-
-<div id="inventorySection">
-  <h2>Lager</h2>
-  <div id="inventory"></div>
-</div>
-
-</div>
-
+<!-- 🔥 CACHE-KILL JS -->
 <script>
-function toggleInventory(){
-  const div = document.getElementById("inventorySection")
-  div.style.display = div.style.display === "none" ? "block" : "none"
-}
+const version = Date.now()
+const script = document.createElement("script")
+script.src = "/app.js?v=" + version
+document.body.appendChild(script)
 </script>
-
-<script src="/app.js?v=12000"></script>
 
 </body>
 </html>
