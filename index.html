@@ -7,7 +7,7 @@
 
 <title>Skiduthyrning</title>
 
-<!-- 🔥 STOPPA CACHE HELT -->
+<!-- 🔥 STOPPA CACHE -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -15,7 +15,7 @@
 <style>
 body{
   font-family:-apple-system, Arial;
-  padding:15px;
+  padding:12px;
   background:#f5f5f5;
 }
 
@@ -23,55 +23,60 @@ h2{
   margin-bottom:10px;
 }
 
+/* SECTIONS */
 .section{
   background:white;
-  padding:14px;
-  border-radius:14px;
-  margin-bottom:16px;
+  padding:12px;
+  border-radius:12px;
+  margin-bottom:12px;
 }
 
+/* INPUT */
 input{
-  font-size:18px;
-  padding:14px;
-  margin:6px 0;
+  font-size:16px;
+  padding:10px;
+  margin:5px 0;
   width:100%;
-  border-radius:12px;
+  border-radius:10px;
   border:1px solid #ccc;
 }
 
+/* BUTTON */
 button{
-  font-size:18px;
-  padding:12px 16px;
-  margin:5px;
-  border-radius:12px;
+  font-size:16px;
+  padding:10px 12px;
+  margin:4px;
+  border-radius:10px;
   border:none;
   background:#2e7dff;
   color:white;
 }
 
-/* 🔥 FYLLER HELA BREDDEN */
+/* 🔥 5 KOLUMNER */
 .grid{
   display:grid;
-  grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));
-  gap:12px;
+  grid-template-columns:repeat(5, 1fr);
+  gap:8px;
 }
 
+/* KORT */
 .card{
   border:1px solid #ddd;
-  padding:12px;
-  border-radius:14px;
+  padding:8px;
+  border-radius:10px;
   text-align:center;
   background:#fff;
-  box-shadow:0 2px 6px rgba(0,0,0,0.05);
 }
 
+/* KNAPPAR */
 .card button{
-  font-size:20px;
-  padding:10px 14px;
-  margin:6px;
-  width:60px;
+  font-size:16px;
+  padding:6px 8px;
+  margin:4px;
+  width:40px;
 }
 
+/* KALENDER */
 #calendar table{
   width:100%;
   border-collapse:collapse;
@@ -79,13 +84,14 @@ button{
 }
 
 #calendar th, #calendar td{
-  padding:6px;
+  padding:5px;
   text-align:center;
-  font-size:14px;
+  font-size:12px;
 }
+
 </style>
 
-<!-- 🔥 SUPABASE -->
+<!-- SUPABASE -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 </head>
@@ -94,7 +100,9 @@ button{
 
 <h2>Skiduthyrning</h2>
 
+<!-- BOKNING -->
 <div class="section">
+
 <input id="customer" placeholder="Namn">
 <input id="phone" placeholder="Telefon">
 
@@ -103,35 +111,45 @@ button{
 
 <label>Slut</label>
 <input type="date" id="end">
+
 </div>
 
+<!-- SKIDOR -->
 <div class="section">
+
 <h3>Välj skidor</h3>
 <div id="skiWall" class="grid"></div>
 
-<h3>Valda skidor</h3>
+<h3>Valda</h3>
 <div id="cart"></div>
 
 <button id="saveBtn">Spara bokning</button>
+
 </div>
 
+<!-- KALENDER -->
 <div class="section">
+
 <h3>Kalender</h3>
 
-<div style="display:flex;gap:10px;">
+<div style="display:flex;gap:8px;">
   <button onclick="prevWeek()">←</button>
   <button onclick="nextWeek()">→</button>
 </div>
 
 <div id="calendar"></div>
+
 </div>
 
+<!-- BOKNINGAR -->
 <div class="section">
-<h3>Aktiva bokningar</h3>
+
+<h3>Bokningar</h3>
 <div id="rentals"></div>
+
 </div>
 
-<!-- 🔥 RENSAR ALLA GAMLA SERVICE WORKERS -->
+<!-- 🔥 RENSAR SERVICE WORKER -->
 <script>
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(regs => {
@@ -140,16 +158,14 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 
-<!-- 🔥 100% CACHE-KILL + AUTO-RELOAD -->
+<!-- 🔥 LADDAR NYASTE JS + AUTO-RELOAD -->
 <script>
 const version = Date.now()
 
-// ladda JS alltid ny
 const script = document.createElement("script")
 script.src = "/app.js?v=" + version
 document.body.appendChild(script)
 
-// 🔥 Tvinga reload EN gång per session
 if (!sessionStorage.getItem("reloaded")) {
   sessionStorage.setItem("reloaded", "true")
   location.reload()
