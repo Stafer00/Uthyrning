@@ -1,4 +1,4 @@
-console.log("APP PRO FINAL + KALENDER")
+console.log("APP PRO FINAL + CLEAR")
 
 /* ========= SUPABASE ========= */
 
@@ -20,8 +20,7 @@ window.onload = init
 
 async function init(){
 
-  const btn = document.getElementById("saveBtn")
-  if(btn) btn.onclick = saveBooking
+  document.getElementById("saveBtn").onclick = saveBooking
 
   await loadSkis()
   await loadBookings()
@@ -158,6 +157,20 @@ function renderCart(){
   div.innerHTML = html
 }
 
+/* ========= CLEAR ========= */
+
+function clearForm(){
+
+  document.getElementById("customer").value = ""
+  document.getElementById("phone").value = ""
+  document.getElementById("start").value = ""
+  document.getElementById("end").value = ""
+
+  cart = []
+
+  renderAll()
+}
+
 /* ========= LAGER ========= */
 
 function getAvailable(ids){
@@ -208,13 +221,13 @@ async function saveBooking(){
 
   alert("Bokning sparad")
 
-  cart = []
+  clearForm()
 
   await loadBookings()
   renderAll()
 }
 
-/* ========= KALENDER (ANTAL) ========= */
+/* ========= KALENDER ========= */
 
 function renderWeek(){
 
@@ -225,18 +238,18 @@ function renderWeek(){
 
   let dates = []
   for(let i=0;i<7;i++){
-    let d = new Date(base)
+    let d=new Date(base)
     d.setDate(base.getDate()+i)
     dates.push(format(d))
   }
 
-  let html = "<table border='1'><tr><th>Längd</th>"
+  let html="<table border='1'><tr><th>Längd</th>"
 
   dates.forEach(d=>{
-    html += "<th>"+d.substring(5)+"</th>"
+    html+="<th>"+d.substring(5)+"</th>"
   })
 
-  html += "</tr>"
+  html+="</tr>"
 
   const grouped = getGroupedSkis()
 
@@ -245,17 +258,16 @@ function renderWeek(){
     const ids = grouped[length]
     const total = ids.length
 
-    html += "<tr><td>"+length+" cm</td>"
+    html+="<tr><td>"+length+" cm</td>"
 
     dates.forEach(day=>{
 
-      let booked = 0
+      let booked=0
 
       rentals.forEach(r=>{
-
         if(r.returned) return
 
-        if(day >= r.start && day <= r.end){
+        if(day>=r.start && day<=r.end){
 
           let items=[]
           try{items=JSON.parse(r.items)}catch{}
@@ -272,17 +284,13 @@ function renderWeek(){
       if(free === 0) bg = "#f44336"
       else if(free <= 2) bg = "#ff9800"
 
-      html += `
-        <td style="background:${bg};color:white">
-          ${booked}/${total}
-        </td>
-      `
+      html+=`<td style="background:${bg};color:white">${booked}/${total}</td>`
     })
 
-    html += "</tr>"
+    html+="</tr>"
   })
 
-  html += "</table>"
+  html+="</table>"
 
   div.innerHTML = html
 }
@@ -322,7 +330,9 @@ function renderRentals(){
 
     div.innerHTML += `
       <div style="border:1px solid #ccc;padding:10px;margin:6px;border-radius:10px">
+
         <strong>${r.name}</strong><br>
+        📞 ${r.phone || "-"}<br>
         ${r.start} → ${r.end}<br><br>
 
         ${skisText}
@@ -332,6 +342,7 @@ function renderRentals(){
 
         <button onclick="extendBooking('${r.id}')">Förläng</button>
         <button onclick="returnAll('${r.id}')">Återlämna allt</button>
+
       </div>
     `
   })
