@@ -7,7 +7,7 @@
 
 <title>Skiduthyrning</title>
 
-<!-- 🔥 STOPPA CACHE -->
+<!-- STOPPA CACHE -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -39,8 +39,8 @@ input{
 
 /* BUTTON */
 button{
-  font-size:16px;
-  padding:8px 10px;
+  font-size:14px;
+  padding:6px 8px;
   margin:3px;
   border-radius:8px;
   border:none;
@@ -48,48 +48,48 @@ button{
   color:white;
 }
 
-/* 🔥 5 KOLUMNER */
+/* 🔥 5 KOLUMNER – FUNKAR ALLTID */
 .grid{
   display:grid;
-  grid-template-columns:repeat(5, 1fr);
+  grid-template-columns:repeat(5, minmax(0, 1fr));
   gap:6px;
 }
 
-/* KORT */
+/* 🔥 KRITISK FIX */
 .card{
+  width:100%;
+  box-sizing:border-box;
   border:1px solid #ddd;
   padding:6px;
   border-radius:10px;
   text-align:center;
   background:#fff;
-  font-size:13px;
+  font-size:12px;
 }
 
-/* TITEL */
+/* RUBRIK */
 .card h4{
   margin:2px 0;
-  font-size:14px;
+  font-size:13px;
 }
 
 /* ANTAL */
 .count{
-  font-size:16px;
-  margin:4px 0;
-}
-
-/* KNAPPRAD */
-.controls{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  gap:6px;
+  font-size:14px;
+  margin:2px 0;
 }
 
 /* KNAPPAR */
+.controls{
+  display:flex;
+  justify-content:center;
+  gap:4px;
+}
+
 .card button{
-  width:34px;
-  height:34px;
-  font-size:16px;
+  width:28px;
+  height:28px;
+  font-size:14px;
   padding:0;
 }
 
@@ -102,7 +102,7 @@ button{
 
 #calendar th, #calendar td{
   padding:4px;
-  font-size:12px;
+  font-size:11px;
   text-align:center;
 }
 </style>
@@ -161,7 +161,7 @@ button{
 
 </div>
 
-<!-- 🔥 RENSAR SERVICE WORKER -->
+<!-- RENSAR SERVICE WORKERS -->
 <script>
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(regs => {
@@ -170,7 +170,7 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 
-<!-- 🔥 CACHE KILL -->
+<!-- CACHE KILL -->
 <script>
 const script = document.createElement("script")
 script.src = "/app.js?v=" + Date.now()
