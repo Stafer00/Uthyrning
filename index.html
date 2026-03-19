@@ -15,38 +15,34 @@
 <style>
 body{
   font-family:-apple-system, Arial;
-  padding:12px;
+  padding:10px;
   background:#f5f5f5;
-}
-
-h2{
-  margin-bottom:10px;
 }
 
 /* SECTIONS */
 .section{
   background:white;
-  padding:12px;
-  border-radius:12px;
-  margin-bottom:12px;
+  padding:10px;
+  border-radius:10px;
+  margin-bottom:10px;
 }
 
 /* INPUT */
 input{
   font-size:16px;
   padding:10px;
-  margin:5px 0;
+  margin:4px 0;
   width:100%;
-  border-radius:10px;
+  border-radius:8px;
   border:1px solid #ccc;
 }
 
 /* BUTTON */
 button{
   font-size:16px;
-  padding:10px 12px;
-  margin:4px;
-  border-radius:10px;
+  padding:8px 10px;
+  margin:3px;
+  border-radius:8px;
   border:none;
   background:#2e7dff;
   color:white;
@@ -56,24 +52,45 @@ button{
 .grid{
   display:grid;
   grid-template-columns:repeat(5, 1fr);
-  gap:8px;
+  gap:6px;
 }
 
 /* KORT */
 .card{
   border:1px solid #ddd;
-  padding:8px;
+  padding:6px;
   border-radius:10px;
   text-align:center;
   background:#fff;
+  font-size:13px;
+}
+
+/* TITEL */
+.card h4{
+  margin:2px 0;
+  font-size:14px;
+}
+
+/* ANTAL */
+.count{
+  font-size:16px;
+  margin:4px 0;
+}
+
+/* KNAPPRAD */
+.controls{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:6px;
 }
 
 /* KNAPPAR */
 .card button{
+  width:34px;
+  height:34px;
   font-size:16px;
-  padding:6px 8px;
-  margin:4px;
-  width:40px;
+  padding:0;
 }
 
 /* KALENDER */
@@ -84,11 +101,10 @@ button{
 }
 
 #calendar th, #calendar td{
-  padding:5px;
-  text-align:center;
+  padding:4px;
   font-size:12px;
+  text-align:center;
 }
-
 </style>
 
 <!-- SUPABASE -->
@@ -98,11 +114,10 @@ button{
 
 <body>
 
-<h2>Skiduthyrning</h2>
+<h3>Skiduthyrning</h3>
 
 <!-- BOKNING -->
 <div class="section">
-
 <input id="customer" placeholder="Namn">
 <input id="phone" placeholder="Telefon">
 
@@ -111,16 +126,15 @@ button{
 
 <label>Slut</label>
 <input type="date" id="end">
-
 </div>
 
 <!-- SKIDOR -->
 <div class="section">
 
-<h3>Välj skidor</h3>
+<h4>Välj skidor</h4>
 <div id="skiWall" class="grid"></div>
 
-<h3>Valda</h3>
+<h4>Valda</h4>
 <div id="cart"></div>
 
 <button id="saveBtn">Spara bokning</button>
@@ -130,12 +144,10 @@ button{
 <!-- KALENDER -->
 <div class="section">
 
-<h3>Kalender</h3>
+<h4>Kalender</h4>
 
-<div style="display:flex;gap:8px;">
-  <button onclick="prevWeek()">←</button>
-  <button onclick="nextWeek()">→</button>
-</div>
+<button onclick="prevWeek()">←</button>
+<button onclick="nextWeek()">→</button>
 
 <div id="calendar"></div>
 
@@ -144,7 +156,7 @@ button{
 <!-- BOKNINGAR -->
 <div class="section">
 
-<h3>Bokningar</h3>
+<h4>Bokningar</h4>
 <div id="rentals"></div>
 
 </div>
@@ -158,12 +170,10 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 
-<!-- 🔥 LADDAR NYASTE JS + AUTO-RELOAD -->
+<!-- 🔥 CACHE KILL -->
 <script>
-const version = Date.now()
-
 const script = document.createElement("script")
-script.src = "/app.js?v=" + version
+script.src = "/app.js?v=" + Date.now()
 document.body.appendChild(script)
 
 if (!sessionStorage.getItem("reloaded")) {
