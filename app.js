@@ -43,7 +43,6 @@ function getAvailableCount(length,start,end){
     if(r.returned) return
 
     if(!(end < r.start || start > r.end)){
-
       let items=[]
       try{items=JSON.parse(r.items||"[]")}catch{}
 
@@ -69,7 +68,7 @@ function renderAll(){
   renderInventory()
 }
 
-/* ========= DROPDOWN ========= */
+/* ========= KOMPAKT GRID ========= */
 
 function renderWall(){
 
@@ -86,39 +85,61 @@ function renderWall(){
     groups[s.length].push(s)
   })
 
+  let html="<div style='display:grid;grid-template-columns:repeat(3,1fr);gap:10px'>"
+
   Object.keys(groups).sort((a,b)=>a-b).forEach(length=>{
 
     let available=(start&&end)
       ? getAvailableCount(length,start,end)
       : groups[length].length
 
-    let row=document.createElement("div")
-    row.style.cssText="margin:10px;padding:10px;border:1px solid #ccc;border-radius:10px"
+    let selected=selections[length]||0
 
-    let label=document.createElement("div")
-    label.innerHTML=`<strong>${length} cm</strong> (${available} kvar)`
+    html+=`
+    <div style="border:1px solid #ccc;padding:10px;border-radius:10px;text-align:center">
 
-    let select=document.createElement("select")
+      <strong>${length} cm</strong><br>
+      <small>${available} kvar</small><br><br>
 
-    for(let i=0;i<=available;i++){
-      let opt=document.createElement("option")
-      opt.value=i
-      opt.text=i+" st"
-      select.appendChild(opt)
-    }
+      <button onclick="minus('${length}')">–</button>
+      <span style="font-size:20px;margin:0 10px">${selected}</span>
+      <button onclick="plus('${length}',${available})">+</button>
 
-    select.value=selections[length]||0
-
-    select.onchange=()=>{
-      selections[length]=parseInt(select.value)
-      buildCart()
-      renderCart()
-    }
-
-    row.appendChild(label)
-    row.appendChild(select)
-    div.appendChild(row)
+    </div>
+    `
   })
+
+  html+="</div>"
+
+  div.innerHTML=html
+}
+
+function plus(length,available){
+
+  if(!selections[length]) selections[length]=0
+
+  if(selections[length] >= available){
+    alert("Finns inte fler")
+    return
+  }
+
+  selections[length]++
+  buildCart()
+  renderAll()
+}
+
+function minus(length){
+
+  if(!selections[length]) return
+
+  selections[length]--
+
+  if(selections[length]<=0){
+    delete selections[length]
+  }
+
+  buildCart()
+  renderAll()
 }
 
 /* ========= CART ========= */
@@ -150,9 +171,7 @@ function renderCart(){
   let html="<strong>Valt:</strong><br>"
 
   Object.keys(selections).forEach(l=>{
-    if(selections[l]>0){
-      html+=`${l} cm: ${selections[l]} st<br>`
-    }
+    html+=`${l} cm: ${selections[l]} st<br>`
   })
 
   html+=`<br><button onclick="clearCart()">Rensa</button>`
@@ -161,8 +180,8 @@ function renderCart(){
 }
 
 function clearCart(){
-  cart=[]
   selections={}
+  cart=[]
   renderAll()
 }
 
@@ -194,8 +213,8 @@ async function saveBooking(){
     return
   }
 
-  cart=[]
   selections={}
+  cart=[]
 
   await loadBookings()
   renderAll()
@@ -258,95 +277,7 @@ function renderWeek(){
   div.innerHTML=html
 }
 
-/* ========= BOKNINGAR ========= */
-
-function renderRentals(){
-
-  const div=document.getElementById("rentals")
-  div.innerHTML=""
-
-  rentals.forEach(r=>{
-
-    if(r.returned) return
-
-    let items=JSON.parse(r.items||"[]")
-
-    let html="<div style='border:1px solid #ccc;padding:10px;margin:5px'>"
-
-    html+=`<strong>${r.name}</strong><br>`
-    html+=`${r.start} → ${r.end}<br><br>`
-
-    items.forEach((id,i)=>{
-      let ski=skis.find(s=>s.id===id)
-
-      html+=`
-      ${ski.length} cm 
-      <button onclick="returnOne('${r.id}',${i})">X</button><br>
-      `
-    })
-
-    html+=`
-    <br>
-    <button onclick="returnAll('${r.id}')">Återlämna alla</button>
-    <button onclick="extendBooking('${r.id}')">Förläng</button>
-    `
-
-    html+="</div>"
-
-    div.innerHTML+=html
-  })
-}
-
-/* ========= RETUR ========= */
-
-async function returnOne(id,index){
-
-  let r=rentals.find(x=>x.id==id)
-  let items=JSON.parse(r.items||"[]")
-
-  items.splice(index,1)
-
-  if(items.length===0){
-    await supabaseClient.from("rentals").update({returned:true}).eq("id",id)
-  }else{
-    await supabaseClient.from("rentals")
-      .update({items:JSON.stringify(items)})
-      .eq("id",id)
-  }
-
-  await loadBookings()
-  renderAll()
-}
-
-async function returnAll(id){
-
-  await supabaseClient.from("rentals")
-    .update({returned:true})
-    .eq("id",id)
-
-  await loadBookings()
-  renderAll()
-}
-
-/* ========= FÖRLÄNG ========= */
-
-async function extendBooking(id){
-
-  let r=rentals.find(x=>x.id==id)
-
-  let ny=prompt("Nytt slutdatum",r.end)
-
-  if(!ny) return
-
-  await supabaseClient.from("rentals")
-    .update({end:ny})
-    .eq("id",id)
-
-  await loadBookings()
-  renderAll()
-}
-
-/* ========= LAGER ========= */
+/* ========= LAGERHANTERING ========= */
 
 function renderInventory(){
 
@@ -356,17 +287,70 @@ function renderInventory(){
   let groups={}
 
   skis.forEach(s=>{
-    if(!groups[s.length]) groups[s.length]=0
-    groups[s.length]++
+    if(!groups[s.length]) groups[s.length]=[]
+    groups[s.length].push(s)
   })
 
   let html=""
 
-  Object.keys(groups).forEach(l=>{
-    html+=`${l} cm: ${groups[l]} st<br>`
+  Object.keys(groups).forEach(length=>{
+
+    html+=`
+    <div style="margin:5px;border:1px solid #ccc;padding:8px;border-radius:8px">
+
+      <strong>${length} cm</strong> (${groups[length].length})
+
+      <button onclick="addSki('${length}')">+</button>
+      <button onclick="removeSki('${length}')">–</button>
+
+    </div>
+    `
   })
 
   div.innerHTML=html
+}
+
+async function addSki(length){
+
+  await supabaseClient.from("skis").insert({
+    length:parseInt(length)
+  })
+
+  await loadSkis()
+  renderAll()
+}
+
+async function removeSki(length){
+
+  let ski=skis.find(s=>s.length==length)
+  if(!ski){
+    alert("Inga kvar")
+    return
+  }
+
+  await supabaseClient.from("skis").delete().eq("id",ski.id)
+
+  await loadSkis()
+  renderAll()
+}
+
+/* ========= RENTALS ========= */
+
+function renderRentals(){
+
+  const div=document.getElementById("rentals")
+  div.innerHTML=""
+
+  rentals.forEach(r=>{
+    if(r.returned) return
+
+    div.innerHTML+=`
+    <div style="border:1px solid #ccc;padding:10px;margin:5px">
+      <strong>${r.name}</strong><br>
+      ${r.start} → ${r.end}
+    </div>
+    `
+  })
 }
 
 /* ========= NAV ========= */
