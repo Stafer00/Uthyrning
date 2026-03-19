@@ -65,10 +65,9 @@ function renderAll(){
   renderCart()
   renderWeek()
   renderRentals()
-  renderInventory()
 }
 
-/* ========= KOMPAKT GRID ========= */
+/* ========= GRID ========= */
 
 function renderWall(){
 
@@ -125,7 +124,7 @@ function plus(length,available){
 
   selections[length]++
   buildCart()
-  renderAll()
+  renderCart()
 }
 
 function minus(length){
@@ -139,7 +138,7 @@ function minus(length){
   }
 
   buildCart()
-  renderAll()
+  renderCart()
 }
 
 /* ========= CART ========= */
@@ -277,63 +276,6 @@ function renderWeek(){
   div.innerHTML=html
 }
 
-/* ========= LAGERHANTERING ========= */
-
-function renderInventory(){
-
-  const div=document.getElementById("inventory")
-  if(!div) return
-
-  let groups={}
-
-  skis.forEach(s=>{
-    if(!groups[s.length]) groups[s.length]=[]
-    groups[s.length].push(s)
-  })
-
-  let html=""
-
-  Object.keys(groups).forEach(length=>{
-
-    html+=`
-    <div style="margin:5px;border:1px solid #ccc;padding:8px;border-radius:8px">
-
-      <strong>${length} cm</strong> (${groups[length].length})
-
-      <button onclick="addSki('${length}')">+</button>
-      <button onclick="removeSki('${length}')">–</button>
-
-    </div>
-    `
-  })
-
-  div.innerHTML=html
-}
-
-async function addSki(length){
-
-  await supabaseClient.from("skis").insert({
-    length:parseInt(length)
-  })
-
-  await loadSkis()
-  renderAll()
-}
-
-async function removeSki(length){
-
-  let ski=skis.find(s=>s.length==length)
-  if(!ski){
-    alert("Inga kvar")
-    return
-  }
-
-  await supabaseClient.from("skis").delete().eq("id",ski.id)
-
-  await loadSkis()
-  renderAll()
-}
-
 /* ========= RENTALS ========= */
 
 function renderRentals(){
@@ -342,15 +284,84 @@ function renderRentals(){
   div.innerHTML=""
 
   rentals.forEach(r=>{
+
     if(r.returned) return
 
-    div.innerHTML+=`
-    <div style="border:1px solid #ccc;padding:10px;margin:5px">
-      <strong>${r.name}</strong><br>
-      ${r.start} → ${r.end}
-    </div>
+    let items=JSON.parse(r.items||"[]")
+
+    let html="<div style='border:1px solid #ccc;padding:10px;margin:5px'>"
+
+    html+=`<strong>${r.name}</strong><br>`
+    html+=`${r.start} → ${r.end}<br><br>`
+
+    items.forEach((id,i)=>{
+      let ski=skis.find(s=>s.id===id)
+
+      html+=`
+      ${ski.length} cm 
+      <button onclick="returnOne('${r.id}',${i})">X</button><br>
+      `
+    })
+
+    html+=`
+    <br>
+    <button onclick="returnAll('${r.id}')">Återlämna alla</button>
+    <button onclick="extendBooking('${r.id}')">Förläng</button>
     `
+
+    html+="</div>"
+
+    div.innerHTML+=html
   })
+}
+
+/* ========= RETUR ========= */
+
+async function returnOne(id,index){
+
+  let r=rentals.find(x=>x.id==id)
+  let items=JSON.parse(r.items||"[]")
+
+  items.splice(index,1)
+
+  if(items.length===0){
+    await supabaseClient.from("rentals").update({returned:true}).eq("id",id)
+  }else{
+    await supabaseClient.from("rentals")
+      .update({items:JSON.stringify(items)})
+      .eq("id",id)
+  }
+
+  await loadBookings()
+  renderAll()
+}
+
+async function returnAll(id){
+
+  await supabaseClient.from("rentals")
+    .update({returned:true})
+    .eq("id",id)
+
+  await loadBookings()
+  renderAll()
+}
+
+/* ========= FÖRLÄNG ========= */
+
+async function extendBooking(id){
+
+  let r=rentals.find(x=>x.id==id)
+
+  let ny=prompt("Nytt slutdatum",r.end)
+
+  if(!ny) return
+
+  await supabaseClient.from("rentals")
+    .update({end:ny})
+    .eq("id",id)
+
+  await loadBookings()
+  renderAll()
 }
 
 /* ========= NAV ========= */
