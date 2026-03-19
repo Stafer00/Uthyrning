@@ -1,4 +1,4 @@
-console.log("APP STARTAR")
+console.log("APP PRO START")
 
 /* ========= SUPABASE ========= */
 
@@ -14,13 +14,11 @@ let rentals = []
 let cart = []
 let weekOffset = 0
 
-/* ========= START ========= */
+/* ========= INIT ========= */
 
 window.onload = init
 
 async function init(){
-
-  console.log("INIT")
 
   const btn = document.getElementById("saveBtn")
   if(btn) btn.onclick = saveBooking
@@ -53,6 +51,22 @@ async function loadBookings(){
   rentals = data || []
 }
 
+/* ========= GROUP ========= */
+
+function getGroupedSkis(){
+
+  const map = {}
+
+  skis.forEach(ski=>{
+    if(!map[ski.length]){
+      map[ski.length] = []
+    }
+    map[ski.length].push(ski.id)
+  })
+
+  return map
+}
+
 /* ========= RENDER ========= */
 
 function renderAll(){
@@ -62,7 +76,7 @@ function renderAll(){
   renderRentals()
 }
 
-/* ========= SKIDOR ========= */
+/* ========= SKI WALL (PRO) ========= */
 
 function renderWall(){
 
@@ -71,49 +85,75 @@ function renderWall(){
 
   div.innerHTML = ""
 
-  skis.forEach(ski => {
+  const grouped = getGroupedSkis()
 
-    const el = document.createElement("div")
-    el.className = "card"
+  Object.keys(grouped)
+    .sort((a,b)=>a-b)
+    .forEach(length=>{
 
-    el.innerHTML = `
-      <div><strong>${ski.length} cm</strong></div>
-      <div style="font-size:11px">${getAvailable(ski.id)} kvar</div>
+      const ids = grouped[length]
 
-      <div class="controls">
-        <button onclick="removeFromCart(${ski.id})">−</button>
-        <span class="count">${getCount(ski.id)}</span>
-        <button onclick="addToCart(${ski.id})">+</button>
-      </div>
-    `
+      const available = getAvailable(ids)
+      const selected = getSelected(ids)
 
-    div.appendChild(el)
-  })
+      const el = document.createElement("div")
+      el.className = "card"
+
+      // 🎨 FÄRG
+      let bg = "#e8f5e9" // grön
+      if(available === 0) bg = "#ffcdd2"
+      else if(available <= 2) bg = "#fff3cd"
+
+      el.style.background = bg
+
+      el.innerHTML = `
+        <div><strong>${length} cm</strong></div>
+        <div style="font-size:11px">${available} kvar</div>
+
+        <div style="display:flex;justify-content:center;align-items:center;gap:8px;margin-top:5px">
+          <button onclick="minus('${length}')">−</button>
+          <span style="font-size:18px">${selected}</span>
+          <button onclick="plus('${length}')">+</button>
+        </div>
+      `
+
+      div.appendChild(el)
+    })
 }
 
 /* ========= CART ========= */
 
-function getCount(id){
-  return cart.filter(x => x === id).length
+function getSelected(ids){
+  return cart.filter(id => ids.includes(id)).length
 }
 
-function addToCart(id){
+function plus(length){
 
-  if(getAvailable(id) <= getCount(id)){
-    alert("Finns inte fler")
+  const grouped = getGroupedSkis()
+  const ids = grouped[length]
+
+  if(getSelected(ids) >= getAvailable(ids)){
+    alert("Slut i lager")
     return
   }
 
-  cart.push(id)
+  const used = getSelected(ids)
+  cart.push(ids[used])
+
   renderWall()
   renderCart()
 }
 
-function removeFromCart(id){
-  const i = cart.indexOf(id)
-  if(i > -1){
-    cart.splice(i,1)
+function minus(length){
+
+  const grouped = getGroupedSkis()
+  const ids = grouped[length]
+
+  const index = cart.findIndex(id => ids.includes(id))
+  if(index > -1){
+    cart.splice(index,1)
   }
+
   renderWall()
   renderCart()
 }
@@ -128,18 +168,17 @@ function renderCart(){
     return
   }
 
+  const grouped = getGroupedSkis()
+
   let html = ""
 
-  const grouped = {}
+  Object.keys(grouped).forEach(length=>{
 
-  cart.forEach(id=>{
-    grouped[id] = (grouped[id] || 0) + 1
-  })
+    const ids = grouped[length]
+    const count = getSelected(ids)
 
-  Object.keys(grouped).forEach(id=>{
-    const ski = skis.find(s=>s.id == id)
-    if(ski){
-      html += `${ski.length} cm x ${grouped[id]}<br>`
+    if(count > 0){
+      html += `${length} cm x ${count}<br>`
     }
   })
 
@@ -148,9 +187,7 @@ function renderCart(){
 
 /* ========= LAGER ========= */
 
-function getAvailable(skiId){
-
-  let total = skis.filter(s => s.id === skiId).length
+function getAvailable(ids){
 
   let booked = 0
 
@@ -159,14 +196,14 @@ function getAvailable(skiId){
     if(r.returned) return
 
     let items=[]
-    try{ items = JSON.parse(r.items) }catch{}
+    try{items=JSON.parse(r.items)}catch{}
 
     items.forEach(id=>{
-      if(id === skiId) booked++
+      if(ids.includes(id)) booked++
     })
   })
 
-  return total - booked
+  return ids.length - booked
 }
 
 /* ========= SAVE ========= */
@@ -197,7 +234,7 @@ async function saveBooking(){
     return
   }
 
-  alert("Sparad")
+  alert("Bokning sparad")
 
   cart = []
 
@@ -235,16 +272,19 @@ function renderWeek(){
 
   html += "</tr>"
 
-  skis.forEach(ski=>{
+  const grouped = getGroupedSkis()
 
-    html += "<tr><td>"+ski.length+"</td>"
+  Object.keys(grouped).forEach(length=>{
+
+    const ids = grouped[length]
+
+    html += "<tr><td>"+length+"</td>"
 
     dates.forEach(day=>{
 
       let booked = false
 
       rentals.forEach(r=>{
-
         if(r.returned) return
 
         if(day >= r.start && day <= r.end){
@@ -252,16 +292,15 @@ function renderWeek(){
           let items=[]
           try{items=JSON.parse(r.items)}catch{}
 
-          if(items.includes(ski.id)){
-            booked = true
-          }
+          items.forEach(id=>{
+            if(ids.includes(id)) booked = true
+          })
         }
       })
 
       html += booked
         ? "<td style='background:#f44336;color:white'>X</td>"
         : "<td style='background:#4caf50;color:white'>Ledig</td>"
-
     })
 
     html += "</tr>"
