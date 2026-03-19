@@ -7,16 +7,20 @@
 
 <title>Skiduthyrning</title>
 
-<!-- 🔥 STOPPAR ALL CACHE -->
+<!-- 🔥 STOPPA CACHE -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 
 <style>
 body{
-  font-family:-apple-system,Arial;
+  font-family:-apple-system, Arial;
   padding:15px;
   background:#f5f5f5;
+}
+
+h2{
+  margin-bottom:10px;
 }
 
 .section{
@@ -24,6 +28,15 @@ body{
   padding:12px;
   border-radius:12px;
   margin-bottom:15px;
+}
+
+input{
+  font-size:18px;
+  padding:12px;
+  margin:6px 0;
+  width:100%;
+  border-radius:10px;
+  border:1px solid #ccc;
 }
 
 button{
@@ -34,15 +47,6 @@ button{
   border:none;
   background:#2e7dff;
   color:white;
-}
-
-input{
-  font-size:18px;
-  padding:12px;
-  margin:5px 0;
-  width:100%;
-  border-radius:10px;
-  border:1px solid #ccc;
 }
 
 .grid{
@@ -58,6 +62,18 @@ input{
   text-align:center;
 }
 
+#calendar table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+}
+
+#calendar th, #calendar td{
+  padding:6px;
+  text-align:center;
+  font-size:14px;
+}
+
 </style>
 
 <!-- 🔥 SUPABASE -->
@@ -69,6 +85,7 @@ input{
 
 <h2>Skiduthyrning</h2>
 
+<!-- ========= BOKNING ========= -->
 <div class="section">
 
 <input id="customer" placeholder="Namn">
@@ -82,41 +99,54 @@ input{
 
 </div>
 
+<!-- ========= SKIDOR ========= -->
 <div class="section">
 
 <h3>Välj skidor</h3>
 <div id="skiWall" class="grid"></div>
 
-<h3>Valt</h3>
+<h3>Valda skidor</h3>
 <div id="cart"></div>
 
 <button id="saveBtn">Spara bokning</button>
 
 </div>
 
+<!-- ========= KALENDER ========= -->
 <div class="section">
 
 <h3>Kalender</h3>
 
-<button onclick="prevWeek()">←</button>
-<button onclick="nextWeek()">→</button>
+<div style="display:flex;gap:10px;">
+  <button onclick="prevWeek()">←</button>
+  <button onclick="nextWeek()">→</button>
+</div>
 
 <div id="calendar"></div>
 
 </div>
 
+<!-- ========= BOKNINGAR ========= -->
 <div class="section">
 
-<h3>Bokningar</h3>
+<h3>Aktiva bokningar</h3>
 <div id="rentals"></div>
 
 </div>
 
-<!-- 🔥 CACHE-KILL JS -->
+<!-- 🔥 RENSAR GAMLA SERVICE WORKERS -->
 <script>
-const version = Date.now()
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(r => r.unregister())
+  })
+}
+</script>
+
+<!-- 🔥 LADDAR ALLTID SENASTE app.js -->
+<script>
 const script = document.createElement("script")
-script.src = "/app.js?v=" + version
+script.src = "/app.js?v=" + Date.now()
 document.body.appendChild(script)
 </script>
 
