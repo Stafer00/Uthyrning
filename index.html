@@ -14,83 +14,107 @@
 
 <style>
 
+/* BAS */
 body{
   font-family:-apple-system, Arial;
   margin:0;
-  padding:10px;
   background:#f5f5f5;
+  height:100vh;
+  overflow:hidden; /* 🔥 INGEN SCROLL */
+}
+
+/* HUVUDLAYOUT */
+.container{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  height:100vh;
+  gap:8px;
+  padding:8px;
+  box-sizing:border-box;
+}
+
+/* VÄNSTER / HÖGER */
+.left, .right{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
 }
 
 /* SECTIONS */
 .section{
   background:white;
-  padding:12px;
-  border-radius:12px;
-  margin-bottom:12px;
+  padding:8px;
+  border-radius:10px;
+  flex:1;
+  overflow:hidden;
 }
 
 /* INPUT */
 input{
-  font-size:18px;
-  padding:12px;
-  margin:6px 0;
+  font-size:16px;
+  padding:8px;
+  margin:4px 0;
   width:100%;
-  border-radius:10px;
+  border-radius:8px;
   border:1px solid #ccc;
 }
 
 /* BUTTON */
 button{
-  font-size:16px;
-  padding:10px;
-  margin:5px;
-  border-radius:10px;
+  font-size:14px;
+  padding:8px;
+  margin:3px;
+  border-radius:8px;
   border:none;
   background:#2e7dff;
   color:white;
 }
 
-/* SPECIAL KNAPPAR */
-.clearBtn{
-  background:#777;
-}
+/* KNAPPVARIANTER */
+.clearBtn{ background:#777; }
 
-.saveBtn{
-  background:#2e7dff;
-}
-
-/* GRID – 5 KOLUMNER */
+/* SKI GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(5, 1fr);
-  gap:8px;
+  gap:6px;
 }
 
 /* SKIDKORT */
 .card{
   border:1px solid #ddd;
-  border-radius:12px;
-  padding:8px;
+  border-radius:10px;
+  padding:6px;
   text-align:center;
-  font-size:13px;
+  font-size:12px;
 }
 
 /* KALENDER */
+#calendar{
+  overflow:hidden;
+}
+
 #calendar table{
   width:100%;
   border-collapse:collapse;
-  margin-top:10px;
 }
 
 #calendar th, #calendar td{
-  padding:6px;
-  font-size:12px;
+  font-size:10px;
+  padding:4px;
   text-align:center;
 }
 
+/* BOKNINGAR */
+#rentals{
+  overflow:auto;
+  max-height:100%;
+}
+
 /* RUBRIKER */
-h3, h4{
-  margin:5px 0;
+h3,h4{
+  margin:4px 0;
+  font-size:14px;
 }
 
 </style>
@@ -102,59 +126,55 @@ h3, h4{
 
 <body>
 
-<h3>Skiduthyrning</h3>
+<div class="container">
 
-<!-- KUND -->
-<div class="section">
+  <!-- VÄNSTER -->
+  <div class="left">
 
-<input id="customer" placeholder="Namn">
-<input id="phone" placeholder="Telefon">
+    <div class="section">
+      <h4>Kund</h4>
+      <input id="customer" placeholder="Namn">
+      <input id="phone" placeholder="Telefon">
 
-<label>Start</label>
-<input type="date" id="start">
+      <input type="date" id="start">
+      <input type="date" id="end">
+    </div>
 
-<label>Slut</label>
-<input type="date" id="end">
+    <div class="section">
+      <h4>Skidor</h4>
 
-</div>
+      <div id="skiWall" class="grid"></div>
 
-<!-- SKIDOR -->
-<div class="section">
+      <div id="cart"></div>
 
-<h4>Välj skidor</h4>
+      <button id="saveBtn">Spara</button>
+      <button onclick="clearForm()" class="clearBtn">Rensa</button>
+    </div>
 
-<div id="skiWall" class="grid"></div>
+  </div>
 
-<h4>Valda</h4>
-<div id="cart"></div>
+  <!-- HÖGER -->
+  <div class="right">
 
-<button id="saveBtn" class="saveBtn">Spara bokning</button>
-<button onclick="clearForm()" class="clearBtn">Rensa</button>
+    <div class="section">
+      <h4>Kalender</h4>
 
-</div>
+      <button onclick="prevWeek()">←</button>
+      <button onclick="nextWeek()">→</button>
 
-<!-- KALENDER -->
-<div class="section">
+      <div id="calendar"></div>
+    </div>
 
-<h4>Kalender</h4>
+    <div class="section">
+      <h4>Bokningar</h4>
+      <div id="rentals"></div>
+    </div>
 
-<button onclick="prevWeek()">←</button>
-<button onclick="nextWeek()">→</button>
-
-<div id="calendar"></div>
-
-</div>
-
-<!-- BOKNINGAR -->
-<div class="section">
-
-<h4>Bokningar</h4>
-
-<div id="rentals"></div>
+  </div>
 
 </div>
 
-<!-- 🔥 RENSAR SERVICE WORKER -->
+<!-- 🔥 RENSAR SERVICE WORKERS -->
 <script>
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(regs => {
@@ -163,7 +183,7 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 
-<!-- 🔥 CACHE-KILL -->
+<!-- 🔥 CACHE KILL -->
 <script>
 const script = document.createElement("script")
 script.src = "/app.js?v=" + Date.now()
@@ -176,4 +196,4 @@ if (!sessionStorage.getItem("reloaded")) {
 </script>
 
 </body>
-</html>
+</html> 
