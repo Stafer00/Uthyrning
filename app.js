@@ -431,3 +431,14 @@ function getMonday(d){
   let diff=d.getDate()-(day==0?6:day-1)
   return new Date(d.setDate(diff))
 }
+function filterRentals(){
+
+  const q = document.getElementById("search").value.toLowerCase()
+
+  const cards = document.querySelectorAll("#rentals > div")
+
+  cards.forEach(card=>{
+    const text = card.innerText.toLowerCase()
+    card.style.display = text.includes(q) ? "" : "none"
+  })
+}
