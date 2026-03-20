@@ -37,6 +37,7 @@ body{
   display:flex;
   flex-direction:column;
   gap:8px;
+  min-height:0;
 }
 
 /* SECTIONS */
@@ -46,10 +47,10 @@ body{
   border-radius:10px;
   display:flex;
   flex-direction:column;
-  overflow:hidden;
+  min-height:0;
 }
 
-/* FLEX HÖJD */
+/* HÖJDER */
 .customer{ flex:0 0 auto; }
 .skiSection{ flex:1; }
 .calendar{ flex:1; }
@@ -78,18 +79,11 @@ button{
 
 .clearBtn{ background:#777; }
 
-/* GRID SKIDOR */
+/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(5, 1fr);
   gap:6px;
-}
-
-/* SCROLL YTOR */
-.scroll{
-  overflow:auto;
-  flex:1;
-  min-height:0;
 }
 
 /* KORT */
@@ -99,6 +93,13 @@ button{
   padding:6px;
   text-align:center;
   font-size:12px;
+}
+
+/* SCROLL */
+.scroll{
+  flex:1;
+  overflow:auto;
+  min-height:0;
 }
 
 /* KALENDER */
@@ -145,16 +146,21 @@ h4{
 
       <h4>Skidor</h4>
 
-      <!-- SCROLL -->
-      <div class="scroll">
-        <div id="skiWall" class="grid"></div>
-        <div id="cart"></div>
-      </div>
+      <!-- WRAPPER (KRITISK) -->
+      <div style="display:flex; flex-direction:column; flex:1; min-height:0;">
 
-      <!-- 🔥 FASTA KNAPPAR -->
-      <div style="flex:0 0 auto; display:flex; gap:6px;">
-        <button id="saveBtn">Spara</button>
-        <button onclick="clearForm()" class="clearBtn">Rensa</button>
+        <!-- SCROLL -->
+        <div class="scroll">
+          <div id="skiWall" class="grid"></div>
+          <div id="cart"></div>
+        </div>
+
+        <!-- KNAPPAR -->
+        <div style="flex:0 0 auto; display:flex; gap:6px; padding-top:6px;">
+          <button id="saveBtn">Spara</button>
+          <button onclick="clearForm()" class="clearBtn">Rensa</button>
+        </div>
+
       </div>
 
     </div>
@@ -165,20 +171,24 @@ h4{
   <div class="right">
 
     <div class="section calendar">
+
       <h4>Kalender</h4>
-      <button onclick="prevWeek()">←</button>
-      <button onclick="nextWeek()">→</button>
+
+      <div>
+        <button onclick="prevWeek()">←</button>
+        <button onclick="nextWeek()">→</button>
+      </div>
 
       <div class="scroll">
         <div id="calendar"></div>
       </div>
+
     </div>
 
     <div class="section bookings">
 
       <h4>Bokningar</h4>
 
-      <!-- 🔍 SÖK -->
       <input id="search" placeholder="Sök namn / telefon" oninput="filterRentals()">
 
       <div class="scroll">
