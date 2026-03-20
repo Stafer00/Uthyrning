@@ -20,20 +20,19 @@ body{
   margin:0;
   background:#f5f5f5;
   height:100vh;
-  overflow:hidden; /* 🔥 INGEN SCROLL */
+  overflow:hidden;
 }
 
-/* HUVUDLAYOUT */
+/* GRID */
 .container{
   display:grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns:1fr 1fr;
   height:100vh;
   gap:8px;
   padding:8px;
   box-sizing:border-box;
 }
 
-/* VÄNSTER / HÖGER */
 .left, .right{
   display:flex;
   flex-direction:column;
@@ -45,9 +44,16 @@ body{
   background:white;
   padding:8px;
   border-radius:10px;
-  flex:1;
+  display:flex;
+  flex-direction:column;
   overflow:hidden;
 }
+
+/* FLEX HEIGHTS */
+.customer{ flex:0 0 auto; }
+.skiSection{ flex:1; }
+.calendar{ flex:1; }
+.bookings{ flex:1; }
 
 /* INPUT */
 input{
@@ -70,7 +76,6 @@ button{
   color:white;
 }
 
-/* KNAPPVARIANTER */
 .clearBtn{ background:#777; }
 
 /* SKI GRID */
@@ -80,7 +85,13 @@ button{
   gap:6px;
 }
 
-/* SKIDKORT */
+/* SCROLL AREAS */
+.scroll{
+  overflow:auto;
+  flex:1;
+}
+
+/* SKI CARD */
 .card{
   border:1px solid #ddd;
   border-radius:10px;
@@ -89,11 +100,15 @@ button{
   font-size:12px;
 }
 
-/* KALENDER */
-#calendar{
-  overflow:hidden;
+/* STICKY ACTIONS */
+.actions{
+  position:sticky;
+  bottom:0;
+  background:white;
+  padding-top:5px;
 }
 
+/* CALENDAR */
 #calendar table{
   width:100%;
   border-collapse:collapse;
@@ -105,21 +120,14 @@ button{
   text-align:center;
 }
 
-/* BOKNINGAR */
-#rentals{
-  overflow:auto;
-  max-height:100%;
-}
-
-/* RUBRIKER */
-h3,h4{
+/* HEADERS */
+h4{
   margin:4px 0;
   font-size:14px;
 }
 
 </style>
 
-<!-- SUPABASE -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 </head>
@@ -131,24 +139,30 @@ h3,h4{
   <!-- VÄNSTER -->
   <div class="left">
 
-    <div class="section">
+    <div class="section customer">
       <h4>Kund</h4>
       <input id="customer" placeholder="Namn">
       <input id="phone" placeholder="Telefon">
-
       <input type="date" id="start">
       <input type="date" id="end">
     </div>
 
-    <div class="section">
+    <div class="section skiSection">
+
       <h4>Skidor</h4>
 
-      <div id="skiWall" class="grid"></div>
+      <!-- SCROLLBAR -->
+      <div class="scroll">
+        <div id="skiWall" class="grid"></div>
+        <div id="cart"></div>
+      </div>
 
-      <div id="cart"></div>
+      <!-- STICKY KNAPPAR -->
+      <div class="actions">
+        <button id="saveBtn">Spara</button>
+        <button onclick="clearForm()" class="clearBtn">Rensa</button>
+      </div>
 
-      <button id="saveBtn">Spara</button>
-      <button onclick="clearForm()" class="clearBtn">Rensa</button>
     </div>
 
   </div>
@@ -156,18 +170,28 @@ h3,h4{
   <!-- HÖGER -->
   <div class="right">
 
-    <div class="section">
+    <div class="section calendar">
       <h4>Kalender</h4>
-
       <button onclick="prevWeek()">←</button>
       <button onclick="nextWeek()">→</button>
 
-      <div id="calendar"></div>
+      <div class="scroll">
+        <div id="calendar"></div>
+      </div>
     </div>
 
-    <div class="section">
+    <div class="section bookings">
+
       <h4>Bokningar</h4>
-      <div id="rentals"></div>
+
+      <!-- 🔍 SÖK -->
+      <input id="search" placeholder="Sök namn / telefon" oninput="filterRentals()">
+
+      <!-- SCROLL -->
+      <div class="scroll">
+        <div id="rentals"></div>
+      </div>
+
     </div>
 
   </div>
@@ -196,4 +220,4 @@ if (!sessionStorage.getItem("reloaded")) {
 </script>
 
 </body>
-</html> 
+</html>
