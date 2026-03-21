@@ -78,6 +78,7 @@ button{
 }
 
 .clearBtn{ background:#777; }
+.lagerBtn{ background:#009688; }
 
 /* GRID */
 .grid{
@@ -133,6 +134,7 @@ h4{
   <!-- VÄNSTER -->
   <div class="left">
 
+    <!-- KUND -->
     <div class="section customer">
       <h4>Kund</h4>
       <input id="customer" placeholder="Namn">
@@ -141,12 +143,11 @@ h4{
       <input type="date" id="end">
     </div>
 
-    <!-- 🔥 SKIDOR -->
+    <!-- SKIDOR -->
     <div class="section skiSection">
 
       <h4>Skidor</h4>
 
-      <!-- WRAPPER (KRITISK) -->
       <div style="display:flex; flex-direction:column; flex:1; min-height:0;">
 
         <!-- SCROLL -->
@@ -159,6 +160,7 @@ h4{
         <div style="flex:0 0 auto; display:flex; gap:6px; padding-top:6px;">
           <button id="saveBtn">Spara</button>
           <button onclick="clearForm()" class="clearBtn">Rensa</button>
+          <button onclick="location.href='lager.html'" class="lagerBtn">Lager</button>
         </div>
 
       </div>
@@ -170,6 +172,7 @@ h4{
   <!-- HÖGER -->
   <div class="right">
 
+    <!-- KALENDER -->
     <div class="section calendar">
 
       <h4>Kalender</h4>
@@ -185,6 +188,7 @@ h4{
 
     </div>
 
+    <!-- BOKNINGAR -->
     <div class="section bookings">
 
       <h4>Bokningar</h4>
