@@ -40,6 +40,11 @@ button{
   color:white;
 }
 
+/* 🔥 NY KNAPP */
+.backBtn{
+  background:#4caf50;
+}
+
 .grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
@@ -62,6 +67,11 @@ button{
 
 <h2>Lagerhantering</h2>
 
+<!-- 🔥 TILLBAKA -->
+<button onclick="location.href='index.html'" class="backBtn">
+  ← Till bokning
+</button>
+
 <div class="section">
 
 <input id="length" placeholder="Skidlängd (cm)">
@@ -78,19 +88,19 @@ button{
 
 <script>
 
-/* 🔥 DIN SUPABASE */
+/* SUPABASE */
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
 )
 
-let skis = []
+let skis=[]
 
 window.onload = load
 
 async function load(){
 
-  const {data, error} = await supabaseClient.from("skis").select("*")
+  const {data,error} = await supabaseClient.from("skis").select("*")
 
   if(error){
     console.log(error)
@@ -130,7 +140,7 @@ function render(){
   })
 }
 
-/* ========= ADD ========= */
+/* ADD */
 
 async function addSki(){
 
@@ -142,26 +152,26 @@ async function addSki(){
   }
 
   await supabaseClient.from("skis").insert({
-    length: Number(length)
+    length:Number(length)
   })
 
-  document.getElementById("length").value = ""
+  document.getElementById("length").value=""
 
   await load()
 }
 
 async function addOne(length){
 
-  await supabaseClient.from("skis").insert({ length })
+  await supabaseClient.from("skis").insert({length})
 
   await load()
 }
 
-/* ========= REMOVE ========= */
+/* REMOVE */
 
 async function removeOne(length){
 
-  const ski = skis.find(s => s.length == length)
+  const ski = skis.find(s=>s.length==length)
 
   if(!ski){
     alert("Finns ingen att ta bort")
