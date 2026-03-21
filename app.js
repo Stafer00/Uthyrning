@@ -1,4 +1,4 @@
-console.log("APP FINAL IN/OUT CALENDAR")
+console.log("APP FINAL WITH ARROWS")
 
 /* ========= SUPABASE ========= */
 
@@ -254,19 +254,34 @@ function renderWeek(){
     dates.forEach(day=>{
 
       let booked=0
+      let outCount=0
+      let inCount=0
 
       rentals.forEach(r=>{
+
         if(r.returned) return
 
+        let items=[]
+        try{items=JSON.parse(r.items)}catch{}
+
         if(day>=r.start && day<=r.end){
-
-          let items=[]
-          try{items=JSON.parse(r.items)}catch{}
-
           items.forEach(id=>{
             if(ids.includes(id)) booked++
           })
         }
+
+        if(r.start===day){
+          items.forEach(id=>{
+            if(ids.includes(id)) outCount++
+          })
+        }
+
+        if(r.end===day){
+          items.forEach(id=>{
+            if(ids.includes(id)) inCount++
+          })
+        }
+
       })
 
       const free=total-booked
@@ -277,8 +292,15 @@ function renderWeek(){
 
       html+=`
         <td onclick="showDayDetails('${day}')"
-        style="background:${bg};color:white;cursor:pointer">
-        ${free}
+        style="background:${bg};color:white;cursor:pointer;font-size:11px">
+
+          <div style="font-size:14px;font-weight:bold">${free}</div>
+
+          <div>
+            ${outCount>0 ? "🟢↑"+outCount : ""}
+            ${inCount>0 ? " 🔵↓"+inCount : ""}
+          </div>
+
         </td>
       `
     })
