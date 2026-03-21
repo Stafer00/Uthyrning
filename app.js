@@ -1,4 +1,4 @@
-console.log("APP PRO FINAL COMPLETE")
+console.log("APP FINAL PRO + RETURN + EXTEND + STOCK")
 
 /* ========= SUPABASE ========= */
 
@@ -223,7 +223,6 @@ function renderWeek(){
     d.setDate(base.getDate()+i)
 
     const dayStr=format(d)
-
     dates.push(dayStr)
 
     let label=days[i]+"<br>"+d.toISOString().substring(5,10)
@@ -278,8 +277,8 @@ function renderWeek(){
 
       html+=`
         <td onclick="showDay('${day}')"
-        style="background:${bg};color:white;cursor:pointer">
-        ${booked}/${total}
+        style="background:${bg};color:white">
+        ${free}/${total}
         </td>
       `
     })
@@ -295,14 +294,10 @@ function renderWeek(){
 /* ========= VECKONUMMER ========= */
 
 function getWeekNumber(d){
-
   d=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()))
-
   const dayNum=d.getUTCDay()||7
   d.setUTCDate(d.getUTCDate()+4-dayNum)
-
   const yearStart=new Date(Date.UTC(d.getUTCFullYear(),0,1))
-
   return Math.ceil((((d-yearStart)/86400000)+1)/7)
 }
 
@@ -310,7 +305,7 @@ function getWeekNumber(d){
 
 function showDay(day){
 
-  let html="Bokningar:\n\n"
+  let text="Bokningar:\n\n"
   let found=false
 
   rentals.forEach(r=>{
@@ -320,15 +315,14 @@ function showDay(day){
     if(day>=r.start && day<=r.end){
 
       found=true
-
-      html+=`${r.name} (${r.phone||"-"})\n`
-      html+=`${r.start} → ${r.end}\n\n`
+      text+=`${r.name} (${r.phone||"-"})\n`
+      text+=`${r.start} → ${r.end}\n\n`
     }
   })
 
-  if(!found) html="Inga bokningar"
+  if(!found) text="Inga bokningar"
 
-  alert(html)
+  alert(text)
 }
 
 /* ========= BOKNINGAR ========= */
@@ -358,21 +352,91 @@ function renderRentals(){
       skisText+=`${len} cm x ${grouped[len]}<br>`
     })
 
+    let controls=""
+
+    Object.keys(grouped).forEach(len=>{
+      controls+=`<button onclick="returnOne('${r.id}', ${len})">− ${len}</button>`
+    })
+
     div.innerHTML+=`
       <div style="border:1px solid #ccc;padding:8px;margin:5px">
         <strong>${r.name}</strong><br>
         📞 ${r.phone||""}<br>
         ${r.start} → ${r.end}<br><br>
+
         ${skisText}
+
+        ${controls}<br>
+
+        <button onclick="extendBooking('${r.id}')">Förläng</button>
+        <button onclick="returnAll('${r.id}')">Återlämna allt</button>
       </div>
     `
   })
 }
 
+/* ========= RETURN ========= */
+
+async function returnOne(id,length){
+
+  const booking=rentals.find(r=>r.id==id)
+
+  let items=[]
+  try{items=JSON.parse(booking.items)}catch{}
+
+  const index=items.findIndex(itemId=>{
+    const ski=skis.find(s=>s.id===itemId)
+    return ski && ski.length==length
+  })
+
+  if(index===-1) return
+
+  items.splice(index,1)
+
+  if(items.length===0){
+    await returnAll(id)
+    return
+  }
+
+  await supabaseClient.from("rentals")
+    .update({items:JSON.stringify(items)})
+    .eq("id",id)
+
+  await loadBookings()
+  renderAll()
+}
+
+async function returnAll(id){
+
+  if(!confirm("Återlämna allt?")) return
+
+  await supabaseClient.from("rentals")
+    .update({returned:true})
+    .eq("id",id)
+
+  await loadBookings()
+  renderAll()
+}
+
+/* ========= EXTEND ========= */
+
+async function extendBooking(id){
+
+  const newEnd=prompt("Nytt slutdatum YYYY-MM-DD")
+  if(!newEnd) return
+
+  await supabaseClient.from("rentals")
+    .update({end:newEnd})
+    .eq("id",id)
+
+  await loadBookings()
+  renderAll()
+}
+
 /* ========= NAV ========= */
 
-function prevWeek(){ weekOffset--; renderWeek() }
-function nextWeek(){ weekOffset++; renderWeek() }
+function prevWeek(){weekOffset--;renderWeek()}
+function nextWeek(){weekOffset++;renderWeek()}
 
 /* ========= DATE ========= */
 
