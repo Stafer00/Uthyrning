@@ -1,4 +1,4 @@
-console.log("APP FINAL + VECKO KALENDER")
+console.log("APP PRO FINAL COMPLETE")
 
 /* ========= SUPABASE ========= */
 
@@ -83,7 +83,6 @@ function renderWall(){
     el.innerHTML=`
       <strong>${length} cm</strong><br>
       <small>${available} kvar</small><br>
-
       <button onclick="minus('${length}')">−</button>
       ${selected}
       <button onclick="plus('${length}')">+</button>
@@ -217,12 +216,23 @@ function renderWeek(){
   let labels=[]
   const days=["Mån","Tis","Ons","Tor","Fre","Lör","Sön"]
 
+  const today=format(new Date())
+
   for(let i=0;i<7;i++){
     let d=new Date(base)
     d.setDate(base.getDate()+i)
 
-    dates.push(format(d))
-    labels.push(days[i]+"<br>"+d.toISOString().substring(5,10))
+    const dayStr=format(d)
+
+    dates.push(dayStr)
+
+    let label=days[i]+"<br>"+d.toISOString().substring(5,10)
+
+    if(dayStr===today){
+      label="<span style='color:#2196f3;font-weight:bold'>"+label+"</span>"
+    }
+
+    labels.push(label)
   }
 
   const weekNumber=getWeekNumber(base)
@@ -266,7 +276,12 @@ function renderWeek(){
       if(free===0) bg="#f44336"
       else if(free<=2) bg="#ff9800"
 
-      html+=`<td style="background:${bg};color:white">${booked}/${total}</td>`
+      html+=`
+        <td onclick="showDay('${day}')"
+        style="background:${bg};color:white;cursor:pointer">
+        ${booked}/${total}
+        </td>
+      `
     })
 
     html+="</tr>"
@@ -289,6 +304,31 @@ function getWeekNumber(d){
   const yearStart=new Date(Date.UTC(d.getUTCFullYear(),0,1))
 
   return Math.ceil((((d-yearStart)/86400000)+1)/7)
+}
+
+/* ========= KALENDER POPUP ========= */
+
+function showDay(day){
+
+  let html="Bokningar:\n\n"
+  let found=false
+
+  rentals.forEach(r=>{
+
+    if(r.returned) return
+
+    if(day>=r.start && day<=r.end){
+
+      found=true
+
+      html+=`${r.name} (${r.phone||"-"})\n`
+      html+=`${r.start} → ${r.end}\n\n`
+    }
+  })
+
+  if(!found) html="Inga bokningar"
+
+  alert(html)
 }
 
 /* ========= BOKNINGAR ========= */
@@ -321,7 +361,7 @@ function renderRentals(){
     div.innerHTML+=`
       <div style="border:1px solid #ccc;padding:8px;margin:5px">
         <strong>${r.name}</strong><br>
-        ${r.phone || ""}<br>
+        📞 ${r.phone||""}<br>
         ${r.start} → ${r.end}<br><br>
         ${skisText}
       </div>
