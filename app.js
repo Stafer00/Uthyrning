@@ -1,4 +1,4 @@
-console.log("APP FINAL PRO + RETURN + EXTEND + STOCK")
+console.log("APP FINAL IN/OUT CALENDAR")
 
 /* ========= SUPABASE ========= */
 
@@ -276,9 +276,9 @@ function renderWeek(){
       else if(free<=2) bg="#ff9800"
 
       html+=`
-        <td onclick="showDay('${day}')"
-        style="background:${bg};color:white">
-        ${free}/${total}
+        <td onclick="showDayDetails('${day}')"
+        style="background:${bg};color:white;cursor:pointer">
+        ${free}
         </td>
       `
     })
@@ -301,28 +301,38 @@ function getWeekNumber(d){
   return Math.ceil((((d-yearStart)/86400000)+1)/7)
 }
 
-/* ========= KALENDER POPUP ========= */
+/* ========= DAG DETALJ ========= */
 
-function showDay(day){
+function showDayDetails(day){
 
-  let text="Bokningar:\n\n"
-  let found=false
+  let outCount=0
+  let inCount=0
+  let text=""
 
   rentals.forEach(r=>{
 
     if(r.returned) return
 
-    if(day>=r.start && day<=r.end){
+    let items=[]
+    try{items=JSON.parse(r.items)}catch{}
 
-      found=true
-      text+=`${r.name} (${r.phone||"-"})\n`
-      text+=`${r.start} → ${r.end}\n\n`
+    if(r.start===day){
+      outCount+=items.length
+      text+=`🟢 UT: ${r.name} (${items.length})\n`
+    }
+
+    if(r.end===day){
+      inCount+=items.length
+      text+=`🔵 IN: ${r.name} (${items.length})\n`
     }
   })
 
-  if(!found) text="Inga bokningar"
-
-  alert(text)
+  alert(
+    `Datum: ${day}\n\n` +
+    `🟢 Ut: ${outCount}\n` +
+    `🔵 In: ${inCount}\n\n` +
+    (text || "Inga rörelser")
+  )
 }
 
 /* ========= BOKNINGAR ========= */
