@@ -1,4 +1,4 @@
-console.log("APP FINAL WITH ARROWS")
+console.log("APP FINAL NO SCROLL CALENDAR")
 
 /* ========= SUPABASE ========= */
 
@@ -236,10 +236,19 @@ function renderWeek(){
 
   const weekNumber=getWeekNumber(base)
 
-  let html=`<table border="1">
-  <tr><th>v${weekNumber}</th>`
+  let html=`
+  <table style="
+    width:100%;
+    table-layout:fixed;
+    border-collapse:collapse;
+    font-size:10px;
+  ">
+  <tr>
+    <th style="width:40px">v${weekNumber}</th>
+  `
 
-  labels.forEach(l=>html+=`<th>${l}</th>`)
+  labels.forEach(l=>html+=`<th style="padding:2px">${l}</th>`)
+
   html+="</tr>"
 
   const grouped=getGroupedSkis()
@@ -249,7 +258,7 @@ function renderWeek(){
     const ids=grouped[length]
     const total=ids.length
 
-    html+=`<tr><td>${length}</td>`
+    html+=`<tr><td style="font-size:10px">${length}</td>`
 
     dates.forEach(day=>{
 
@@ -291,17 +300,21 @@ function renderWeek(){
       else if(free<=2) bg="#ff9800"
 
       html+=`
-        <td onclick="showDayDetails('${day}')"
-        style="background:${bg};color:white;cursor:pointer;font-size:11px">
-
-          <div style="font-size:14px;font-weight:bold">${free}</div>
-
-          <div>
-            ${outCount>0 ? "🟢↑"+outCount : ""}
-            ${inCount>0 ? " 🔵↓"+inCount : ""}
-          </div>
-
-        </td>
+      <td onclick="showDayDetails('${day}')"
+      style="
+        background:${bg};
+        color:white;
+        padding:2px;
+        text-align:center;
+        font-size:9px;
+        line-height:1.1;
+      ">
+        <div style="font-weight:bold;font-size:11px">${free}</div>
+        <div>
+          ${outCount>0 ? "↑"+outCount : ""}
+          ${inCount>0 ? " ↓"+inCount : ""}
+        </div>
+      </td>
       `
     })
 
