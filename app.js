@@ -1,4 +1,4 @@
-console.log("APP FINAL CLEAN")
+console.log("APP FINAL AUTO FIT CALENDAR")
 
 /* ========= SUPABASE ========= */
 
@@ -109,8 +109,7 @@ function plus(length){
 
   cart.push(ids[getSelected(ids)])
 
-  renderWall()
-  renderCart()
+  renderAll()
 }
 
 function minus(length){
@@ -120,8 +119,7 @@ function minus(length){
   const index=cart.findIndex(id=>ids.includes(id))
   if(index>-1) cart.splice(index,1)
 
-  renderWall()
-  renderCart()
+  renderAll()
 }
 
 function renderCart(){
@@ -236,31 +234,27 @@ function renderWeek(){
 
   const weekNumber=getWeekNumber(base)
 
+  const grouped=getGroupedSkis()
+  const lengths=Object.keys(grouped).sort((a,b)=>a-b)
+
+  const totalRows=lengths.length+1
+  const rowHeight=Math.floor(100/totalRows)
+
   let html=`
-  <table style="
-    width:100%;
-    table-layout:fixed;
-    border-collapse:collapse;
-    font-size:13px;
-  ">
-  <tr>
-    <th style="width:55px">v${weekNumber}</th>
+  <table style="width:100%;height:100%;table-layout:fixed;border-collapse:collapse;font-size:11px;">
+  <tr style="height:${rowHeight}%">
+    <th style="width:45px">v${weekNumber}</th>
   `
 
-  labels.forEach(l=>{
-    html+=`<th style="padding:4px">${l}</th>`
-  })
-
+  labels.forEach(l=>html+=`<th>${l}</th>`)
   html+="</tr>"
 
-  const grouped=getGroupedSkis()
-
-  Object.keys(grouped).sort((a,b)=>a-b).forEach(length=>{
+  lengths.forEach(length=>{
 
     const ids=grouped[length]
     const total=ids.length
 
-    html+=`<tr><td style="font-weight:bold">${length}</td>`
+    html+=`<tr style="height:${rowHeight}%"><td><strong>${length}</strong></td>`
 
     dates.forEach(day=>{
 
@@ -303,18 +297,13 @@ function renderWeek(){
 
       html+=`
       <td onclick="showDayDetails('${day}')"
-      style="
-        background:${bg};
-        color:white;
-        text-align:center;
-        padding:8px;
-        cursor:pointer;
-      ">
-        <div style="font-size:18px;font-weight:bold">${free}</div>
-        <div style="font-size:12px">
+      style="background:${bg};color:white;text-align:center;padding:2px;font-size:10px;">
+        <div style="font-weight:bold">${free}</div>
+        <div style="font-size:9px">
           ${outCount>0 ? "↑"+outCount : ""}
           ${inCount>0 ? " ↓"+inCount : ""}
         </div>
+        <div style="width:4px;height:4px;border-radius:50%;margin:auto;background:white;"></div>
       </td>
       `
     })
