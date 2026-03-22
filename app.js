@@ -1,4 +1,4 @@
-console.log("APP FINAL WITH COLORS + DOTS")
+console.log("APP FINAL CLEAN")
 
 /* ========= SUPABASE ========= */
 
@@ -207,10 +207,10 @@ async function saveBooking(){
 
 function renderWeek(){
 
-  const div=document.getElementById("calendar")
+  const div = document.getElementById("calendar")
 
-  let base=getMonday(new Date())
-  base.setDate(base.getDate()+weekOffset*7)
+  let base = getMonday(new Date())
+  base.setDate(base.getDate() + weekOffset*7)
 
   let dates=[]
   let labels=[]
@@ -241,13 +241,15 @@ function renderWeek(){
     width:100%;
     table-layout:fixed;
     border-collapse:collapse;
-    font-size:10px;
+    font-size:13px;
   ">
   <tr>
-    <th style="width:40px">v${weekNumber}</th>
+    <th style="width:55px">v${weekNumber}</th>
   `
 
-  labels.forEach(l=>html+=`<th style="padding:2px">${l}</th>`)
+  labels.forEach(l=>{
+    html+=`<th style="padding:4px">${l}</th>`
+  })
 
   html+="</tr>"
 
@@ -258,7 +260,7 @@ function renderWeek(){
     const ids=grouped[length]
     const total=ids.length
 
-    html+=`<tr><td style="font-size:10px">${length}</td>`
+    html+=`<tr><td style="font-weight:bold">${length}</td>`
 
     dates.forEach(day=>{
 
@@ -295,36 +297,24 @@ function renderWeek(){
 
       const free=total-booked
 
-      let bg="#2e7d32"
-      if(free===0) bg="#c62828"
-      else if(free<=2) bg="#ef6c00"
+      let bg="#4caf50"
+      if(free===0) bg="#f44336"
+      else if(free<=2) bg="#ff9800"
 
       html+=`
       <td onclick="showDayDetails('${day}')"
       style="
         background:${bg};
         color:white;
-        padding:3px;
         text-align:center;
-        font-size:9px;
-        border:1px solid rgba(255,255,255,0.2);
+        padding:8px;
+        cursor:pointer;
       ">
-        <div style="font-weight:bold;font-size:12px">${free}</div>
-
-        <div style="font-size:9px">
-          ${outCount>0 ? "🟢↑"+outCount : ""}
-          ${inCount>0 ? " 🔵↓"+inCount : ""}
+        <div style="font-size:18px;font-weight:bold">${free}</div>
+        <div style="font-size:12px">
+          ${outCount>0 ? "↑"+outCount : ""}
+          ${inCount>0 ? " ↓"+inCount : ""}
         </div>
-
-        <div style="
-          width:6px;
-          height:6px;
-          border-radius:50%;
-          margin:2px auto 0;
-          background:white;
-          opacity:0.8;
-        "></div>
-
       </td>
       `
     })
