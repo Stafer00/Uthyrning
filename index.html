@@ -1,6 +1,143 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Skiduthyrning</title>
+
+<style>
+
+/* BAS */
+body{
+  margin:0;
+  font-family:-apple-system, Arial;
+  background:#f5f5f5;
+  height:100vh;
+  overflow:hidden;
+}
+
+/* HUVUDLAYOUT */
+.container{
+  display:flex;
+  height:100vh;
+  gap:8px;
+  padding:8px;
+  box-sizing:border-box;
+}
+
+/* VÄNSTER (MINDRE) */
+.left{
+  width:35%;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+/* HÖGER (STÖRRE = KALENDER) */
+.right{
+  width:65%;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+/* SECTIONS */
+.section{
+  background:white;
+  border-radius:10px;
+  padding:8px;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+/* HÖJDER */
+.customer{ flex:0 0 auto; }
+.skiSection{ flex:1; }
+.calendar{ flex:2; }   /* 🔥 STÖRST */
+.bookings{ flex:1; }
+
+/* INPUT */
+input{
+  font-size:14px;
+  padding:8px;
+  margin:3px 0;
+  width:100%;
+  border-radius:6px;
+  border:1px solid #ccc;
+}
+
+/* BUTTON */
+button{
+  font-size:14px;
+  padding:6px 8px;
+  margin:2px;
+  border:none;
+  border-radius:6px;
+  background:#2e7dff;
+  color:white;
+}
+
+.clearBtn{
+  background:#777;
+}
+
+/* SKIDGRID */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:6px;
+}
+
+/* SCROLL YTOR */
+.scroll{
+  overflow:auto;
+  flex:1;
+  min-height:0;
+}
+
+/* KORT */
+.card{
+  border:1px solid #ddd;
+  border-radius:8px;
+  padding:6px;
+  text-align:center;
+  font-size:12px;
+}
+
+/* KALENDER */
+#calendar{
+  flex:1;
+  overflow:hidden;
+}
+
+#calendar table{
+  width:100%;
+  height:100%;
+  border-collapse:collapse;
+}
+
+#calendar th, #calendar td{
+  text-align:center;
+}
+
+h4{
+  margin:4px 0;
+}
+
+</style>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+</head>
+
+<body>
+
 <div class="container">
 
-  <!-- VÄNSTER (MINDRE) -->
+  <!-- VÄNSTER -->
   <div class="left">
 
     <div class="section customer">
@@ -15,29 +152,25 @@
 
       <h4>Skidor</h4>
 
-      <div style="display:flex; flex-direction:column; flex:1; min-height:0;">
+      <div class="scroll">
+        <div id="skiWall" class="grid"></div>
+        <div id="cart"></div>
+      </div>
 
-        <div class="scroll">
-          <div id="skiWall" class="grid"></div>
-          <div id="cart"></div>
-        </div>
-
-        <div style="flex:0 0 auto; display:flex; gap:6px;">
-          <button id="saveBtn">Spara</button>
-          <button onclick="clearForm()" class="clearBtn">Rensa</button>
-          <button onclick="location.href='lager.html'">Lager</button>
-        </div>
-
+      <div style="display:flex; gap:6px;">
+        <button id="saveBtn">Spara</button>
+        <button onclick="clearForm()" class="clearBtn">Rensa</button>
+        <button onclick="location.href='lager.html'">Lager</button>
       </div>
 
     </div>
 
   </div>
 
-  <!-- HÖGER (STÖRRE) -->
-  <div class="right" style="flex:2;">
+  <!-- HÖGER -->
+  <div class="right">
 
-    <div class="section calendar" style="flex:2;">
+    <div class="section calendar">
 
       <h4>Kalender</h4>
 
@@ -50,9 +183,10 @@
 
     </div>
 
-    <div class="section bookings" style="flex:1;">
+    <div class="section bookings">
 
       <h4>Bokningar</h4>
+
       <input id="search" placeholder="Sök..." oninput="filterRentals()">
 
       <div class="scroll">
@@ -64,3 +198,13 @@
   </div>
 
 </div>
+
+<!-- LOAD JS -->
+<script>
+const script = document.createElement("script")
+script.src = "/app.js?v=" + Date.now()
+document.body.appendChild(script)
+</script>
+
+</body>
+</html>
