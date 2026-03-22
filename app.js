@@ -1,4 +1,4 @@
-console.log("APP FINAL NO SCROLL CALENDAR")
+console.log("APP FINAL WITH COLORS + DOTS")
 
 /* ========= SUPABASE ========= */
 
@@ -295,25 +295,36 @@ function renderWeek(){
 
       const free=total-booked
 
-      let bg="#4caf50"
-      if(free===0) bg="#f44336"
-      else if(free<=2) bg="#ff9800"
+      let bg="#2e7d32"
+      if(free===0) bg="#c62828"
+      else if(free<=2) bg="#ef6c00"
 
       html+=`
       <td onclick="showDayDetails('${day}')"
       style="
         background:${bg};
         color:white;
-        padding:2px;
+        padding:3px;
         text-align:center;
         font-size:9px;
-        line-height:1.1;
+        border:1px solid rgba(255,255,255,0.2);
       ">
-        <div style="font-weight:bold;font-size:11px">${free}</div>
-        <div>
-          ${outCount>0 ? "↑"+outCount : ""}
-          ${inCount>0 ? " ↓"+inCount : ""}
+        <div style="font-weight:bold;font-size:12px">${free}</div>
+
+        <div style="font-size:9px">
+          ${outCount>0 ? "🟢↑"+outCount : ""}
+          ${inCount>0 ? " 🔵↓"+inCount : ""}
         </div>
+
+        <div style="
+          width:6px;
+          height:6px;
+          border-radius:50%;
+          margin:2px auto 0;
+          background:white;
+          opacity:0.8;
+        "></div>
+
       </td>
       `
     })
