@@ -1,140 +1,8 @@
-<!DOCTYPE html>
-<html lang="sv">
-<head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<title>Skiduthyrning</title>
-
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-
-<style>
-
-/* BAS */
-body{
-  font-family:-apple-system, Arial;
-  margin:0;
-  background:#f5f5f5;
-  height:100vh;
-  overflow:hidden;
-}
-
-/* GRID */
-.container{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  height:100vh;
-  gap:8px;
-  padding:8px;
-  box-sizing:border-box;
-}
-
-/* KOLUMNER */
-.left, .right{
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  min-height:0;
-}
-
-/* SECTIONS */
-.section{
-  background:white;
-  padding:8px;
-  border-radius:10px;
-  display:flex;
-  flex-direction:column;
-  min-height:0;
-}
-
-/* HÖJDER */
-.customer{ flex:0 0 auto; }
-.skiSection{ flex:1; }
-.calendar{ flex:1; }
-.bookings{ flex:1; }
-
-/* INPUT */
-input{
-  font-size:16px;
-  padding:8px;
-  margin:4px 0;
-  width:100%;
-  border-radius:8px;
-  border:1px solid #ccc;
-}
-
-/* BUTTON */
-button{
-  font-size:14px;
-  padding:8px;
-  margin:3px;
-  border-radius:8px;
-  border:none;
-  background:#2e7dff;
-  color:white;
-}
-
-.clearBtn{ background:#777; }
-.lagerBtn{ background:#009688; }
-
-/* GRID */
-.grid{
-  display:grid;
-  grid-template-columns:repeat(5, 1fr);
-  gap:6px;
-}
-
-/* KORT */
-.card{
-  border:1px solid #ddd;
-  border-radius:10px;
-  padding:6px;
-  text-align:center;
-  font-size:12px;
-}
-
-/* SCROLL */
-.scroll{
-  flex:1;
-  overflow:auto;
-  min-height:0;
-}
-
-/* KALENDER */
-#calendar table{
-  width:100%;
-  border-collapse:collapse;
-}
-
-#calendar th, #calendar td{
-  font-size:10px;
-  padding:4px;
-  text-align:center;
-}
-
-/* RUBRIKER */
-h4{
-  margin:4px 0;
-  font-size:14px;
-}
-
-</style>
-
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-
-</head>
-
-<body>
-
 <div class="container">
 
-  <!-- VÄNSTER -->
+  <!-- VÄNSTER (MINDRE) -->
   <div class="left">
 
-    <!-- KUND -->
     <div class="section customer">
       <h4>Kund</h4>
       <input id="customer" placeholder="Namn">
@@ -143,24 +11,21 @@ h4{
       <input type="date" id="end">
     </div>
 
-    <!-- SKIDOR -->
     <div class="section skiSection">
 
       <h4>Skidor</h4>
 
       <div style="display:flex; flex-direction:column; flex:1; min-height:0;">
 
-        <!-- SCROLL -->
         <div class="scroll">
           <div id="skiWall" class="grid"></div>
           <div id="cart"></div>
         </div>
 
-        <!-- KNAPPAR -->
-        <div style="flex:0 0 auto; display:flex; gap:6px; padding-top:6px;">
+        <div style="flex:0 0 auto; display:flex; gap:6px;">
           <button id="saveBtn">Spara</button>
           <button onclick="clearForm()" class="clearBtn">Rensa</button>
-          <button onclick="location.href='lager.html'" class="lagerBtn">Lager</button>
+          <button onclick="location.href='lager.html'">Lager</button>
         </div>
 
       </div>
@@ -169,11 +34,10 @@ h4{
 
   </div>
 
-  <!-- HÖGER -->
-  <div class="right">
+  <!-- HÖGER (STÖRRE) -->
+  <div class="right" style="flex:2;">
 
-    <!-- KALENDER -->
-    <div class="section calendar">
+    <div class="section calendar" style="flex:2;">
 
       <h4>Kalender</h4>
 
@@ -182,18 +46,14 @@ h4{
         <button onclick="nextWeek()">→</button>
       </div>
 
-      <div class="scroll">
-        <div id="calendar"></div>
-      </div>
+      <div id="calendar"></div>
 
     </div>
 
-    <!-- BOKNINGAR -->
-    <div class="section bookings">
+    <div class="section bookings" style="flex:1;">
 
       <h4>Bokningar</h4>
-
-      <input id="search" placeholder="Sök namn / telefon" oninput="filterRentals()">
+      <input id="search" placeholder="Sök..." oninput="filterRentals()">
 
       <div class="scroll">
         <div id="rentals"></div>
@@ -204,27 +64,3 @@ h4{
   </div>
 
 </div>
-
-<!-- SERVICE WORKER CLEAN -->
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(regs => {
-    regs.forEach(r => r.unregister())
-  })
-}
-</script>
-
-<!-- CACHE KILL -->
-<script>
-const script = document.createElement("script")
-script.src = "/app.js?v=" + Date.now()
-document.body.appendChild(script)
-
-if (!sessionStorage.getItem("reloaded")) {
-  sessionStorage.setItem("reloaded", "true")
-  location.reload()
-}
-</script>
-
-</body>
-</html>
