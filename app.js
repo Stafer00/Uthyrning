@@ -1,4 +1,4 @@
-console.log("APP FINAL AUTO FIT CALENDAR")
+console.log("APP FINAL ARROWS COLOR")
 
 /* ========= SUPABASE ========= */
 
@@ -299,11 +299,11 @@ function renderWeek(){
       <td onclick="showDayDetails('${day}')"
       style="background:${bg};color:white;text-align:center;padding:2px;font-size:10px;">
         <div style="font-weight:bold">${free}</div>
-        <div style="font-size:9px">
-          ${outCount>0 ? "↑"+outCount : ""}
-          ${inCount>0 ? " ↓"+inCount : ""}
+
+        <div style="font-size:10px;font-weight:bold;">
+          ${outCount>0 ? `<span style="color:#00e676">↑${outCount}</span>` : ""}
+          ${inCount>0 ? `<span style="color:#40c4ff"> ↓${inCount}</span>` : ""}
         </div>
-        <div style="width:4px;height:4px;border-radius:50%;margin:auto;background:white;"></div>
       </td>
       `
     })
