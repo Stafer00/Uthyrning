@@ -7,10 +7,8 @@
 
 <title>Skiduthyrning</title>
 
-<!-- STOPPA CACHE -->
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
+<!-- LÄTT CACHE-KONTROLL (inte aggressiv) -->
+<meta http-equiv="Cache-Control" content="no-cache">
 
 <style>
 
@@ -103,10 +101,12 @@ button{
   width:100%;
   height:100%;
   border-collapse:collapse;
+  font-size:11px;
 }
 
-#calendar th, #calendar td{
+#calendar td{
   text-align:center;
+  color:white;
 }
 
 h4{ margin:4px 0; }
@@ -180,29 +180,6 @@ h4{ margin:4px 0; }
 
 </div>
 
-<!-- 🔥 TOTAL CACHE RESET -->
-<script>
-(async () => {
-
-  if ('serviceWorker' in navigator) {
-    const regs = await navigator.serviceWorker.getRegistrations()
-    for (let r of regs) await r.unregister()
-  }
-
-  if ('caches' in window) {
-    const keys = await caches.keys()
-    for (let k of keys) await caches.delete(k)
-  }
-
-  if (!localStorage.getItem("fresh")) {
-    localStorage.setItem("fresh", "1")
-    location.reload(true)
-  }
-
-})()
-</script>
-
-<!-- LOAD JS -->
 <script>
 const script = document.createElement("script")
 script.src = "/app.js?v=" + Date.now()
