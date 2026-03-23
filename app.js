@@ -1,4 +1,4 @@
-console.log("SAFE VERSION")
+console.log("SAFE FULL VERSION")
 
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
@@ -18,28 +18,24 @@ async function init(){
     document.getElementById("saveBtn").onclick=saveBooking
     await loadAll()
     renderAll()
-  }catch(e){
-    showError(e)
-  }
+  }catch(e){showError(e)}
 }
 
-/* LOAD */
+/* ========= LOAD ========= */
 
 async function loadAll(){
   try{
     skis=(await supabaseClient.from("skis").select("*")).data||[]
     rentals=(await supabaseClient.from("rentals").select("*")).data||[]
     filteredRentals=rentals
-  }catch(e){ showError(e) }
+  }catch(e){showError(e)}
 }
 
-/* SAFE DOM */
+/* ========= HELP ========= */
 
-function el(id){
-  return document.getElementById(id)
-}
+function el(id){return document.getElementById(id)}
 
-/* RENDER */
+/* ========= RENDER ========= */
 
 function renderAll(){
   try{
@@ -47,10 +43,10 @@ function renderAll(){
     renderCart()
     renderWeek()
     renderRentals()
-  }catch(e){ showError(e) }
+  }catch(e){showError(e)}
 }
 
-/* SKIS */
+/* ========= SKIDOR ========= */
 
 function getGroupedSkis(){
   const m={}
@@ -69,21 +65,29 @@ function renderWall(){
 
   const g=getGroupedSkis()
 
-  Object.keys(g).forEach(l=>{
+  Object.keys(g).sort((a,b)=>a-b).forEach(l=>{
+
     const ids=g[l]
+    const available=getAvailable(ids)
+    const selected=getSelected(ids)
+
+    let bg="#e8f5e9"
+    if(available===0) bg="#ffcdd2"
+    else if(available<=2) bg="#fff3cd"
+
     div.innerHTML+=`
-      <div class="card">
+      <div class="card" style="background:${bg}">
         <b>${l} cm</b><br>
-        ${getAvailable(ids)} kvar<br>
+        ${available} kvar<br>
         <button onclick="minus('${l}')">−</button>
-        ${getSelected(ids)}
+        ${selected}
         <button onclick="plus('${l}')">+</button>
       </div>
     `
   })
 }
 
-/* CART */
+/* ========= CART ========= */
 
 function getSelected(ids){
   return cart.filter(id=>ids.includes(id)).length
@@ -92,6 +96,7 @@ function getSelected(ids){
 function plus(l){
   try{
     const ids=getGroupedSkis()[l]
+    if(getSelected(ids)>=getAvailable(ids)) return
     cart.push(ids[getSelected(ids)])
     renderAll()
   }catch(e){showError(e)}
@@ -115,13 +120,22 @@ function renderCart(){
     return
   }
 
-  div.innerHTML=cart.length+" skidor valda"
+  const g=getGroupedSkis()
+  let html=""
+
+  Object.keys(g).forEach(l=>{
+    const c=getSelected(g[l])
+    if(c>0) html+=`${l} cm x ${c}<br>`
+  })
+
+  div.innerHTML=html
 }
 
-/* LAGER */
+/* ========= LAGER ========= */
 
 function getAvailable(ids){
   let booked=0
+
   rentals.forEach(r=>{
     if(r.returned) return
     try{
@@ -130,13 +144,19 @@ function getAvailable(ids){
       })
     }catch{}
   })
+
   return ids.length-booked
 }
 
-/* SAVE */
+/* ========= SAVE ========= */
 
 async function saveBooking(){
   try{
+    if(!el("customer").value||!el("start").value||!el("end").value||cart.length===0){
+      alert("Fyll i allt")
+      return
+    }
+
     await supabaseClient.from("rentals").insert({
       name:el("customer").value,
       phone:el("phone").value,
@@ -149,8 +169,11 @@ async function saveBooking(){
     clearForm()
     await loadAll()
     renderAll()
+
   }catch(e){showError(e)}
 }
+
+/* ========= CLEAR ========= */
 
 function clearForm(){
   el("customer").value=""
@@ -161,56 +184,171 @@ function clearForm(){
   renderAll()
 }
 
-/* KALENDER */
+/* ========= KALENDER ========= */
 
 function renderWeek(){
+
   const div=el("calendar")
   if(!div) return
 
   try{
-    div.innerHTML="<div>Kalender laddar...</div>"
 
-    let base=new Date()
+    let base=getMonday(new Date())
     base.setDate(base.getDate()+weekOffset*7)
 
-    div.innerHTML="OK"
+    const days=["Mån","Tis","Ons","Tor","Fre","Lör","Sön"]
+
+    let dates=[]
+    let html="<table><tr><th></th>"
+
+    for(let i=0;i<7;i++){
+      let d=new Date(base)
+      d.setDate(base.getDate()+i)
+
+      dates.push(format(d))
+
+      html+=`<th>${days[i]}<br>${d.toISOString().substring(5,10)}</th>`
+    }
+
+    html+="</tr>"
+
+    const g=getGroupedSkis()
+
+    Object.keys(g).sort((a,b)=>a-b).forEach(l=>{
+
+      const ids=g[l]
+      const total=ids.length
+
+      html+=`<tr><td>${l}</td>`
+
+      dates.forEach(day=>{
+
+        let booked=0,out=0,inn=0
+
+        rentals.forEach(r=>{
+          if(r.returned) return
+
+          let items=[]
+          try{items=JSON.parse(r.items)}catch{}
+
+          if(day>=r.start && day<=r.end){
+            items.forEach(id=>{ if(ids.includes(id)) booked++ })
+          }
+
+          if(r.start===day){
+            items.forEach(id=>{ if(ids.includes(id)) out++ })
+          }
+
+          if(r.end===day){
+            items.forEach(id=>{ if(ids.includes(id)) inn++ })
+          }
+        })
+
+        const free=total-booked
+
+        let bg="#4caf50"
+        if(free===0) bg="#f44336"
+        else if(free<=2) bg="#ff9800"
+
+        html+=`
+          <td style="background:${bg};color:white">
+            ${free}<br>
+            <span style="color:#00e676">↑${out||""}</span>
+            <span style="color:#40c4ff">↓${inn||""}</span>
+          </td>
+        `
+      })
+
+      html+="</tr>"
+    })
+
+    html+="</table>"
+
+    div.innerHTML=html
+
   }catch(e){showError(e)}
 }
 
-/* BOOKINGS */
+/* ========= BOKNINGAR ========= */
 
 function renderRentals(){
+
   const div=el("rentals")
   if(!div) return
 
   try{
+
     div.innerHTML=""
 
     filteredRentals.forEach(r=>{
+
       if(r.returned) return
-      div.innerHTML+=`<div>${r.name}</div>`
+
+      div.innerHTML+=`
+        <div style="border:1px solid #ccc;padding:8px;margin:5px">
+          <strong>${r.name}</strong><br>
+          📞 ${r.phone||""}<br>
+          ${r.start} → ${r.end}<br>
+
+          <button onclick="extendBooking('${r.id}')">Förläng</button>
+          <button onclick="returnAll('${r.id}')">Återlämna</button>
+        </div>
+      `
     })
+
   }catch(e){showError(e)}
 }
 
-/* SEARCH */
+/* ========= SÖK ========= */
 
 function filterRentals(){
   const q=el("search").value.toLowerCase()
+
   filteredRentals=rentals.filter(r=>
-    (r.name||"").toLowerCase().includes(q)
+    (r.name||"").toLowerCase().includes(q) ||
+    (r.phone||"").toLowerCase().includes(q)
   )
+
   renderRentals()
 }
 
-/* NAV */
+/* ========= ACTIONS ========= */
+
+async function returnAll(id){
+  await supabaseClient.from("rentals").update({returned:true}).eq("id",id)
+  await loadAll()
+  renderAll()
+}
+
+async function extendBooking(id){
+  const d=prompt("Nytt slutdatum YYYY-MM-DD")
+  if(!d) return
+  await supabaseClient.from("rentals").update({end:d}).eq("id",id)
+  await loadAll()
+  renderAll()
+}
+
+/* ========= NAV ========= */
 
 function prevWeek(){weekOffset--;renderWeek()}
 function nextWeek(){weekOffset++;renderWeek()}
 
-/* ERROR */
+/* ========= DATE ========= */
+
+function format(d){
+  return d.toISOString().split("T")[0]
+}
+
+function getMonday(d){
+  d=new Date(d)
+  let day=d.getDay()
+  let diff=d.getDate()-(day==0?6:day-1)
+  return new Date(d.setDate(diff))
+}
+
+/* ========= ERROR ========= */
 
 function showError(e){
   console.error(e)
-  document.body.innerHTML+=`<div class="error">${e.message}</div>`
+  document.body.innerHTML+=`<div style="color:red">${e.message}</div>`
 }
