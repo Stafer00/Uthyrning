@@ -7,19 +7,19 @@
 
 <title>Skiduthyrning</title>
 
-<!-- CACHE SAFE -->
 <meta http-equiv="Cache-Control" content="no-cache">
 
 <style>
 
+/* BAS */
 body{
   margin:0;
   font-family:-apple-system, Arial;
   background:#f5f5f5;
   height:100vh;
-  overflow:hidden;
 }
 
+/* LAYOUT */
 .container{
   display:flex;
   height:100vh;
@@ -28,9 +28,22 @@ body{
   box-sizing:border-box;
 }
 
-.left{width:35%;display:flex;flex-direction:column;gap:8px;}
-.right{width:65%;display:flex;flex-direction:column;gap:8px;}
+/* KOLUMNER */
+.left{
+  width:35%;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
 
+.right{
+  width:65%;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+/* SECTIONS */
 .section{
   background:white;
   border-radius:10px;
@@ -40,11 +53,13 @@ body{
   overflow:hidden;
 }
 
+/* FLEX */
 .customer{flex:0 0 auto;}
 .skiSection{flex:1;}
 .calendar{flex:2;}
 .bookings{flex:1;}
 
+/* INPUT */
 input{
   font-size:14px;
   padding:8px;
@@ -54,6 +69,7 @@ input{
   border:1px solid #ccc;
 }
 
+/* BUTTON */
 button{
   font-size:14px;
   padding:6px;
@@ -64,20 +80,25 @@ button{
   color:white;
 }
 
+/* SPECIAL */
 .clearBtn{background:#777;}
+.lagerBtn{background:#4caf50;}
 
+/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(5,1fr);
   gap:6px;
 }
 
+/* SCROLL */
 .scroll{
   overflow:auto;
   flex:1;
   min-height:0;
 }
 
+/* CARD */
 .card{
   border:1px solid #ddd;
   border-radius:8px;
@@ -86,6 +107,7 @@ button{
   font-size:12px;
 }
 
+/* KALENDER */
 #calendar table{
   width:100%;
   height:100%;
@@ -98,10 +120,9 @@ button{
   color:white;
 }
 
-.error{
-  color:red;
-  font-weight:bold;
-  padding:10px;
+/* RUBRIKER */
+h4{
+  margin:4px 0;
 }
 
 </style>
@@ -114,17 +135,29 @@ button{
 
 <div class="container">
 
+  <!-- VÄNSTER -->
   <div class="left">
 
+    <!-- KUND -->
     <div class="section customer">
-      <h4>Kund</h4>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h4>Kund</h4>
+        <button class="lagerBtn" onclick="window.location.href='/lager.html'">
+          Lager
+        </button>
+      </div>
+
       <input id="customer" placeholder="Namn">
       <input id="phone" placeholder="Telefon">
       <input type="date" id="start">
       <input type="date" id="end">
+
     </div>
 
+    <!-- SKIDOR -->
     <div class="section skiSection">
+
       <h4>Skidor</h4>
 
       <div class="scroll">
@@ -132,17 +165,22 @@ button{
         <div id="cart"></div>
       </div>
 
-      <div>
+      <!-- FASTA KNAPPAR -->
+      <div style="flex:0 0 auto;">
         <button id="saveBtn">Spara</button>
         <button onclick="clearForm()" class="clearBtn">Rensa</button>
       </div>
+
     </div>
 
   </div>
 
+  <!-- HÖGER -->
   <div class="right">
 
+    <!-- KALENDER -->
     <div class="section calendar">
+
       <h4>Kalender</h4>
 
       <div>
@@ -151,15 +189,20 @@ button{
       </div>
 
       <div id="calendar"></div>
+
     </div>
 
+    <!-- BOKNINGAR -->
     <div class="section bookings">
+
       <h4>Bokningar</h4>
+
       <input id="search" placeholder="Sök..." oninput="filterRentals()">
 
       <div class="scroll">
         <div id="rentals"></div>
       </div>
+
     </div>
 
   </div>
