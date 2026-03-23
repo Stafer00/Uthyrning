@@ -384,3 +384,6 @@ function getMonday(d){
   let diff=d.getDate()-(day==0?6:day-1)
   return new Date(d.setDate(diff))
 }
+function filterRentals(){
+  renderRentals()
+}
