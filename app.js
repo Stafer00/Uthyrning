@@ -1,4 +1,4 @@
-console.log("APP FINAL ARROWS COLOR")
+console.log("APP FINAL CONTRAST ARROWS + DATE")
 
 /* ========= SUPABASE ========= */
 
@@ -223,7 +223,10 @@ function renderWeek(){
     const dayStr=format(d)
     dates.push(dayStr)
 
-    let label=days[i]+"<br>"+d.toISOString().substring(5,10)
+    const dayNum = d.getDate()
+    const month = d.getMonth()+1
+
+    let label = days[i] + "<br>" + dayNum + "/" + month
 
     if(dayStr===today){
       label="<span style='color:#2196f3;font-weight:bold'>"+label+"</span>"
@@ -300,9 +303,13 @@ function renderWeek(){
       style="background:${bg};color:white;text-align:center;padding:2px;font-size:10px;">
         <div style="font-weight:bold">${free}</div>
 
-        <div style="font-size:10px;font-weight:bold;">
-          ${outCount>0 ? `<span style="color:#00e676">↑${outCount}</span>` : ""}
-          ${inCount>0 ? `<span style="color:#40c4ff"> ↓${inCount}</span>` : ""}
+        <div style="
+          font-size:10px;
+          font-weight:bold;
+          text-shadow:1px 1px 2px black;
+        ">
+          ${outCount>0 ? `<span style="color:#ffeb3b">↑${outCount}</span>` : ""}
+          ${inCount>0 ? `<span style="color:#00e5ff"> ↓${inCount}</span>` : ""}
         </div>
       </td>
       `
@@ -358,114 +365,6 @@ function showDayDetails(day){
     `🔵 In: ${inCount}\n\n` +
     (text || "Inga rörelser")
   )
-}
-
-/* ========= BOKNINGAR ========= */
-
-function renderRentals(){
-
-  const div=document.getElementById("rentals")
-  div.innerHTML=""
-
-  rentals.forEach(r=>{
-
-    if(r.returned) return
-
-    let items=[]
-    try{items=JSON.parse(r.items)}catch{}
-
-    const grouped={}
-
-    items.forEach(id=>{
-      const ski=skis.find(s=>s.id===id)
-      if(!ski) return
-      grouped[ski.length]=(grouped[ski.length]||0)+1
-    })
-
-    let skisText=""
-    Object.keys(grouped).forEach(len=>{
-      skisText+=`${len} cm x ${grouped[len]}<br>`
-    })
-
-    let controls=""
-
-    Object.keys(grouped).forEach(len=>{
-      controls+=`<button onclick="returnOne('${r.id}', ${len})">− ${len}</button>`
-    })
-
-    div.innerHTML+=`
-      <div style="border:1px solid #ccc;padding:8px;margin:5px">
-        <strong>${r.name}</strong><br>
-        📞 ${r.phone||""}<br>
-        ${r.start} → ${r.end}<br><br>
-
-        ${skisText}
-
-        ${controls}<br>
-
-        <button onclick="extendBooking('${r.id}')">Förläng</button>
-        <button onclick="returnAll('${r.id}')">Återlämna allt</button>
-      </div>
-    `
-  })
-}
-
-/* ========= RETURN ========= */
-
-async function returnOne(id,length){
-
-  const booking=rentals.find(r=>r.id==id)
-
-  let items=[]
-  try{items=JSON.parse(booking.items)}catch{}
-
-  const index=items.findIndex(itemId=>{
-    const ski=skis.find(s=>s.id===itemId)
-    return ski && ski.length==length
-  })
-
-  if(index===-1) return
-
-  items.splice(index,1)
-
-  if(items.length===0){
-    await returnAll(id)
-    return
-  }
-
-  await supabaseClient.from("rentals")
-    .update({items:JSON.stringify(items)})
-    .eq("id",id)
-
-  await loadBookings()
-  renderAll()
-}
-
-async function returnAll(id){
-
-  if(!confirm("Återlämna allt?")) return
-
-  await supabaseClient.from("rentals")
-    .update({returned:true})
-    .eq("id",id)
-
-  await loadBookings()
-  renderAll()
-}
-
-/* ========= EXTEND ========= */
-
-async function extendBooking(id){
-
-  const newEnd=prompt("Nytt slutdatum YYYY-MM-DD")
-  if(!newEnd) return
-
-  await supabaseClient.from("rentals")
-    .update({end:newEnd})
-    .eq("id",id)
-
-  await loadBookings()
-  renderAll()
 }
 
 /* ========= NAV ========= */
