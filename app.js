@@ -1,16 +1,17 @@
-console.log("APP FINAL CONTRAST ARROWS + DATE")
+console.log("APP FINAL STABLE")
 
 /* ========= SUPABASE ========= */
 
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSIIjoicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
 )
 
 /* ========= STATE ========= */
 
 let skis = []
 let rentals = []
+let filteredRentals = []
 let cart = []
 let weekOffset = 0
 
@@ -22,6 +23,7 @@ async function init(){
   document.getElementById("saveBtn").onclick = saveBooking
   await loadSkis()
   await loadBookings()
+  filteredRentals = rentals
   renderAll()
 }
 
@@ -99,7 +101,6 @@ function getSelected(ids){
 }
 
 function plus(length){
-
   const ids=getGroupedSkis()[length]
 
   if(getSelected(ids)>=getAvailable(ids)){
@@ -108,12 +109,10 @@ function plus(length){
   }
 
   cart.push(ids[getSelected(ids)])
-
   renderAll()
 }
 
 function minus(length){
-
   const ids=getGroupedSkis()[length]
 
   const index=cart.findIndex(id=>ids.includes(id))
@@ -198,7 +197,22 @@ async function saveBooking(){
   clearForm()
 
   await loadBookings()
+  filteredRentals = rentals
   renderAll()
+}
+
+/* ========= SÖK ========= */
+
+function filterRentals(){
+
+  const q = document.getElementById("search").value.toLowerCase()
+
+  filteredRentals = rentals.filter(r =>
+    (r.name || "").toLowerCase().includes(q) ||
+    (r.phone || "").toLowerCase().includes(q)
+  )
+
+  renderRentals()
 }
 
 /* ========= KALENDER ========= */
@@ -223,10 +237,7 @@ function renderWeek(){
     const dayStr=format(d)
     dates.push(dayStr)
 
-    const dayNum = d.getDate()
-    const month = d.getMonth()+1
-
-    let label = days[i] + "<br>" + dayNum + "/" + month
+    let label = days[i]+"<br>"+d.getDate()+"/"+(d.getMonth()+1)
 
     if(dayStr===today){
       label="<span style='color:#2196f3;font-weight:bold'>"+label+"</span>"
@@ -236,18 +247,13 @@ function renderWeek(){
   }
 
   const weekNumber=getWeekNumber(base)
-
   const grouped=getGroupedSkis()
   const lengths=Object.keys(grouped).sort((a,b)=>a-b)
 
-  const totalRows=lengths.length+1
-  const rowHeight=Math.floor(100/totalRows)
+  const rowHeight=Math.floor(100/(lengths.length+1))
 
-  let html=`
-  <table style="width:100%;height:100%;table-layout:fixed;border-collapse:collapse;font-size:11px;">
-  <tr style="height:${rowHeight}%">
-    <th style="width:45px">v${weekNumber}</th>
-  `
+  let html=`<table style="width:100%;height:100%;table-layout:fixed;border-collapse:collapse;font-size:11px;">
+  <tr style="height:${rowHeight}%"><th style="width:45px">v${weekNumber}</th>`
 
   labels.forEach(l=>html+=`<th>${l}</th>`)
   html+="</tr>"
@@ -261,35 +267,25 @@ function renderWeek(){
 
     dates.forEach(day=>{
 
-      let booked=0
-      let outCount=0
-      let inCount=0
+      let booked=0,outCount=0,inCount=0
 
       rentals.forEach(r=>{
-
         if(r.returned) return
 
         let items=[]
         try{items=JSON.parse(r.items)}catch{}
 
         if(day>=r.start && day<=r.end){
-          items.forEach(id=>{
-            if(ids.includes(id)) booked++
-          })
+          items.forEach(id=>{ if(ids.includes(id)) booked++ })
         }
 
         if(r.start===day){
-          items.forEach(id=>{
-            if(ids.includes(id)) outCount++
-          })
+          items.forEach(id=>{ if(ids.includes(id)) outCount++ })
         }
 
         if(r.end===day){
-          items.forEach(id=>{
-            if(ids.includes(id)) inCount++
-          })
+          items.forEach(id=>{ if(ids.includes(id)) inCount++ })
         }
-
       })
 
       const free=total-booked
@@ -299,72 +295,130 @@ function renderWeek(){
       else if(free<=2) bg="#ff9800"
 
       html+=`
-      <td onclick="showDayDetails('${day}')"
-      style="background:${bg};color:white;text-align:center;padding:2px;font-size:10px;">
+      <td style="background:${bg};color:white;text-align:center;font-size:10px;">
         <div style="font-weight:bold">${free}</div>
-
-        <div style="
-          font-size:10px;
-          font-weight:bold;
-          text-shadow:1px 1px 2px black;
-        ">
+        <div style="text-shadow:1px 1px 2px black;">
           ${outCount>0 ? `<span style="color:#ffeb3b">↑${outCount}</span>` : ""}
           ${inCount>0 ? `<span style="color:#00e5ff"> ↓${inCount}</span>` : ""}
         </div>
-      </td>
-      `
+      </td>`
     })
 
     html+="</tr>"
   })
 
   html+="</table>"
-
   div.innerHTML=html
 }
 
-/* ========= VECKONUMMER ========= */
+/* ========= BOKNINGAR ========= */
 
-function getWeekNumber(d){
-  d=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()))
-  const dayNum=d.getUTCDay()||7
-  d.setUTCDate(d.getUTCDate()+4-dayNum)
-  const yearStart=new Date(Date.UTC(d.getUTCFullYear(),0,1))
-  return Math.ceil((((d-yearStart)/86400000)+1)/7)
-}
+function renderRentals(){
 
-/* ========= DAG DETALJ ========= */
+  const div=document.getElementById("rentals")
+  div.innerHTML=""
 
-function showDayDetails(day){
-
-  let outCount=0
-  let inCount=0
-  let text=""
-
-  rentals.forEach(r=>{
+  filteredRentals.forEach(r=>{
 
     if(r.returned) return
 
     let items=[]
     try{items=JSON.parse(r.items)}catch{}
 
-    if(r.start===day){
-      outCount+=items.length
-      text+=`🟢 UT: ${r.name} (${items.length})\n`
-    }
+    const grouped={}
 
-    if(r.end===day){
-      inCount+=items.length
-      text+=`🔵 IN: ${r.name} (${items.length})\n`
-    }
+    items.forEach(id=>{
+      const ski=skis.find(s=>s.id===id)
+      if(!ski) return
+      grouped[ski.length]=(grouped[ski.length]||0)+1
+    })
+
+    let skisText=""
+    Object.keys(grouped).forEach(len=>{
+      skisText+=`${len} cm x ${grouped[len]}<br>`
+    })
+
+    let controls=""
+    Object.keys(grouped).forEach(len=>{
+      controls+=`<button onclick="returnOne('${r.id}', ${len})">− ${len}</button>`
+    })
+
+    div.innerHTML+=`
+      <div style="border:1px solid #ccc;padding:8px;margin:5px">
+        <strong>${r.name}</strong><br>
+        📞 ${r.phone||""}<br>
+        ${r.start} → ${r.end}<br><br>
+
+        ${skisText}
+
+        ${controls}<br>
+
+        <button onclick="extendBooking('${r.id}')">Förläng</button>
+        <button onclick="returnAll('${r.id}')">Återlämna allt</button>
+      </div>
+    `
+  })
+}
+
+/* ========= RETURN ========= */
+
+async function returnOne(id,length){
+
+  const booking=rentals.find(r=>r.id==id)
+
+  let items=[]
+  try{items=JSON.parse(booking.items)}catch{}
+
+  const index=items.findIndex(itemId=>{
+    const ski=skis.find(s=>s.id===itemId)
+    return ski && ski.length==length
   })
 
-  alert(
-    `Datum: ${day}\n\n` +
-    `🟢 Ut: ${outCount}\n` +
-    `🔵 In: ${inCount}\n\n` +
-    (text || "Inga rörelser")
-  )
+  if(index===-1) return
+
+  items.splice(index,1)
+
+  if(items.length===0){
+    await returnAll(id)
+    return
+  }
+
+  await supabaseClient.from("rentals")
+    .update({items:JSON.stringify(items)})
+    .eq("id",id)
+
+  await loadBookings()
+  filteredRentals = rentals
+  renderAll()
+}
+
+async function returnAll(id){
+
+  if(!confirm("Återlämna allt?")) return
+
+  await supabaseClient.from("rentals")
+    .update({returned:true})
+    .eq("id",id)
+
+  await loadBookings()
+  filteredRentals = rentals
+  renderAll()
+}
+
+/* ========= EXTEND ========= */
+
+async function extendBooking(id){
+
+  const newEnd=prompt("Nytt slutdatum YYYY-MM-DD")
+  if(!newEnd) return
+
+  await supabaseClient.from("rentals")
+    .update({end:newEnd})
+    .eq("id",id)
+
+  await loadBookings()
+  filteredRentals = rentals
+  renderAll()
 }
 
 /* ========= NAV ========= */
@@ -384,6 +438,11 @@ function getMonday(d){
   let diff=d.getDate()-(day==0?6:day-1)
   return new Date(d.setDate(diff))
 }
-function filterRentals(){
-  renderRentals()
+
+function getWeekNumber(d){
+  d=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()))
+  const dayNum=d.getUTCDay()||7
+  d.setUTCDate(d.getUTCDate()+4-dayNum)
+  const yearStart=new Date(Date.UTC(d.getUTCFullYear(),0,1))
+  return Math.ceil((((d-yearStart)/86400000)+1)/7)
 }
