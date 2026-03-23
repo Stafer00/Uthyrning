@@ -7,9 +7,13 @@
 
 <title>Skiduthyrning</title>
 
+<!-- STOPPA CACHE -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+
 <style>
 
-/* BAS */
 body{
   margin:0;
   font-family:-apple-system, Arial;
@@ -18,7 +22,6 @@ body{
   overflow:hidden;
 }
 
-/* HUVUDLAYOUT */
 .container{
   display:flex;
   height:100vh;
@@ -27,7 +30,6 @@ body{
   box-sizing:border-box;
 }
 
-/* VÄNSTER (MINDRE) */
 .left{
   width:35%;
   display:flex;
@@ -35,7 +37,6 @@ body{
   gap:8px;
 }
 
-/* HÖGER (STÖRRE = KALENDER) */
 .right{
   width:65%;
   display:flex;
@@ -43,7 +44,6 @@ body{
   gap:8px;
 }
 
-/* SECTIONS */
 .section{
   background:white;
   border-radius:10px;
@@ -53,13 +53,11 @@ body{
   overflow:hidden;
 }
 
-/* HÖJDER */
 .customer{ flex:0 0 auto; }
 .skiSection{ flex:1; }
-.calendar{ flex:2; }   /* 🔥 STÖRST */
+.calendar{ flex:2; }
 .bookings{ flex:1; }
 
-/* INPUT */
 input{
   font-size:14px;
   padding:8px;
@@ -69,7 +67,6 @@ input{
   border:1px solid #ccc;
 }
 
-/* BUTTON */
 button{
   font-size:14px;
   padding:6px 8px;
@@ -80,37 +77,26 @@ button{
   color:white;
 }
 
-.clearBtn{
-  background:#777;
-}
+.clearBtn{ background:#777; }
 
-/* SKIDGRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(5,1fr);
   gap:6px;
 }
 
-/* SCROLL YTOR */
 .scroll{
   overflow:auto;
   flex:1;
   min-height:0;
 }
 
-/* KORT */
 .card{
   border:1px solid #ddd;
   border-radius:8px;
   padding:6px;
   text-align:center;
   font-size:12px;
-}
-
-/* KALENDER */
-#calendar{
-  flex:1;
-  overflow:hidden;
 }
 
 #calendar table{
@@ -123,9 +109,7 @@ button{
   text-align:center;
 }
 
-h4{
-  margin:4px 0;
-}
+h4{ margin:4px 0; }
 
 </style>
 
@@ -137,7 +121,6 @@ h4{
 
 <div class="container">
 
-  <!-- VÄNSTER -->
   <div class="left">
 
     <div class="section customer">
@@ -157,17 +140,15 @@ h4{
         <div id="cart"></div>
       </div>
 
-      <div style="display:flex; gap:6px;">
+      <div>
         <button id="saveBtn">Spara</button>
         <button onclick="clearForm()" class="clearBtn">Rensa</button>
-        <button onclick="location.href='lager.html'">Lager</button>
       </div>
 
     </div>
 
   </div>
 
-  <!-- HÖGER -->
   <div class="right">
 
     <div class="section calendar">
@@ -198,6 +179,28 @@ h4{
   </div>
 
 </div>
+
+<!-- 🔥 TOTAL CACHE RESET -->
+<script>
+(async () => {
+
+  if ('serviceWorker' in navigator) {
+    const regs = await navigator.serviceWorker.getRegistrations()
+    for (let r of regs) await r.unregister()
+  }
+
+  if ('caches' in window) {
+    const keys = await caches.keys()
+    for (let k of keys) await caches.delete(k)
+  }
+
+  if (!localStorage.getItem("fresh")) {
+    localStorage.setItem("fresh", "1")
+    location.reload(true)
+  }
+
+})()
+</script>
 
 <!-- LOAD JS -->
 <script>
