@@ -1,4 +1,4 @@
-console.log("VERSION 1.2")
+console.log("VERSION 1.3")
 
 /* ========= SUPABASE ========= */
 
@@ -281,8 +281,8 @@ function renderWeek(){
 
 function showDayDetails(day){
 
-  let outList=[]
-  let inList=[]
+  let outHTML=""
+  let inHTML=""
 
   rentals.forEach(r=>{
 
@@ -291,22 +291,46 @@ function showDayDetails(day){
     let items=[]
     try{items=JSON.parse(r.items)}catch{}
 
+    const grouped={}
+
+    items.forEach(id=>{
+      const ski=skis.find(s=>s.id===id)
+      if(!ski) return
+      grouped[ski.length]=(grouped[ski.length]||0)+1
+    })
+
     if(r.start===day){
-      outList.push(`
-        <div style="margin-bottom:6px">
+      outHTML+=`
+        <div style="margin-bottom:8px">
           🟢 ${r.name} (${items.length})
         </div>
-      `)
+      `
     }
 
     if(r.end===day){
-      inList.push(`
-        <div style="margin-bottom:8px">
-          🔵 ${r.name} (${items.length})<br>
-          <button onclick="quickReturn('${r.id}')">Återlämna</button>
+
+      let skisHTML=""
+
+      Object.keys(grouped).forEach(len=>{
+        skisHTML+=`
+          ${len} cm x ${grouped[len]}
+          <button onclick="returnOne('${r.id}', ${len})">−</button><br>
+        `
+      })
+
+      inHTML+=`
+        <div style="margin-bottom:12px;border-bottom:1px solid #ccc;padding-bottom:6px">
+          🔵 ${r.name}<br><br>
+
+          ${skisHTML}
+
+          <button onclick="quickReturn('${r.id}')">
+            Återlämna allt
+          </button>
         </div>
-      `)
+      `
     }
+
   })
 
   let html = `
@@ -327,15 +351,17 @@ function showDayDetails(day){
         border-radius:10px;
         max-width:420px;
         width:90%;
+        max-height:80%;
+        overflow:auto;
       ">
 
         <h3>${day}</h3>
 
         <b>🟢 Ut</b><br>
-        ${outList.length ? outList.join("") : "Inga"}<br>
+        ${outHTML || "Inga"}<br><br>
 
         <b>🔵 In</b><br>
-        ${inList.length ? inList.join("") : "Inga"}<br><br>
+        ${inHTML || "Inga"}<br><br>
 
         <button onclick="closePopup()">Stäng</button>
 
@@ -351,24 +377,53 @@ function closePopup(){
   if(p) p.remove()
 }
 
-/* ========= QUICK RETURN ========= */
+/* ========= RETURN ========= */
+
+async function returnOne(id,length){
+
+  const booking=rentals.find(r=>r.id==id)
+
+  let items=[]
+  try{items=JSON.parse(booking.items)}catch{}
+
+  const index=items.findIndex(itemId=>{
+    const ski=skis.find(s=>s.id===itemId)
+    return ski && ski.length==length
+  })
+
+  if(index===-1) return
+
+  items.splice(index,1)
+
+  if(items.length===0){
+    await quickReturn(id)
+    return
+  }
+
+  await supabaseClient
+    .from("rentals")
+    .update({items:JSON.stringify(items)})
+    .eq("id",id)
+
+  await loadAll()
+  renderAll()
+
+  closePopup()
+}
 
 async function quickReturn(id){
 
   if(!confirm("Återlämna hela bokningen?")) return
 
-  try{
-    await supabaseClient
-      .from("rentals")
-      .update({returned:true})
-      .eq("id",id)
+  await supabaseClient
+    .from("rentals")
+    .update({returned:true})
+    .eq("id",id)
 
-    await loadAll()
-    renderAll()
+  await loadAll()
+  renderAll()
 
-    closePopup()
-
-  }catch(e){showError(e)}
+  closePopup()
 }
 
 /* ========= BOKNINGAR ========= */
