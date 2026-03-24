@@ -1,26 +1,36 @@
-console.log("VERSION 1.5 TYPES")
+console.log("VERSION 1.5 SAFE")
 
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
+  "DIN_FULLA_KEY_HÄR"
 )
 
-/* STATE */
 let skis=[], rentals=[], filteredRentals=[], cart=[], weekOffset=0
 
 window.onload=init
 
 async function init(){
-  document.getElementById("saveBtn").onclick=saveBooking
-  await loadAll()
-  renderAll()
+  try{
+    document.getElementById("saveBtn").onclick=saveBooking
+    await loadAll()
+    renderAll()
+  }catch(e){showError(e)}
 }
 
 /* LOAD */
 async function loadAll(){
-  skis=(await supabaseClient.from("skis").select("*")).data||[]
-  rentals=(await supabaseClient.from("rentals").select("*")).data||[]
-  filteredRentals=rentals
+  try{
+    skis=(await supabaseClient.from("skis").select("*")).data||[]
+    rentals=(await supabaseClient.from("rentals").select("*")).data||[]
+
+    // 🔥 FALLBACK – OM TYPE SAKNAS
+    skis = skis.map(s => ({
+      ...s,
+      type: s.type || "langd"
+    }))
+
+    filteredRentals=rentals
+  }catch(e){showError(e)}
 }
 
 /* HELP */
@@ -41,19 +51,22 @@ function getIds(length,type){
 
 /* RENDER */
 function renderAll(){
-  renderWall()
-  renderCart()
-  renderWeek()
-  renderRentals()
+  try{
+    renderWall()
+    renderCart()
+    renderWeek()
+    renderRentals()
+  }catch(e){showError(e)}
 }
 
-/* SKIDOR – NU MED TYPER */
+/* SKIDOR */
 function renderWall(){
-
   const div=el("skiWall")
+  if(!div) return
+
   div.innerHTML=""
 
-  const types = {
+  const types={
     langd:"🎿 Längdskidor",
     skin:"🟢 Skinskidor",
     tur:"🟠 Turskidor"
@@ -64,11 +77,7 @@ function renderWall(){
     const lengths=getLengthsByType(type)
     if(lengths.length===0) return
 
-    div.innerHTML+=`
-      <div style="grid-column:1/-1;font-weight:bold;margin-top:6px">
-        ${types[type]}
-      </div>
-    `
+    div.innerHTML+=`<div style="grid-column:1/-1;font-weight:bold">${types[type]}</div>`
 
     lengths.forEach(l=>{
 
@@ -113,35 +122,17 @@ function minus(l,type){
 }
 
 function renderCart(){
-
   const div=el("cart")
+  if(!div) return
+
   if(cart.length===0){div.innerHTML="Inga val";return}
-
-  const grouped={}
-
-  cart.forEach(id=>{
-    const ski=skis.find(s=>s.id===id)
-    if(!ski) return
-
-    const key=ski.type+"-"+ski.length
-
-    if(!grouped[key]){
-      grouped[key]={count:0,length:ski.length,type:ski.type}
-    }
-
-    grouped[key].count++
-  })
 
   let html=""
 
-  Object.values(grouped).forEach(item=>{
-
-    let name=""
-    if(item.type==="langd") name="Längd"
-    if(item.type==="skin") name="Skin"
-    if(item.type==="tur") name="Tur"
-
-    html+=`${name} ${item.length} cm x ${item.count}<br>`
+  cart.forEach(id=>{
+    const s=skis.find(x=>x.id===id)
+    if(!s) return
+    html+=`${s.type} ${s.length} cm<br>`
   })
 
   div.innerHTML=html
@@ -153,7 +144,7 @@ function getAvailable(ids){
   rentals.forEach(r=>{
     if(r.returned) return
     try{
-      JSON.parse(r.items).forEach(id=>{
+      JSON.parse(r.items||"[]").forEach(id=>{
         if(ids.includes(id)) booked++
       })
     }catch{}
@@ -163,22 +154,26 @@ function getAvailable(ids){
 
 /* SAVE */
 async function saveBooking(){
-  if(!el("customer").value||!el("start").value||!el("end").value||cart.length===0){
-    alert("Fyll i allt");return
-  }
+  try{
+    if(!el("customer").value||!el("start").value||!el("end").value||cart.length===0){
+      alert("Fyll i allt")
+      return
+    }
 
-  await supabaseClient.from("rentals").insert({
-    name:el("customer").value,
-    phone:el("phone").value,
-    start:el("start").value,
-    end:el("end").value,
-    items:JSON.stringify(cart),
-    returned:false
-  })
+    await supabaseClient.from("rentals").insert({
+      name:el("customer").value,
+      phone:el("phone").value,
+      start:el("start").value,
+      end:el("end").value,
+      items:JSON.stringify(cart),
+      returned:false
+    })
 
-  clearForm()
-  await loadAll()
-  renderAll()
+    clearForm()
+    await loadAll()
+    renderAll()
+
+  }catch(e){showError(e)}
 }
 
 /* CLEAR */
@@ -191,91 +186,96 @@ function clearForm(){
   renderAll()
 }
 
-/* KALENDER (OFÖRÄNDRAD LOGIK) */
+/* KALENDER */
 function renderWeek(){
-
   const div=el("calendar")
+  if(!div) return
 
-  let base=getMonday(new Date())
-  base.setDate(base.getDate()+weekOffset*7)
+  try{
 
-  const days=["Mån","Tis","Ons","Tor","Fre","Lör","Sön"]
+    let base=getMonday(new Date())
+    base.setDate(base.getDate()+weekOffset*7)
 
-  let dates=[]
-  let html="<table style='width:100%;height:100%;table-layout:fixed'><tr>"
+    let dates=[]
+    let html="<table style='width:100%;height:100%'><tr><th>cm</th>"
 
-  html+=`<th style="width:60px;text-align:left">cm</th>`
-
-  for(let i=0;i<7;i++){
-    let d=new Date(base)
-    d.setDate(base.getDate()+i)
-
-    const dayStr=format(d)
-    dates.push(dayStr)
-
-    html+=`<th>${days[i]}<br>${formatDisplayDate(d)}</th>`
-  }
-
-  html+="</tr>"
-
-  const lengths=[...new Set(skis.map(s=>s.length))].sort((a,b)=>a-b)
-
-  lengths.forEach(l=>{
-
-    const ids=skis.filter(s=>s.length==l).map(s=>s.id)
-    const total=ids.length
-
-    html+=`
-      <tr>
-      <td style="font-weight:bold;background:#f0f0f0;text-align:center;color:black">
-        ${l}
-      </td>
-    `
-
-    dates.forEach(day=>{
-
-      let booked=0,out=0,inn=0
-
-      rentals.forEach(r=>{
-        if(r.returned) return
-
-        let items=[]
-        try{items=JSON.parse(r.items)}catch{}
-
-        if(day>=r.start && day<=r.end){
-          items.forEach(id=>{if(ids.includes(id)) booked++})
-        }
-
-        if(r.start===day){
-          items.forEach(id=>{if(ids.includes(id)) out++})
-        }
-
-        if(r.end===day){
-          items.forEach(id=>{if(ids.includes(id)) inn++})
-        }
-      })
-
-      const free=total-booked
-
-      let bg="#4caf50"
-      if(free===0) bg="#f44336"
-      else if(free<=2) bg="#ff9800"
-
-      html+=`
-        <td onclick="showDayDetails('${day}')"
-        style="background:${bg};color:white;text-align:center">
-          ${free}<br>
-          <span style="color:black;font-weight:bold">↑${out||""}</span>
-          <span style="color:black;font-weight:bold;margin-left:4px">↓${inn||""}</span>
-        </td>
-      `
-    })
+    for(let i=0;i<7;i++){
+      let d=new Date(base)
+      d.setDate(base.getDate()+i)
+      dates.push(format(d))
+      html+=`<th>${d.getDate()}/${d.getMonth()+1}</th>`
+    }
 
     html+="</tr>"
-  })
 
-  html+="</table>"
-  div.innerHTML=html
+    const lengths=[...new Set(skis.map(s=>s.length))]
+
+    lengths.forEach(l=>{
+      const ids=skis.filter(s=>s.length==l).map(s=>s.id)
+
+      html+=`<tr><td style="color:black">${l}</td>`
+
+      dates.forEach(day=>{
+
+        let booked=0
+
+        rentals.forEach(r=>{
+          if(r.returned) return
+          try{
+            JSON.parse(r.items||"[]").forEach(id=>{
+              if(ids.includes(id)) booked++
+            })
+          }catch{}
+        })
+
+        const free=ids.length-booked
+
+        html+=`<td>${free}</td>`
+      })
+
+      html+="</tr>"
+    })
+
+    html+="</table>"
+    div.innerHTML=html
+
+  }catch(e){showError(e)}
 }
 
-/* RESTEN = IDENTISKT SOM 1.4.1 */
+/* BOKNINGAR */
+function renderRentals(){
+  const div=el("rentals")
+  if(!div) return
+
+  div.innerHTML=""
+
+  filteredRentals.forEach(r=>{
+    if(r.returned) return
+
+    div.innerHTML+=`
+      <div style="border:1px solid #ccc;padding:6px;margin:4px">
+        ${r.name}<br>
+        ${r.start} → ${r.end}
+      </div>
+    `
+  })
+}
+
+/* NAV */
+function prevWeek(){weekOffset--;renderWeek()}
+function nextWeek(){weekOffset++;renderWeek()}
+
+/* DATE */
+function format(d){return d.toISOString().split("T")[0]}
+function getMonday(d){
+  d=new Date(d)
+  let day=d.getDay()
+  let diff=d.getDate()-(day==0?6:day-1)
+  return new Date(d.setDate(diff))
+}
+
+/* ERROR */
+function showError(e){
+  console.error(e)
+  document.body.innerHTML+=`<div style="color:red">${e.message}</div>`
+}
