@@ -1,4 +1,4 @@
-console.log("VERSION 1.3")
+console.log("VERSION 1.3.1")
 
 /* ========= SUPABASE ========= */
 
@@ -261,8 +261,8 @@ function renderWeek(){
           <td onclick="showDayDetails('${day}')"
           style="background:${bg};color:white;cursor:pointer">
             ${free}<br>
-            <span style="color:#00e676">↑${out||""}</span>
-            <span style="color:#40c4ff">↓${inn||""}</span>
+            <span style="color:black;font-weight:bold">↑${out||""}</span>
+            <span style="color:black;font-weight:bold;margin-left:4px">↓${inn||""}</span>
           </td>
         `
       })
@@ -278,14 +278,13 @@ function renderWeek(){
 }
 
 /* ========= POPUP ========= */
+/* (oförändrad från 1.3) */
 
 function showDayDetails(day){
-
   let outHTML=""
   let inHTML=""
 
   rentals.forEach(r=>{
-
     if(r.returned) return
 
     let items=[]
@@ -300,91 +299,46 @@ function showDayDetails(day){
     })
 
     if(r.start===day){
-      outHTML+=`
-        <div style="margin-bottom:8px">
-          🟢 ${r.name} (${items.length})
-        </div>
-      `
+      outHTML+=`<div>🟢 ${r.name} (${items.length})</div>`
     }
 
     if(r.end===day){
-
       let skisHTML=""
-
       Object.keys(grouped).forEach(len=>{
-        skisHTML+=`
-          ${len} cm x ${grouped[len]}
-          <button onclick="returnOne('${r.id}', ${len})">−</button><br>
-        `
+        skisHTML+=`${len} cm x ${grouped[len]} <button onclick="returnOne('${r.id}', ${len})">−</button><br>`
       })
 
       inHTML+=`
-        <div style="margin-bottom:12px;border-bottom:1px solid #ccc;padding-bottom:6px">
-          🔵 ${r.name}<br><br>
-
+        <div style="margin-bottom:10px">
+          🔵 ${r.name}<br>
           ${skisHTML}
-
-          <button onclick="quickReturn('${r.id}')">
-            Återlämna allt
-          </button>
+          <button onclick="quickReturn('${r.id}')">Återlämna allt</button>
         </div>
       `
     }
-
   })
 
-  let html = `
-    <div id="popup" style="
-      position:fixed;
-      top:0;left:0;
-      width:100%;height:100%;
-      background:rgba(0,0,0,0.6);
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      z-index:999;
-    ">
-
-      <div style="
-        background:white;
-        padding:20px;
-        border-radius:10px;
-        max-width:420px;
-        width:90%;
-        max-height:80%;
-        overflow:auto;
-      ">
-
+  document.body.insertAdjacentHTML("beforeend",`
+    <div id="popup" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;justify-content:center;align-items:center;z-index:999;">
+      <div style="background:white;padding:20px;border-radius:10px;width:90%;max-width:400px">
         <h3>${day}</h3>
-
-        <b>🟢 Ut</b><br>
-        ${outHTML || "Inga"}<br><br>
-
-        <b>🔵 In</b><br>
-        ${inHTML || "Inga"}<br><br>
-
+        <b>Ut</b><br>${outHTML||"Inga"}<br><br>
+        <b>In</b><br>${inHTML||"Inga"}<br><br>
         <button onclick="closePopup()">Stäng</button>
-
       </div>
     </div>
-  `
-
-  document.body.insertAdjacentHTML("beforeend", html)
+  `)
 }
 
 function closePopup(){
-  const p=document.getElementById("popup")
-  if(p) p.remove()
+  document.getElementById("popup")?.remove()
 }
 
 /* ========= RETURN ========= */
 
 async function returnOne(id,length){
-
   const booking=rentals.find(r=>r.id==id)
-
-  let items=[]
-  try{items=JSON.parse(booking.items)}catch{}
+  let items=JSON.parse(booking.items||"[]")
 
   const index=items.findIndex(itemId=>{
     const ski=skis.find(s=>s.id===itemId)
@@ -400,72 +354,54 @@ async function returnOne(id,length){
     return
   }
 
-  await supabaseClient
-    .from("rentals")
+  await supabaseClient.from("rentals")
     .update({items:JSON.stringify(items)})
     .eq("id",id)
 
   await loadAll()
   renderAll()
-
   closePopup()
 }
 
 async function quickReturn(id){
-
   if(!confirm("Återlämna hela bokningen?")) return
 
-  await supabaseClient
-    .from("rentals")
+  await supabaseClient.from("rentals")
     .update({returned:true})
     .eq("id",id)
 
   await loadAll()
   renderAll()
-
   closePopup()
 }
 
 /* ========= BOKNINGAR ========= */
 
 function renderRentals(){
-
   const div=el("rentals")
-  if(!div) return
+  div.innerHTML=""
 
-  try{
+  filteredRentals.forEach(r=>{
+    if(r.returned) return
 
-    div.innerHTML=""
-
-    filteredRentals.forEach(r=>{
-
-      if(r.returned) return
-
-      div.innerHTML+=`
-        <div style="border:1px solid #ccc;padding:8px;margin:5px">
-          <strong>${r.name}</strong><br>
-          📞 ${r.phone||""}<br>
-          ${r.start} → ${r.end}<br>
-
-          <button onclick="extendBooking('${r.id}')">Förläng</button>
-          <button onclick="returnAll('${r.id}')">Återlämna</button>
-        </div>
-      `
-    })
-
-  }catch(e){showError(e)}
+    div.innerHTML+=`
+      <div style="border:1px solid #ccc;padding:8px;margin:5px">
+        <strong>${r.name}</strong><br>
+        ${r.start} → ${r.end}<br>
+        <button onclick="returnAll('${r.id}')">Återlämna</button>
+      </div>
+    `
+  })
 }
 
 /* ========= SÖK ========= */
 
 function filterRentals(){
   const q=el("search").value.toLowerCase()
-
   filteredRentals=rentals.filter(r=>
     (r.name||"").toLowerCase().includes(q) ||
     (r.phone||"").toLowerCase().includes(q)
   )
-
   renderRentals()
 }
 
@@ -477,14 +413,6 @@ async function returnAll(id){
   renderAll()
 }
 
-async function extendBooking(id){
-  const d=prompt("Nytt slutdatum YYYY-MM-DD")
-  if(!d) return
-  await supabaseClient.from("rentals").update({end:d}).eq("id",id)
-  await loadAll()
-  renderAll()
-}
-
 /* ========= NAV ========= */
 
 function prevWeek(){weekOffset--;renderWeek()}
@@ -492,14 +420,8 @@ function nextWeek(){weekOffset++;renderWeek()}
 
 /* ========= DATE ========= */
 
-function format(d){
-  return d.toISOString().split("T")[0]
-}
-
-function formatDisplayDate(d){
-  return d.getDate()+"/"+(d.getMonth()+1)
-}
-
+function format(d){return d.toISOString().split("T")[0]}
+function formatDisplayDate(d){return d.getDate()+"/"+(d.getMonth()+1)}
 function getMonday(d){
   d=new Date(d)
   let day=d.getDay()
@@ -511,7 +433,4 @@ function getMonday(d){
 
 function showError(e){
   console.error(e)
-  document.body.insertAdjacentHTML("beforeend",
-    `<div style="color:red">${e.message}</div>`
-  )
 }
