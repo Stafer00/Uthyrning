@@ -1,4 +1,4 @@
-console.log("VERSION 1.1")
+console.log("VERSION 1.2")
 
 /* ========= SUPABASE ========= */
 
@@ -292,11 +292,20 @@ function showDayDetails(day){
     try{items=JSON.parse(r.items)}catch{}
 
     if(r.start===day){
-      outList.push(`${r.name} (${items.length})`)
+      outList.push(`
+        <div style="margin-bottom:6px">
+          🟢 ${r.name} (${items.length})
+        </div>
+      `)
     }
 
     if(r.end===day){
-      inList.push(`${r.name} (${items.length})`)
+      inList.push(`
+        <div style="margin-bottom:8px">
+          🔵 ${r.name} (${items.length})<br>
+          <button onclick="quickReturn('${r.id}')">Återlämna</button>
+        </div>
+      `)
     }
   })
 
@@ -316,17 +325,17 @@ function showDayDetails(day){
         background:white;
         padding:20px;
         border-radius:10px;
-        max-width:400px;
+        max-width:420px;
         width:90%;
       ">
 
         <h3>${day}</h3>
 
         <b>🟢 Ut</b><br>
-        ${outList.length ? outList.join("<br>") : "Inga"}<br><br>
+        ${outList.length ? outList.join("") : "Inga"}<br>
 
         <b>🔵 In</b><br>
-        ${inList.length ? inList.join("<br>") : "Inga"}<br><br>
+        ${inList.length ? inList.join("") : "Inga"}<br><br>
 
         <button onclick="closePopup()">Stäng</button>
 
@@ -340,6 +349,26 @@ function showDayDetails(day){
 function closePopup(){
   const p=document.getElementById("popup")
   if(p) p.remove()
+}
+
+/* ========= QUICK RETURN ========= */
+
+async function quickReturn(id){
+
+  if(!confirm("Återlämna hela bokningen?")) return
+
+  try{
+    await supabaseClient
+      .from("rentals")
+      .update({returned:true})
+      .eq("id",id)
+
+    await loadAll()
+    renderAll()
+
+    closePopup()
+
+  }catch(e){showError(e)}
 }
 
 /* ========= BOKNINGAR ========= */
