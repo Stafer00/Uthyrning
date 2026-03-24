@@ -1,4 +1,4 @@
-console.log("VERSION 1.3.5")
+console.log("VERSION 1.4")
 
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
@@ -30,7 +30,6 @@ function el(id){return document.getElementById(id)}
 function getLengths(){
   return [...new Set(skis.map(s=>s.length))].sort((a,b)=>a-b)
 }
-
 function getIdsByLength(length){
   return skis.filter(s=>s.length==length).map(s=>s.id)
 }
@@ -224,10 +223,11 @@ function renderWeek(){
   div.innerHTML=html
 }
 
-/* POPUP */
+/* 🔥 POPUP PRO */
 function showDayDetails(day){
 
-  let html=""
+  let outHTML=""
+  let inHTML=""
 
   rentals.forEach(r=>{
 
@@ -236,23 +236,45 @@ function showDayDetails(day){
     let items=[]
     try{items=JSON.parse(r.items)}catch{}
 
+    const grouped={}
+    items.forEach(id=>{
+      const ski=skis.find(s=>s.id===id)
+      if(!ski) return
+      grouped[ski.length]=(grouped[ski.length]||0)+1
+    })
+
+    if(r.start===day){
+      outHTML+=`🟢 <b>${r.name}</b> (${items.length})<br>`
+    }
+
     if(r.end===day){
 
-      html+=`
-        <div style="margin-bottom:10px">
-          🔵 <b>${r.name}</b> (${items.length})<br>
-          <button onclick="quickReturn('${r.id}')">Återlämna</button>
+      let skisHTML=""
+
+      Object.keys(grouped).forEach(len=>{
+        skisHTML+=`
+          ${len} cm x ${grouped[len]}
+          <button onclick="returnOne('${r.id}', ${len})">−</button><br>
+        `
+      })
+
+      inHTML+=`
+        <div style="margin-bottom:10px;border:1px solid #ccc;padding:6px;border-radius:8px">
+          🔵 <b>${r.name}</b><br><br>
+          ${skisHTML}
+          <button onclick="quickReturn('${r.id}')">Återlämna allt</button>
         </div>
       `
     }
+
   })
 
   document.body.insertAdjacentHTML("beforeend",`
     <div id="popup" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;justify-content:center;align-items:center;">
-      <div style="background:white;padding:16px;border-radius:10px;width:90%;max-width:400px">
+      <div style="background:white;padding:16px;border-radius:10px;width:90%;max-width:420px;max-height:80%;overflow:auto">
         <h3>${day}</h3>
-        ${html||"Inga"}
-        <br><br>
+        <b>Ut</b><br>${outHTML||"Inga"}<br><br>
+        <b>In</b><br>${inHTML||"Inga"}<br><br>
         <button onclick="closePopup()">Stäng</button>
       </div>
     </div>
@@ -263,7 +285,38 @@ function closePopup(){
   document.getElementById("popup")?.remove()
 }
 
+/* RETURN */
+async function returnOne(id,length){
+
+  const booking=rentals.find(r=>r.id==id)
+  let items=JSON.parse(booking.items||"[]")
+
+  const index=items.findIndex(itemId=>{
+    const ski=skis.find(s=>s.id===itemId)
+    return ski && ski.length==length
+  })
+
+  if(index===-1) return
+
+  items.splice(index,1)
+
+  if(items.length===0){
+    await quickReturn(id)
+    return
+  }
+
+  await supabaseClient.from("rentals")
+    .update({items:JSON.stringify(items)})
+    .eq("id",id)
+
+  await loadAll()
+  renderAll()
+  closePopup()
+}
+
 async function quickReturn(id){
+  if(!confirm("Återlämna allt?")) return
+
   await supabaseClient.from("rentals")
     .update({returned:true})
     .eq("id",id)
@@ -284,7 +337,6 @@ function renderRentals(){
     div.innerHTML+=`
       <div style="border:1px solid #ccc;padding:8px;margin:5px">
         <b>${r.name}</b><br>
-        📞 ${r.phone||""}<br>
         ${r.start} → ${r.end}<br>
       </div>
     `
