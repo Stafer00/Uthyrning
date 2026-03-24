@@ -183,13 +183,15 @@ function renderWeek(){
     /* 🔥 TYDLIG LÄNGD */
     html+=`
       <tr>
-        <td style="
-          font-weight:bold;
-          background:#f0f0f0;
-          text-align:center;
-        ">
-          ${l}
-        </td>
+      <td style="
+  font-weight:bold;
+  background:#f0f0f0;
+  text-align:center;
+  color:black;
+  font-size:13px;
+">
+  ${l}
+</td>  
     `
 
     dates.forEach(day=>{
