@@ -1,10 +1,11 @@
-console.log("VERSION 1.3.4")
+console.log("VERSION 1.3.5")
 
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
 )
 
+/* STATE */
 let skis=[], rentals=[], filteredRentals=[], cart=[], weekOffset=0
 
 window.onload=init
@@ -25,11 +26,9 @@ async function loadAll(){
 /* HELP */
 function el(id){return document.getElementById(id)}
 
-/* GROUP SAFE */
+/* GROUP */
 function getLengths(){
-  const set = new Set()
-  skis.forEach(s=>set.add(s.length))
-  return Array.from(set).sort((a,b)=>a-b)
+  return [...new Set(skis.map(s=>s.length))].sort((a,b)=>a-b)
 }
 
 function getIdsByLength(length){
@@ -49,10 +48,7 @@ function renderWall(){
   const div=el("skiWall")
   div.innerHTML=""
 
-  const lengths=getLengths()
-
-  lengths.forEach(l=>{
-
+  getLengths().forEach(l=>{
     const ids=getIdsByLength(l)
     const available=getAvailable(ids)
     const selected=getSelected(ids)
@@ -96,10 +92,8 @@ function renderCart(){
   const div=el("cart")
   if(cart.length===0){div.innerHTML="Inga val";return}
 
-  const lengths=getLengths()
   let html=""
-
-  lengths.forEach(l=>{
+  getLengths().forEach(l=>{
     const ids=getIdsByLength(l)
     const c=getSelected(ids)
     if(c>0) html+=`${l} cm x ${c}<br>`
@@ -111,7 +105,6 @@ function renderCart(){
 /* LAGER */
 function getAvailable(ids){
   let booked=0
-
   rentals.forEach(r=>{
     if(r.returned) return
     try{
@@ -120,7 +113,6 @@ function getAvailable(ids){
       })
     }catch{}
   })
-
   return ids.length-booked
 }
 
@@ -159,20 +151,13 @@ function renderWeek(){
 
   const div=el("calendar")
 
-  const lengths=getLengths()
-
-  if(lengths.length===0){
-    div.innerHTML="<b>Inga skidor i lager</b>"
-    return
-  }
-
   let base=getMonday(new Date())
   base.setDate(base.getDate()+weekOffset*7)
 
   const days=["Mån","Tis","Ons","Tor","Fre","Lör","Sön"]
 
   let dates=[]
-  let html="<table><tr><th style='width:45px'></th>"
+  let html="<table><tr><th></th>"
 
   for(let i=0;i<7;i++){
     let d=new Date(base)
@@ -186,7 +171,7 @@ function renderWeek(){
 
   html+="</tr>"
 
-  lengths.forEach(l=>{
+  getLengths().forEach(l=>{
 
     const ids=getIdsByLength(l)
     const total=ids.length
@@ -238,6 +223,87 @@ function renderWeek(){
   html+="</table>"
   div.innerHTML=html
 }
+
+/* POPUP */
+function showDayDetails(day){
+
+  let html=""
+
+  rentals.forEach(r=>{
+
+    if(r.returned) return
+
+    let items=[]
+    try{items=JSON.parse(r.items)}catch{}
+
+    if(r.end===day){
+
+      html+=`
+        <div style="margin-bottom:10px">
+          🔵 <b>${r.name}</b> (${items.length})<br>
+          <button onclick="quickReturn('${r.id}')">Återlämna</button>
+        </div>
+      `
+    }
+  })
+
+  document.body.insertAdjacentHTML("beforeend",`
+    <div id="popup" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;justify-content:center;align-items:center;">
+      <div style="background:white;padding:16px;border-radius:10px;width:90%;max-width:400px">
+        <h3>${day}</h3>
+        ${html||"Inga"}
+        <br><br>
+        <button onclick="closePopup()">Stäng</button>
+      </div>
+    </div>
+  `)
+}
+
+function closePopup(){
+  document.getElementById("popup")?.remove()
+}
+
+async function quickReturn(id){
+  await supabaseClient.from("rentals")
+    .update({returned:true})
+    .eq("id",id)
+
+  await loadAll()
+  renderAll()
+  closePopup()
+}
+
+/* BOKNINGAR */
+function renderRentals(){
+  const div=el("rentals")
+  div.innerHTML=""
+
+  filteredRentals.forEach(r=>{
+    if(r.returned) return
+
+    div.innerHTML+=`
+      <div style="border:1px solid #ccc;padding:8px;margin:5px">
+        <b>${r.name}</b><br>
+        📞 ${r.phone||""}<br>
+        ${r.start} → ${r.end}<br>
+      </div>
+    `
+  })
+}
+
+/* SÖK */
+function filterRentals(){
+  const q=el("search").value.toLowerCase()
+  filteredRentals=rentals.filter(r=>
+    (r.name||"").toLowerCase().includes(q) ||
+    (r.phone||"").toLowerCase().includes(q)
+  )
+  renderRentals()
+}
+
+/* NAV */
+function prevWeek(){weekOffset--;renderWeek()}
+function nextWeek(){weekOffset++;renderWeek()}
 
 /* DATE */
 function format(d){return d.toISOString().split("T")[0]}
