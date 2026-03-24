@@ -156,7 +156,10 @@ function renderWeek(){
   const days=["Mån","Tis","Ons","Tor","Fre","Lör","Sön"]
 
   let dates=[]
-  let html="<table><tr><th></th>"
+  let html="<table style='width:100%;height:100%;table-layout:fixed'><tr>"
+
+  /* 🔥 FAST KOLUMN FÖR LÄNGDER */
+  html+=`<th style="width:60px;text-align:left">cm</th>`
 
   for(let i=0;i<7;i++){
     let d=new Date(base)
@@ -170,12 +173,24 @@ function renderWeek(){
 
   html+="</tr>"
 
-  getLengths().forEach(l=>{
+  const lengths=getLengths()
+
+  lengths.forEach(l=>{
 
     const ids=getIdsByLength(l)
     const total=ids.length
 
-    html+=`<tr><td><b>${l}</b></td>`
+    /* 🔥 TYDLIG LÄNGD */
+    html+=`
+      <tr>
+        <td style="
+          font-weight:bold;
+          background:#f0f0f0;
+          text-align:center;
+        ">
+          ${l}
+        </td>
+    `
 
     dates.forEach(day=>{
 
@@ -208,7 +223,7 @@ function renderWeek(){
 
       html+=`
         <td onclick="showDayDetails('${day}')"
-        style="background:${bg};color:white">
+        style="background:${bg};color:white;text-align:center">
           ${free}<br>
           <span style="color:black;font-weight:bold">↑${out||""}</span>
           <span style="color:black;font-weight:bold;margin-left:4px">↓${inn||""}</span>
@@ -220,6 +235,7 @@ function renderWeek(){
   })
 
   html+="</table>"
+
   div.innerHTML=html
 }
 
