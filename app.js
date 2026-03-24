@@ -1,9 +1,13 @@
-console.log("SAFE FULL VERSION")
+console.log("VERSION 1.1")
+
+/* ========= SUPABASE ========= */
 
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
 )
+
+/* ========= STATE ========= */
 
 let skis=[]
 let rentals=[]
@@ -12,6 +16,8 @@ let cart=[]
 let weekOffset=0
 
 window.onload=init
+
+/* ========= INIT ========= */
 
 async function init(){
   try{
@@ -205,9 +211,10 @@ function renderWeek(){
       let d=new Date(base)
       d.setDate(base.getDate()+i)
 
-      dates.push(format(d))
+      const dayStr=format(d)
+      dates.push(dayStr)
 
-      html+=`<th>${days[i]}<br>${d.toISOString().substring(5,10)}</th>`
+      html+=`<th>${days[i]}<br>${formatDisplayDate(d)}</th>`
     }
 
     html+="</tr>"
@@ -251,7 +258,8 @@ function renderWeek(){
         else if(free<=2) bg="#ff9800"
 
         html+=`
-          <td style="background:${bg};color:white">
+          <td onclick="showDayDetails('${day}')"
+          style="background:${bg};color:white;cursor:pointer">
             ${free}<br>
             <span style="color:#00e676">↑${out||""}</span>
             <span style="color:#40c4ff">↓${inn||""}</span>
@@ -267,6 +275,71 @@ function renderWeek(){
     div.innerHTML=html
 
   }catch(e){showError(e)}
+}
+
+/* ========= POPUP ========= */
+
+function showDayDetails(day){
+
+  let outList=[]
+  let inList=[]
+
+  rentals.forEach(r=>{
+
+    if(r.returned) return
+
+    let items=[]
+    try{items=JSON.parse(r.items)}catch{}
+
+    if(r.start===day){
+      outList.push(`${r.name} (${items.length})`)
+    }
+
+    if(r.end===day){
+      inList.push(`${r.name} (${items.length})`)
+    }
+  })
+
+  let html = `
+    <div id="popup" style="
+      position:fixed;
+      top:0;left:0;
+      width:100%;height:100%;
+      background:rgba(0,0,0,0.6);
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      z-index:999;
+    ">
+
+      <div style="
+        background:white;
+        padding:20px;
+        border-radius:10px;
+        max-width:400px;
+        width:90%;
+      ">
+
+        <h3>${day}</h3>
+
+        <b>🟢 Ut</b><br>
+        ${outList.length ? outList.join("<br>") : "Inga"}<br><br>
+
+        <b>🔵 In</b><br>
+        ${inList.length ? inList.join("<br>") : "Inga"}<br><br>
+
+        <button onclick="closePopup()">Stäng</button>
+
+      </div>
+    </div>
+  `
+
+  document.body.insertAdjacentHTML("beforeend", html)
+}
+
+function closePopup(){
+  const p=document.getElementById("popup")
+  if(p) p.remove()
 }
 
 /* ========= BOKNINGAR ========= */
@@ -339,6 +412,10 @@ function format(d){
   return d.toISOString().split("T")[0]
 }
 
+function formatDisplayDate(d){
+  return d.getDate()+"/"+(d.getMonth()+1)
+}
+
 function getMonday(d){
   d=new Date(d)
   let day=d.getDay()
@@ -350,5 +427,7 @@ function getMonday(d){
 
 function showError(e){
   console.error(e)
-  document.body.innerHTML+=`<div style="color:red">${e.message}</div>`
+  document.body.insertAdjacentHTML("beforeend",
+    `<div style="color:red">${e.message}</div>`
+  )
 }
