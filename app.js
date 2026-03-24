@@ -1,4 +1,4 @@
-console.log("VERSION 1.3.2")
+console.log("VERSION 1.3.3")
 
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
@@ -151,31 +151,36 @@ function clearForm(){
 function renderWeek(){
 
   const div=el("calendar")
+
   let base=getMonday(new Date())
   base.setDate(base.getDate()+weekOffset*7)
 
   const days=["Mån","Tis","Ons","Tor","Fre","Lör","Sön"]
 
   let dates=[]
-  let html="<table><tr><th></th>"
+  let html="<table><tr><th style='width:45px'></th>"
 
   for(let i=0;i<7;i++){
     let d=new Date(base)
     d.setDate(base.getDate()+i)
+
     const dayStr=format(d)
     dates.push(dayStr)
+
     html+=`<th>${days[i]}<br>${formatDisplayDate(d)}</th>`
   }
 
   html+="</tr>"
 
   const g=getGroupedSkis()
+  const lengths=Object.keys(g).sort((a,b)=>a-b)
 
-  Object.keys(g).forEach(l=>{
+  lengths.forEach(l=>{
+
     const ids=g[l]
     const total=ids.length
 
-    html+=`<tr><td>${l}</td>`
+    html+=`<tr><td><b>${l}</b></td>`
 
     dates.forEach(day=>{
 
