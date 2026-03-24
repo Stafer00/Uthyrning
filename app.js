@@ -188,6 +188,7 @@ function clearForm(){
 
 /* KALENDER */
 function renderWeek(){
+
   const div=el("calendar")
   if(!div) return
 
@@ -197,23 +198,33 @@ function renderWeek(){
     base.setDate(base.getDate()+weekOffset*7)
 
     let dates=[]
-    let html="<table style='width:100%;height:100%'><tr><th>cm</th>"
+    let html="<table style='width:100%;height:100%;table-layout:fixed'><tr><th>cm</th>"
 
     for(let i=0;i<7;i++){
       let d=new Date(base)
       d.setDate(base.getDate()+i)
-      dates.push(format(d))
+
+      const day=format(d)
+      dates.push(day)
+
       html+=`<th>${d.getDate()}/${d.getMonth()+1}</th>`
     }
 
     html+="</tr>"
 
-    const lengths=[...new Set(skis.map(s=>s.length))]
+    const lengths=[...new Set(skis.map(s=>s.length))].sort((a,b)=>a-b)
 
     lengths.forEach(l=>{
-      const ids=skis.filter(s=>s.length==l).map(s=>s.id)
 
-      html+=`<tr><td style="color:black">${l}</td>`
+      const ids=skis.filter(s=>s.length==l).map(s=>s.id)
+      const total=ids.length
+
+      html+=`
+        <tr>
+          <td style="color:black;font-weight:bold;background:#f0f0f0">
+            ${l}
+          </td>
+      `
 
       dates.forEach(day=>{
 
@@ -221,6 +232,7 @@ function renderWeek(){
 
         rentals.forEach(r=>{
           if(r.returned) return
+
           try{
             JSON.parse(r.items||"[]").forEach(id=>{
               if(ids.includes(id)) booked++
@@ -228,18 +240,37 @@ function renderWeek(){
           }catch{}
         })
 
-        const free=ids.length-booked
+        const free=total-booked
 
-        html+=`<td>${free}</td>`
+        /* 🔥 FÄRGER */
+        let bg="#4caf50"
+        if(free===0) bg="#f44336"
+        else if(free<=2) bg="#ff9800"
+
+        html+=`
+          <td 
+            style="
+              background:${bg};
+              color:black;
+              font-weight:bold;
+              text-align:center;
+            "
+          >
+            ${free}
+          </td>
+        `
       })
 
       html+="</tr>"
     })
 
     html+="</table>"
+
     div.innerHTML=html
 
-  }catch(e){showError(e)}
+  }catch(e){
+    showError(e)
+  }
 }
 
 /* BOKNINGAR */
