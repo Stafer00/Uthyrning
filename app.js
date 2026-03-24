@@ -1,4 +1,4 @@
-console.log("VERSION 1.4")
+console.log("VERSION 1.4.1")
 
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
@@ -158,7 +158,6 @@ function renderWeek(){
   let dates=[]
   let html="<table style='width:100%;height:100%;table-layout:fixed'><tr>"
 
-  /* 🔥 FAST KOLUMN FÖR LÄNGDER */
   html+=`<th style="width:60px;text-align:left">cm</th>`
 
   for(let i=0;i<7;i++){
@@ -173,25 +172,16 @@ function renderWeek(){
 
   html+="</tr>"
 
-  const lengths=getLengths()
-
-  lengths.forEach(l=>{
+  getLengths().forEach(l=>{
 
     const ids=getIdsByLength(l)
     const total=ids.length
 
-    /* 🔥 TYDLIG LÄNGD */
     html+=`
       <tr>
-      <td style="
-  font-weight:bold;
-  background:#f0f0f0;
-  text-align:center;
-  color:black;
-  font-size:13px;
-">
-  ${l}
-</td>  
+      <td style="font-weight:bold;background:#f0f0f0;text-align:center;color:black">
+        ${l}
+      </td>
     `
 
     dates.forEach(day=>{
@@ -237,11 +227,10 @@ function renderWeek(){
   })
 
   html+="</table>"
-
   div.innerHTML=html
 }
 
-/* 🔥 POPUP PRO */
+/* POPUP */
 function showDayDetails(day){
 
   let outHTML=""
@@ -268,12 +257,8 @@ function showDayDetails(day){
     if(r.end===day){
 
       let skisHTML=""
-
       Object.keys(grouped).forEach(len=>{
-        skisHTML+=`
-          ${len} cm x ${grouped[len]}
-          <button onclick="returnOne('${r.id}', ${len})">−</button><br>
-        `
+        skisHTML+=`${len} cm x ${grouped[len]} <button onclick="returnOne('${r.id}', ${len})">−</button><br>`
       })
 
       inHTML+=`
@@ -305,7 +290,6 @@ function closePopup(){
 
 /* RETURN */
 async function returnOne(id,length){
-
   const booking=rentals.find(r=>r.id==id)
   let items=JSON.parse(booking.items||"[]")
 
@@ -329,10 +313,10 @@ async function returnOne(id,length){
 
   await loadAll()
   renderAll()
-  closePopup()
 }
 
-async function quickReturn(id){
+/* RETURN ALL */
+async function returnAll(id){
   if(!confirm("Återlämna allt?")) return
 
   await supabaseClient.from("rentals")
@@ -341,27 +325,72 @@ async function quickReturn(id){
 
   await loadAll()
   renderAll()
+}
+
+/* QUICK RETURN */
+async function quickReturn(id){
+  if(!confirm("Återlämna allt?")) return
+  await returnAll(id)
   closePopup()
 }
 
-/* BOKNINGAR */
+/* EXTEND */
+async function extendBooking(id){
+  const d=prompt("Nytt slutdatum YYYY-MM-DD")
+  if(!d) return
+
+  await supabaseClient.from("rentals")
+    .update({end:d})
+    .eq("id",id)
+
+  await loadAll()
+  renderAll()
+}
+
+/* 🔥 BOKNINGAR PRO */
 function renderRentals(){
+
   const div=el("rentals")
   div.innerHTML=""
 
   filteredRentals.forEach(r=>{
+
     if(r.returned) return
 
+    let items=[]
+    try{items=JSON.parse(r.items)}catch{}
+
+    const grouped={}
+    items.forEach(id=>{
+      const ski=skis.find(s=>s.id===id)
+      if(!ski) return
+      grouped[ski.length]=(grouped[ski.length]||0)+1
+    })
+
+    let skisHTML=""
+    Object.keys(grouped).sort((a,b)=>a-b).forEach(len=>{
+      skisHTML+=`
+        ${len} cm x ${grouped[len]}
+        <button onclick="returnOne('${r.id}', ${len})">−</button><br>
+      `
+    })
+
     div.innerHTML+=`
-      <div style="border:1px solid #ccc;padding:8px;margin:5px">
+      <div style="border:1px solid #ccc;padding:8px;margin:5px;border-radius:8px">
         <b>${r.name}</b><br>
-        ${r.start} → ${r.end}<br>
+        📞 ${r.phone||"-"}<br>
+        ${formatDisplayDate(new Date(r.start))} → ${formatDisplayDate(new Date(r.end))}<br><br>
+
+        ${skisHTML}
+
+        <button onclick="extendBooking('${r.id}')">Förläng</button>
+        <button onclick="returnAll('${r.id}')">Återlämna allt</button>
       </div>
     `
   })
 }
 
-/* SÖK */
+/* SEARCH */
 function filterRentals(){
   const q=el("search").value.toLowerCase()
   filteredRentals=rentals.filter(r=>
