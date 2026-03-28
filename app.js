@@ -1,4 +1,4 @@
-console.log("VERSION 1.6 STABLE FULL")
+console.log("VERSION 1.6.1 STABLE")
 
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
@@ -291,33 +291,44 @@ function closePopup(){
 /* RETURN */
 async function returnOne(id,length){
 
-  const r=rentals.find(x=>x.id==id)
-  let items=JSON.parse(r.items||"[]")
+  try{
 
-  const i=items.findIndex(itemId=>{
-    const s=skis.find(x=>x.id===itemId)
-    return s && s.length==length
-  })
+    const booking=rentals.find(r=>r.id==id)
+    if(!booking) return
 
-  if(i===-1) return
+    let items=[]
+    try{items=JSON.parse(booking.items||"[]")}catch{}
 
-  items.splice(i,1)
+    const index=items.findIndex(itemId=>{
+      const s=skis.find(x=>x.id===itemId)
+      return s && s.length==length
+    })
 
-  if(items.length===0){
-    await quickReturn(id)
-    return
+    if(index===-1) return
+
+    items.splice(index,1)
+
+    if(items.length===0){
+      await quickReturn(id)
+      return
+    }
+
+    await supabaseClient.from("rentals")
+      .update({items:JSON.stringify(items)})
+      .eq("id",id)
+
+    await loadAll()
+    renderAll()
+    closePopup()
+
+  }catch(e){
+    showError(e)
   }
-
-  await supabaseClient.from("rentals")
-    .update({items:JSON.stringify(items)})
-    .eq("id",id)
-
-  await loadAll()
-  renderAll()
-  closePopup()
 }
 
+/* 🔥 NY – RETURN ALL */
 async function quickReturn(id){
+
   if(!confirm("Återlämna allt?")) return
 
   await supabaseClient.from("rentals")
@@ -331,11 +342,33 @@ async function quickReturn(id){
 
 /* BOKNINGAR */
 function renderRentals(){
+
   const div=el("rentals")
   div.innerHTML=""
 
   filteredRentals.forEach(r=>{
+
     if(r.returned) return
+
+    let items=[]
+    try{items=JSON.parse(r.items||"[]")}catch{}
+
+    const grouped={}
+
+    items.forEach(id=>{
+      const s=skis.find(x=>x.id===id)
+      if(!s) return
+      grouped[s.length]=(grouped[s.length]||0)+1
+    })
+
+    let skisHTML=""
+
+    Object.keys(grouped).forEach(l=>{
+      skisHTML+=`
+        ${l} cm x ${grouped[l]}
+        <button onclick="returnOne('${r.id}', ${l})">−</button><br>
+      `
+    })
 
     div.innerHTML+=`
       <div style="border:1px solid #ccc;padding:8px;margin:5px">
@@ -343,8 +376,10 @@ function renderRentals(){
         📞 ${r.phone||""}<br>
         ${r.start} → ${r.end}<br><br>
 
+        ${skisHTML}
+
         <button onclick="extendBooking('${r.id}')">Förläng</button>
-        <button onclick="quickReturn('${r.id}')">Återlämna</button>
+        <button onclick="quickReturn('${r.id}')">Återlämna allt</button>
       </div>
     `
   })
