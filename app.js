@@ -1,37 +1,50 @@
-console.log("VERSION 2.0 MULTI EQUIPMENT")
+console.log("VERSION 1.6.2 SAFE")
 
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  "DIN-KEY-HÄR"
 )
 
-/* STATE */
+/* ========= STATE ========= */
 let skis=[], rentals=[], filteredRentals=[], cart=[], weekOffset=0
-let currentTab="booking"
 
-/* INIT */
+const VALID_TYPES = ["langd","skin","tur","slalom","pjaxa","stav","hjalm","pulka"]
+
 window.onload=init
 
 async function init(){
-  document.getElementById("saveBtn").onclick=saveBooking
-  await loadAll()
-  renderAll()
+  try{
+    el("saveBtn").onclick=saveBooking
+    await loadAll()
+    renderAll()
+  }catch(e){showError(e)}
 }
 
-/* LOAD */
+/* ========= LOAD ========= */
 async function loadAll(){
-  skis=(await supabaseClient.from("skis").select("*")).data||[]
-  rentals=(await supabaseClient.from("rentals").select("*")).data||[]
 
-  skis=skis.map(s=>({...s,type:s.type||"langd"}))
+  const skisRes = await supabaseClient.from("skis").select("*")
+  const rentRes = await supabaseClient.from("rentals").select("*")
 
-  filteredRentals=rentals
+  skis = (skisRes.data || []).map(s=>({
+    id: s.id,
+    length: Number(s.length) || 0,
+    type: VALID_TYPES.includes(s.type) ? s.type : "langd"
+  }))
+
+  rentals = rentRes.data || []
+  filteredRentals = rentals
 }
 
-/* HELP */
+/* ========= HELP ========= */
 function el(id){return document.getElementById(id)}
 
-/* GROUP TYPES */
+/* ========= SAFE JSON ========= */
+function safeParse(str){
+  try{return JSON.parse(str||"[]")}catch{return[]}
+}
+
+/* ========= GROUP ========= */
 function getTypes(){
   return [...new Set(skis.map(s=>s.type))]
 }
@@ -43,10 +56,12 @@ function getLengths(type){
 }
 
 function getIds(type,length){
-  return skis.filter(s=>s.type===type && s.length==length).map(s=>s.id)
+  return skis
+    .filter(s=>s.type===type && s.length==length)
+    .map(s=>s.id)
 }
 
-/* RENDER */
+/* ========= RENDER ========= */
 function renderAll(){
   renderWall()
   renderCart()
@@ -54,38 +69,24 @@ function renderAll(){
   renderRentals()
 }
 
-/* TABS */
-function switchTab(tab){
-  currentTab=tab
-
-  el("bookingView").style.display = tab==="booking"?"block":"none"
-  el("calendarView").style.display = tab==="calendar"?"block":"none"
-}
-
-/* SKIDOR */
+/* ========= SKIDOR ========= */
 function renderWall(){
 
   const div=el("skiWall")
-  div.innerHTML=""
+  if(!div) return
 
-  const labels={
-    langd:"🎿 Längd",
-    skin:"🟢 Skins",
-    tur:"🟠 Tur",
-    slalom:"⛷ Slalom",
-    pjaxa:"👢 Pjäxor",
-    stav:"🪵 Stavar",
-    hjalm:"🪖 Hjälmar",
-    pulka:"🛷 Pulkor"
-  }
+  div.innerHTML=""
 
   getTypes().forEach(type=>{
 
-    div.innerHTML+=`<h4>${labels[type]||type}</h4>`
+    div.innerHTML+=`<h4>${type.toUpperCase()}</h4>`
 
-    getLengths(type).forEach(l=>{
+    const grid=document.createElement("div")
+    grid.className="grid"
 
-      const ids=getIds(type,l)
+    getLengths(type).forEach(length=>{
+
+      const ids=getIds(type,length)
       const available=getAvailable(ids)
       const selected=getSelected(ids)
 
@@ -93,33 +94,41 @@ function renderWall(){
       if(available===0) bg="#ffcdd2"
       else if(available<=2) bg="#fff3cd"
 
-      div.innerHTML+=`
+      grid.innerHTML+=`
         <div class="card" style="background:${bg}">
-          <b>${l}${type==="pjaxa"?" EU":" cm"}</b><br>
+          <b>${length}</b><br>
           ${available} kvar<br>
-          <button onclick="minus('${type}',${l})">−</button>
+          <button onclick="minus('${type}',${length})">−</button>
           ${selected}
-          <button onclick="plus('${type}',${l})">+</button>
+          <button onclick="plus('${type}',${length})">+</button>
         </div>
       `
     })
+
+    div.appendChild(grid)
   })
 }
 
-/* CART */
+/* ========= CART ========= */
 function getSelected(ids){
   return cart.filter(id=>ids.includes(id)).length
 }
 
-function plus(type,l){
-  const ids=getIds(type,l)
-  if(getSelected(ids)>=getAvailable(ids)) return
+function plus(type,length){
+  const ids=getIds(type,length)
+  if(!ids.length) return
+
+  if(getSelected(ids)>=getAvailable(ids)){
+    alert("Slut i lager")
+    return
+  }
+
   cart.push(ids[getSelected(ids)])
   renderAll()
 }
 
-function minus(type,l){
-  const ids=getIds(type,l)
+function minus(type,length){
+  const ids=getIds(type,length)
   const i=cart.findIndex(id=>ids.includes(id))
   if(i>-1) cart.splice(i,1)
   renderAll()
@@ -127,64 +136,49 @@ function minus(type,l){
 
 function renderCart(){
   const div=el("cart")
-  if(cart.length===0){div.innerHTML="Inga val";return}
+  if(!div) return
+
+  if(cart.length===0){
+    div.innerHTML="Inga val"
+    return
+  }
 
   const grouped={}
+
   cart.forEach(id=>{
     const s=skis.find(x=>x.id===id)
     if(!s) return
-    const key=s.type+"-"+s.length
+    const key=s.type+"_"+s.length
     grouped[key]=(grouped[key]||0)+1
   })
 
   let html=""
   Object.keys(grouped).forEach(k=>{
-    html+=`${k.replace("-", " ")} x ${grouped[k]}<br>`
+    const [type,length]=k.split("_")
+    html+=`${type} ${length} x ${grouped[k]}<br>`
   })
 
   div.innerHTML=html
 }
 
-/* 🔥 PAKET */
-function addPackage(type){
-
-  if(type==="langd"){
-    addFirst("langd")
-    addFirst("pjaxa")
-    addFirst("stav")
-  }
-
-  if(type==="slalom"){
-    addFirst("slalom")
-    addFirst("pjaxa")
-    addFirst("stav")
-  }
-
-  renderAll()
-}
-
-function addFirst(type){
-  const items=skis.filter(s=>s.type===type)
-  if(items.length===0) return
-  cart.push(items[0].id)
-}
-
-/* LAGER */
+/* ========= LAGER ========= */
 function getAvailable(ids){
   let booked=0
+
   rentals.forEach(r=>{
     if(r.returned) return
-    try{
-      JSON.parse(r.items||"[]").forEach(id=>{
-        if(ids.includes(id)) booked++
-      })
-    }catch{}
+
+    safeParse(r.items).forEach(id=>{
+      if(ids.includes(id)) booked++
+    })
   })
+
   return ids.length-booked
 }
 
-/* SAVE */
+/* ========= SAVE ========= */
 async function saveBooking(){
+
   if(!el("customer").value||!el("start").value||!el("end").value||cart.length===0){
     alert("Fyll i allt");return
   }
@@ -203,7 +197,7 @@ async function saveBooking(){
   renderAll()
 }
 
-/* CLEAR */
+/* ========= CLEAR ========= */
 function clearForm(){
   el("customer").value=""
   el("phone").value=""
@@ -213,44 +207,55 @@ function clearForm(){
   renderAll()
 }
 
-/* KALENDER (oförändrad logik) */
+/* ========= KALENDER ========= */
 function renderWeek(){
 
   const div=el("calendar")
+  if(!div) return
 
   let base=getMonday(new Date())
   base.setDate(base.getDate()+weekOffset*7)
 
   let dates=[]
-  let html="<table style='width:100%;height:100%'><tr><th>cm</th>"
+  let html="<table><tr><th>cm</th>"
 
   for(let i=0;i<7;i++){
     let d=new Date(base)
     d.setDate(base.getDate()+i)
-    const day=format(d)
-    dates.push(day)
+    dates.push(format(d))
     html+=`<th>${d.getDate()}/${d.getMonth()+1}</th>`
   }
 
   html+="</tr>"
 
-  getLengths("langd").forEach(l=>{
+  const lengths=[...new Set(skis.map(s=>s.length))].sort((a,b)=>a-b)
 
-    const ids=getIds("langd",l)
+  lengths.forEach(l=>{
+
+    const ids=skis.filter(s=>s.length==l).map(s=>s.id)
     const total=ids.length
 
-    html+=`<tr><td style="background:#eee;color:black">${l}</td>`
+    html+=`<tr><td style="color:black">${l}</td>`
 
     dates.forEach(day=>{
 
-      let booked=0
+      let booked=0,out=0,inn=0
 
       rentals.forEach(r=>{
         if(r.returned) return
-        let items=[]
-        try{items=JSON.parse(r.items||"[]")}catch{}
+
+        const items=safeParse(r.items)
+
         if(day>=r.start && day<=r.end){
           items.forEach(id=>{if(ids.includes(id)) booked++})
+        }
+
+        if(r.start===day){
+          items.forEach(id=>{if(ids.includes(id)) out++})
+        }
+
+        if(r.end===day){
+          items.forEach(id=>{if(ids.includes(id)) inn++})
         }
       })
 
@@ -260,7 +265,13 @@ function renderWeek(){
       if(free===0) bg="#f44336"
       else if(free<=2) bg="#ff9800"
 
-      html+=`<td style="background:${bg};color:black">${free}</td>`
+      html+=`
+        <td onclick="showDay('${day}')"
+        style="background:${bg};color:black">
+          ${free}<br>
+          ↑${out||""} ↓${inn||""}
+        </td>
+      `
     })
 
     html+="</tr>"
@@ -270,32 +281,54 @@ function renderWeek(){
   div.innerHTML=html
 }
 
-/* BOOKINGS */
-function renderRentals(){
-  const div=el("rentals")
-  div.innerHTML=""
+/* ========= POPUP ========= */
+function showDay(day){
 
-  filteredRentals.forEach(r=>{
+  let html=""
+
+  rentals.forEach(r=>{
+
     if(r.returned) return
 
-    div.innerHTML+=`
-      <div class="card">
-        <b>${r.name}</b><br>
-        ${r.start} → ${r.end}
-      </div>
-    `
+    if(r.start===day || r.end===day){
+
+      html+=`
+        <div>
+          <b>${r.name}</b><br>
+          <button onclick="quickReturn('${r.id}')">Återlämna</button>
+        </div>
+      `
+    }
   })
+
+  alert(html||"Inget")
 }
 
-/* NAV */
+/* ========= RETURN ========= */
+async function quickReturn(id){
+  await supabaseClient.from("rentals")
+    .update({returned:true})
+    .eq("id",id)
+
+  await loadAll()
+  renderAll()
+}
+
+/* ========= NAV ========= */
 function prevWeek(){weekOffset--;renderWeek()}
 function nextWeek(){weekOffset++;renderWeek()}
 
-/* DATE */
+/* ========= DATE ========= */
 function format(d){return d.toISOString().split("T")[0]}
 function getMonday(d){
   d=new Date(d)
   let day=d.getDay()
   let diff=d.getDate()-(day==0?6:day-1)
   return new Date(d.setDate(diff))
+}
+
+/* ========= ERROR ========= */
+function showError(e){
+  console.error(e)
+  document.body.innerHTML+=`<div style="color:red">${e.message}</div>`
 }
