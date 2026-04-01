@@ -12,100 +12,20 @@
 
 <style>
 
-body{
-  margin:0;
-  font-family:-apple-system, Arial;
-  background:#f5f5f5;
-  height:100vh;
-  overflow:hidden;
-}
+body{margin:0;font-family:-apple-system;background:#f5f5f5}
+.container{display:flex;height:100vh;padding:8px;gap:8px}
+.left{width:35%;display:flex;flex-direction:column;gap:8px}
+.right{width:65%;display:flex;flex-direction:column;gap:8px}
 
-.container{
-  display:flex;
-  height:100vh;
-  gap:8px;
-  padding:8px;
-  box-sizing:border-box;
-}
+.section{background:white;padding:10px;border-radius:10px;display:flex;flex-direction:column}
 
-.left{
-  width:35%;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
+.scroll{overflow:auto}
 
-.right{
-  width:65%;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 
-.section{
-  background:white;
-  border-radius:10px;
-  padding:10px;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
-}
+.card{border:1px solid #ccc;padding:6px;border-radius:8px;text-align:center}
 
-.customer{flex:0 0 auto;}
-.bookings{flex:1;}
-.equipment{flex:2;}
-.calendar{flex:1;}
-
-input{
-  font-size:14px;
-  padding:8px;
-  margin:3px 0;
-  width:100%;
-  border-radius:6px;
-  border:1px solid #ccc;
-}
-
-button{
-  font-size:14px;
-  padding:6px 8px;
-  margin:2px;
-  border:none;
-  border-radius:6px;
-  background:#2e7dff;
-  color:white;
-}
-
-.clearBtn{background:#777;}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:6px;
-}
-
-.scroll{
-  overflow:auto;
-  flex:1;
-  min-height:0;
-}
-
-.card{
-  border:1px solid #ddd;
-  border-radius:8px;
-  padding:6px;
-  text-align:center;
-  font-size:12px;
-}
-
-#calendar table{
-  width:100%;
-  border-collapse:collapse;
-  font-size:11px;
-}
-
-#calendar td{
-  text-align:center;
-}
+button{margin:2px;padding:6px;border:none;border-radius:6px;background:#2e7dff;color:white}
 
 </style>
 
@@ -115,69 +35,58 @@ button{
 
 <div class="container">
 
-  <!-- LEFT -->
-  <div class="left">
+<div class="left">
 
-    <!-- KUND -->
-    <div class="section customer">
-      <h4>Kund</h4>
-      <input id="customer" placeholder="Namn">
-      <input id="phone" placeholder="Telefon">
-      <input type="date" id="start">
-      <input type="date" id="end">
-    </div>
+<div class="section">
+<h4>Kund</h4>
+<input id="customer" placeholder="Namn">
+<input id="phone" placeholder="Telefon">
+<input type="date" id="start">
+<input type="date" id="end">
+</div>
 
-    <!-- BOKNINGAR -->
-    <div class="section bookings">
-      <h4>Bokningar</h4>
-      <input id="search" placeholder="Sök..." oninput="filterRentals()">
+<div class="section">
+<h4>Bokningar</h4>
+<input id="search" placeholder="Sök..." oninput="filterRentals()">
+<div id="rentals" class="scroll"></div>
+</div>
 
-      <div class="scroll">
-        <div id="rentals"></div>
-      </div>
-    </div>
+</div>
 
-  </div>
+<div class="right">
 
-  <!-- RIGHT -->
-  <div class="right">
+<div class="section">
 
-    <!-- UTRUSTNING -->
-    <div class="section equipment">
+<h4>Utrustning</h4>
 
-      <h4>Utrustning</h4>
+<div>
+<button onclick="setType('langd')">🎿</button>
+<button onclick="setType('skin')">🟢</button>
+<button onclick="setType('tur')">🟠</button>
+<button onclick="setType('slalom')">⛷️</button>
+<button onclick="setType('pjaxa')">👢</button>
+<button onclick="setType('stav')">🥢</button>
+<button onclick="setType('hjalm')">🪖</button>
+<button onclick="setType('pulka')">🛷</button>
+</div>
 
-      <div>
-        <button onclick="addLangdPackage()">🎿 Längdpaket</button>
-        <button onclick="addSlalomPackage()">⛷️ Slalompaket</button>
-      </div>
+<div id="skiWall" class="grid scroll"></div>
 
-      <div class="scroll">
-        <div id="skiWall" class="grid"></div>
-        <div id="cart"></div>
-      </div>
+<div id="cart"></div>
 
-      <div>
-        <button id="saveBtn">Spara</button>
-        <button onclick="clearForm()" class="clearBtn">Rensa</button>
-        <button onclick="location.href='/lager.html'">Lager</button>
-      </div>
+<button id="saveBtn">Spara</button>
+<button onclick="clearForm()">Rensa</button>
 
-    </div>
+</div>
 
-    <!-- KALENDER -->
-    <div class="section calendar">
-      <h4>Kalender</h4>
+<div class="section">
+<h4>Kalender</h4>
+<button onclick="prevWeek()">←</button>
+<button onclick="nextWeek()">→</button>
+<div id="calendar"></div>
+</div>
 
-      <div>
-        <button onclick="prevWeek()">←</button>
-        <button onclick="nextWeek()">→</button>
-      </div>
-
-      <div id="calendar"></div>
-    </div>
-
-  </div>
+</div>
 
 </div>
 
