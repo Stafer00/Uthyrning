@@ -11,15 +11,14 @@
 
 <style>
 
-/* BAS */
 body{
   margin:0;
   font-family:-apple-system, Arial;
   background:#f5f5f5;
   height:100vh;
+  overflow:hidden;
 }
 
-/* LAYOUT */
 .container{
   display:flex;
   height:100vh;
@@ -28,22 +27,27 @@ body{
   box-sizing:border-box;
 }
 
-/* KOLUMNER */
-.left{
-  width:35%;
+/* 🔥 TABS */
+.tabs{
   display:flex;
-  flex-direction:column;
-  gap:8px;
+  gap:5px;
+  margin-bottom:5px;
 }
 
-.right{
-  width:65%;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
+.tabs button{
+  flex:1;
+  background:#ddd;
+  color:black;
 }
 
-/* SECTIONS */
+.tabs button.active{
+  background:#2e7dff;
+  color:white;
+}
+
+.left{width:35%;display:flex;flex-direction:column;gap:8px;}
+.right{width:65%;display:flex;flex-direction:column;gap:8px;}
+
 .section{
   background:white;
   border-radius:10px;
@@ -53,13 +57,11 @@ body{
   overflow:hidden;
 }
 
-/* FLEX */
 .customer{flex:0 0 auto;}
 .skiSection{flex:1;}
-.calendar{flex:2;}
+.calendar{flex:1;}
 .bookings{flex:1;}
 
-/* INPUT */
 input{
   font-size:14px;
   padding:8px;
@@ -69,7 +71,6 @@ input{
   border:1px solid #ccc;
 }
 
-/* BUTTON */
 button{
   font-size:14px;
   padding:6px;
@@ -80,31 +81,38 @@ button{
   color:white;
 }
 
-/* SPECIAL */
 .clearBtn{background:#777;}
-.lagerBtn{background:#4caf50;}
 
-/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(5,1fr);
   gap:6px;
 }
 
-/* SCROLL */
 .scroll{
   overflow:auto;
   flex:1;
   min-height:0;
 }
 
-/* CARD */
 .card{
   border:1px solid #ddd;
   border-radius:8px;
   padding:6px;
   text-align:center;
   font-size:12px;
+}
+
+/* 🔥 PAKET */
+.packages{
+  display:flex;
+  gap:5px;
+  flex-wrap:wrap;
+  margin-bottom:5px;
+}
+
+.packages button{
+  background:#4caf50;
 }
 
 /* KALENDER */
@@ -117,12 +125,11 @@ button{
 
 #calendar td{
   text-align:center;
-  color:white;
 }
 
-/* RUBRIKER */
-h4{
-  margin:4px 0;
+/* 🔥 VISA/DÖLJ */
+.hidden{
+  display:none;
 }
 
 </style>
@@ -135,51 +142,50 @@ h4{
 
 <div class="container">
 
-  <!-- VÄNSTER -->
+  <!-- LEFT -->
   <div class="left">
 
-    <!-- KUND -->
     <div class="section customer">
+      <h4>Kund</h4>
 
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <h4>Kund</h4>
-        <button class="lagerBtn" onclick="window.location.href='/lager.html'">
-          Lager
-        </button>
+      <!-- 🔥 TABS -->
+      <div class="tabs">
+        <button id="tabBooking" onclick="switchTab('booking')" class="active">Bokning</button>
+        <button id="tabCalendar" onclick="switchTab('calendar')">Kalender</button>
       </div>
 
       <input id="customer" placeholder="Namn">
       <input id="phone" placeholder="Telefon">
       <input type="date" id="start">
       <input type="date" id="end">
-
     </div>
 
-    <!-- SKIDOR -->
-    <div class="section skiSection">
+    <!-- 🔵 BOOKING VIEW -->
+    <div id="bookingView" class="section skiSection">
 
-      <h4>Skidor</h4>
+      <h4>Utrustning</h4>
+
+      <!-- 🔥 PAKET -->
+      <div class="packages">
+        <button onclick="addPackage('langd')">🎿 Längdpaket</button>
+        <button onclick="addPackage('slalom')">⛷ Slalompaket</button>
+      </div>
 
       <div class="scroll">
         <div id="skiWall" class="grid"></div>
         <div id="cart"></div>
       </div>
 
-      <!-- FASTA KNAPPAR -->
-      <div style="flex:0 0 auto;">
+      <div>
         <button id="saveBtn">Spara</button>
         <button onclick="clearForm()" class="clearBtn">Rensa</button>
+        <button onclick="window.location.href='/lager.html'">Lager</button>
       </div>
 
     </div>
 
-  </div>
-
-  <!-- HÖGER -->
-  <div class="right">
-
-    <!-- KALENDER -->
-    <div class="section calendar">
+    <!-- 🟢 CALENDAR VIEW -->
+    <div id="calendarView" class="section skiSection hidden">
 
       <h4>Kalender</h4>
 
@@ -188,13 +194,16 @@ h4{
         <button onclick="nextWeek()">→</button>
       </div>
 
-      <div id="calendar"></div>
+      <div id="calendar" class="scroll"></div>
 
     </div>
 
-    <!-- BOKNINGAR -->
-    <div class="section bookings">
+  </div>
 
+  <!-- RIGHT -->
+  <div class="right">
+
+    <div class="section bookings">
       <h4>Bokningar</h4>
 
       <input id="search" placeholder="Sök..." oninput="filterRentals()">
@@ -202,12 +211,25 @@ h4{
       <div class="scroll">
         <div id="rentals"></div>
       </div>
-
     </div>
 
   </div>
 
 </div>
+
+<script>
+
+/* 🔥 TAB LOGIC */
+function switchTab(tab){
+
+  document.getElementById("bookingView").classList.toggle("hidden", tab!=="booking")
+  document.getElementById("calendarView").classList.toggle("hidden", tab!=="calendar")
+
+  document.getElementById("tabBooking").classList.toggle("active", tab==="booking")
+  document.getElementById("tabCalendar").classList.toggle("active", tab==="calendar")
+}
+
+</script>
 
 <script src="/app.js"></script>
 
