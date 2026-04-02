@@ -1,6 +1,9 @@
 console.log("KALENDER PRO 2.2")
 
-
+const supabaseClient = window.supabase.createClient(
+  "https://ycasdixhobiaiizevgsi.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
+)
 
 let skis=[], rentals=[], weekOffset=0
 
