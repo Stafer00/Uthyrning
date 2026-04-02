@@ -42,6 +42,7 @@ button{
   border-radius:6px;
   background:#2e7dff;
   color:white;
+  cursor:pointer;
 }
 
 .nav-buttons{
@@ -92,26 +93,26 @@ td, th{
 
 <div class="section">
 
-  <!-- 🔥 HEADER -->
+  <!-- HEADER -->
   <div class="header">
     <h2>📅 Kalender</h2>
-    <button onclick="location.href='/index.html'">← Bokning</button>
+    <button onclick="window.location.href='index.html'">← Bokning</button>
   </div>
 
-  <!-- 🔥 NAV -->
+  <!-- NAV -->
   <div class="nav-buttons">
     <button onclick="prevWeek()">← Föregående vecka</button>
     <button onclick="nextWeek()">Nästa vecka →</button>
   </div>
 
-  <!-- 🔥 CALENDAR -->
+  <!-- CALENDAR -->
   <div id="calendar"></div>
 
 </div>
 
 </div>
 
-<script src="/calendar.js"></script>
+<script src="calendar.js"></script>
 
 </body>
 </html>
