@@ -4,28 +4,83 @@
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Cache-Control" content="no-cache">
 
-<title>Skiduthyrning</title>
+<title>Kalender PRO</title>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
 
-body{margin:0;font-family:-apple-system;background:#f5f5f5}
-.container{display:flex;height:100vh;padding:8px;gap:8px}
-.left{width:35%;display:flex;flex-direction:column;gap:8px}
-.right{width:65%;display:flex;flex-direction:column;gap:8px}
+body{
+  margin:0;
+  font-family:-apple-system;
+  background:#f5f5f5;
+}
 
-.section{background:white;padding:10px;border-radius:10px;display:flex;flex-direction:column}
+.container{
+  padding:10px;
+}
 
-.scroll{overflow:auto}
+.section{
+  background:white;
+  padding:12px;
+  border-radius:12px;
+}
 
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+/* HEADER */
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:8px;
+}
 
-.card{border:1px solid #ccc;padding:6px;border-radius:8px;text-align:center}
+button{
+  padding:8px;
+  margin:4px;
+  border:none;
+  border-radius:6px;
+  background:#2e7dff;
+  color:white;
+}
 
-button{margin:2px;padding:6px;border:none;border-radius:6px;background:#2e7dff;color:white}
+.nav-buttons{
+  margin-bottom:8px;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  table-layout:fixed;
+}
+
+td, th{
+  text-align:center;
+  padding:6px;
+  font-size:12px;
+}
+
+.popup{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.6);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.popup-box{
+  background:white;
+  padding:16px;
+  border-radius:10px;
+  width:90%;
+  max-width:420px;
+  max-height:80%;
+  overflow:auto;
+}
 
 </style>
 
@@ -35,62 +90,28 @@ button{margin:2px;padding:6px;border:none;border-radius:6px;background:#2e7dff;c
 
 <div class="container">
 
-<div class="left">
-
-<div class="section">
-<h4>Kund</h4>
-<input id="customer" placeholder="Namn">
-<input id="phone" placeholder="Telefon">
-<input type="date" id="start">
-<input type="date" id="end">
-</div>
-
-<div class="section">
-<h4>Bokningar</h4>
-<input id="search" placeholder="Sök..." oninput="filterRentals()">
-<div id="rentals" class="scroll"></div>
-</div>
-
-</div>
-
-<div class="right">
-
 <div class="section">
 
-<h4>Utrustning</h4>
+  <!-- 🔥 HEADER -->
+  <div class="header">
+    <h2>📅 Kalender</h2>
+    <button onclick="location.href='/index.html'">← Bokning</button>
+  </div>
 
-<div>
-<button onclick="setType('langd')">🎿</button>
-<button onclick="setType('skin')">🟢</button>
-<button onclick="setType('tur')">🟠</button>
-<button onclick="setType('slalom')">⛷️</button>
-<button onclick="setType('pjaxa')">👢</button>
-<button onclick="setType('stav')">🥢</button>
-<button onclick="setType('hjalm')">🪖</button>
-<button onclick="setType('pulka')">🛷</button>
-</div>
+  <!-- 🔥 NAV -->
+  <div class="nav-buttons">
+    <button onclick="prevWeek()">← Föregående vecka</button>
+    <button onclick="nextWeek()">Nästa vecka →</button>
+  </div>
 
-<div id="skiWall" class="grid scroll"></div>
-
-<div id="cart"></div>
-
-<button id="saveBtn">Spara</button>
-<button onclick="clearForm()">Rensa</button>
-
-</div>
-
-<div class="section">
-<h4>Kalender</h4>
-<button onclick="prevWeek()">←</button>
-<button onclick="nextWeek()">→</button>
-<div id="calendar"></div>
-</div>
+  <!-- 🔥 CALENDAR -->
+  <div id="calendar"></div>
 
 </div>
 
 </div>
 
-<script src="/app.js"></script>
+<script src="/calendar.js"></script>
 
 </body>
 </html>
