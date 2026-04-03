@@ -280,3 +280,68 @@ function showView(view){
     document.getElementById("bookingView").classList.remove("hidden")
   }
 }
+let weekOffset = 0
+
+function renderWeek(){
+
+  const div = document.getElementById("calendar")
+  if(!div) return
+
+  let base = getMonday(new Date())
+  base.setDate(base.getDate()+weekOffset*7)
+
+  let dates=[]
+  let html="<table><tr><th>cm</th>"
+
+  for(let i=0;i<7;i++){
+    let d=new Date(base)
+    d.setDate(base.getDate()+i)
+    dates.push(format(d))
+    html+=`<th>${d.getDate()}/${d.getMonth()+1}</th>`
+  }
+
+  html+="</tr>"
+
+  const lengths=[...new Set(skis.map(s=>s.length))].sort((a,b)=>a-b)
+
+  lengths.forEach(l=>{
+    const ids=skis.filter(s=>s.length==l).map(s=>s.id)
+
+    html+=`<tr><td>${l}</td>`
+
+    dates.forEach(day=>{
+      let booked=0
+
+      rentals.forEach(r=>{
+        if(r.returned) return
+        parse(r.items).forEach(id=>{
+          if(ids.includes(id)) booked++
+        })
+      })
+
+      const free=ids.length-booked
+
+      let bg="#4caf50"
+      if(free===0) bg="#f44336"
+      else if(free<=2) bg="#ff9800"
+
+      html+=`<td style="background:${bg}">${free}</td>`
+    })
+
+    html+="</tr>"
+  })
+
+  html+="</table>"
+  div.innerHTML=html
+}
+
+function prevWeek(){weekOffset--;renderWeek()}
+function nextWeek(){weekOffset++;renderWeek()}
+
+function format(d){return d.toISOString().split("T")[0]}
+function getMonday(d){
+  d=new Date(d)
+  let day=d.getDay()
+  let diff=d.getDate()-(day==0?6:day-1)
+  return new Date(d.setDate(diff))
+}
