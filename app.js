@@ -267,3 +267,16 @@ function showError(e){
   console.error(e)
   alert("❌ Fel: " + e.message)
 }
+/* ========= ROUTING ========= */
+function showView(view){
+
+  document.getElementById("bookingView").classList.add("hidden")
+  document.getElementById("calendarView").classList.add("hidden")
+
+  if(view === "calendar"){
+    document.getElementById("calendarView").classList.remove("hidden")
+    renderWeek() // ladda kalender
+  }else{
+    document.getElementById("bookingView").classList.remove("hidden")
+  }
+}
