@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Skiduthyrning</title>
+<title>Skiduthyrning 1.6.4</title>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
@@ -17,67 +17,58 @@ body{
   background:#f5f5f5;
 }
 
+/* LAYOUT */
 .container{
-  display:flex;
-  height:100vh;
-  gap:8px;
-  padding:8px;
-  box-sizing:border-box;
-}
-
-.left{
-  width:35%;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
-
-.right{
-  width:65%;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
+  display:grid;
+  grid-template-columns: 300px 1fr;
+  gap:10px;
+  padding:10px;
 }
 
 .section{
   background:white;
-  padding:10px;
-  border-radius:10px;
-  display:flex;
-  flex-direction:column;
+  padding:12px;
+  border-radius:12px;
 }
 
+/* INPUT */
 input{
+  width:100%;
   padding:8px;
-  margin:3px 0;
+  margin-bottom:6px;
   border-radius:6px;
   border:1px solid #ccc;
 }
 
+/* BUTTON */
 button{
-  padding:6px;
-  margin:3px;
+  padding:8px 10px;
+  margin:4px;
   border:none;
   border-radius:6px;
   background:#2e7dff;
   color:white;
+  cursor:pointer;
 }
 
+/* TYPE BUTTONS */
+.type-buttons{
+  margin-bottom:8px;
+}
+
+/* GRID */
 .grid{
   display:grid;
-  grid-template-columns:repeat(4,1fr);
+  grid-template-columns: repeat(auto-fill,minmax(90px,1fr));
   gap:6px;
 }
 
+/* CARD */
 .card{
-  border:1px solid #ccc;
-  padding:6px;
+  padding:8px;
   border-radius:8px;
   text-align:center;
-}
-
-.scroll{
-  overflow:auto;
+  font-size:12px;
 }
 
 </style>
@@ -88,57 +79,70 @@ button{
 
 <div class="container">
 
-<!-- LEFT -->
-<div class="left">
+  <!-- LEFT -->
+  <div>
 
-<div class="section">
-<h4>Kund</h4>
-<input id="customer" placeholder="Namn">
-<input id="phone" placeholder="Telefon">
-<input type="date" id="start">
-<input type="date" id="end">
-</div>
+    <!-- KUND -->
+    <div class="section">
+      <h3>Kund</h3>
 
-<div class="section">
-<h4>Bokningar</h4>
-<input id="search" placeholder="Sök..." oninput="filterRentals()">
-<div id="rentals" class="scroll"></div>
-</div>
+      <input id="customer" placeholder="Namn">
+      <input id="phone" placeholder="Telefon">
 
-</div>
+      <input id="start" type="date">
+      <input id="end" type="date">
+    </div>
 
-<!-- RIGHT -->
-<div class="right">
+    <!-- BOKNINGAR -->
+    <div class="section">
+      <h3>Bokningar</h3>
 
-<div class="section">
+      <input id="search" placeholder="Sök...">
 
-<h4>Utrustning</h4>
+      <div id="rentals">Inga bokningar</div>
+    </div>
 
-<!-- TYP-KNAPPAR -->
-<div>
-<button onclick="setType('langd')">🎿</button>
-<button onclick="setType('skin')">🟢</button>
-<button onclick="setType('tur')">🟠</button>
-<button onclick="setType('slalom')">⛷️</button>
-<button onclick="setType('pjaxa')">👢</button>
-<button onclick="setType('stav')">🥢</button>
-<button onclick="setType('hjalm')">🪖</button>
-<button onclick="setType('pulka')">🛷</button>
-</div>
+  </div>
 
-<div id="skiWall" class="grid scroll"></div>
+  <!-- RIGHT -->
+  <div>
 
-<div id="cart"></div>
+    <!-- UTRUSTNING -->
+    <div class="section">
+      <h3>Utrustning</h3>
 
-<div>
-<button id="saveBtn">Spara</button>
-<button onclick="clearForm()">Rensa</button>
-<button onclick="location.href='kalender.html'">📅 Kalender</button>
-</div>
+      <!-- FILTER KNAPPAR -->
+      <div class="type-buttons">
 
-</div>
+        <button onclick="setType(null)">Alla</button>
 
-</div>
+        <button onclick="setType('langd')">🎿</button>
+        <button onclick="setType('skin')">🟢</button>
+        <button onclick="setType('tur')">🟠</button>
+        <button onclick="setType('slalom')">⛷️</button>
+        <button onclick="setType('pjaxa')">🥾</button>
+        <button onclick="setType('stav')">🪄</button>
+        <button onclick="setType('hjalm')">🪖</button>
+        <button onclick="setType('pulka')">🛷</button>
+
+      </div>
+
+      <!-- SKIDOR -->
+      <div id="skiWall"></div>
+
+      <!-- CART -->
+      <div id="cart">Inga val</div>
+
+      <!-- ACTIONS -->
+      <div>
+        <button id="saveBtn">Spara</button>
+        <button onclick="clearForm()">Rensa</button>
+        <button onclick="window.location.href='calendar.html'">📅 Kalender</button>
+      </div>
+
+    </div>
+
+  </div>
 
 </div>
 
