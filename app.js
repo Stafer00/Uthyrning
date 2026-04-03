@@ -1,8 +1,8 @@
-console.log("VERSION 1.7 PRO STABLE")
+console.log("VERSION 1.7.1 IDIOTSÄKER")
 
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
+  ""
 )
 
 /* ========= STATE ========= */
@@ -16,27 +16,42 @@ window.onload = init
 
 async function init(){
   try{
-    el("saveBtn").onclick = saveBooking
+    bindUI()
     await loadAll()
     renderAll()
-  }catch(e){ showError(e) }
+    debug("App startad OK")
+  }catch(e){
+    showError(e)
+  }
+}
+
+/* ========= UI ========= */
+function bindUI(){
+  if(el("saveBtn")) el("saveBtn").onclick = saveBooking
 }
 
 /* ========= LOAD ========= */
 async function loadAll(){
 
-  const skisRes = await supabaseClient.from("skis").select("*")
-  const rentRes = await supabaseClient.from("rentals").select("*")
+  const { data: skisData, error: skiErr } =
+    await supabaseClient.from("skis").select("*")
 
-  skis = (skisRes.data || []).map(s => ({
+  const { data: rentData, error: rentErr } =
+    await supabaseClient.from("rentals").select("*")
+
+  if(skiErr) throw skiErr
+  if(rentErr) throw rentErr
+
+  skis = (skisData || []).map(s => ({
     id: s.id,
     length: Number(s.length) || 0,
     type: (s.type || "okand").toLowerCase().trim()
   }))
 
-  rentals = rentRes.data || []
+  rentals = rentData || []
 
-  console.log("TYPES:", [...new Set(skis.map(s=>s.type))])
+  debug("Skis:", skis.length)
+  debug("Rentals:", rentals.length)
 }
 
 /* ========= HELP ========= */
@@ -44,6 +59,13 @@ function el(id){ return document.getElementById(id) }
 
 function parse(x){
   try{return JSON.parse(x || "[]")}catch{return[]}
+}
+
+function debug(...msg){
+  console.log(...msg)
+  if(el("debug")){
+    el("debug").innerHTML += msg.join(" ") + "<br>"
+  }
 }
 
 /* ========= TYPES ========= */
@@ -65,13 +87,13 @@ function renderAll(){
   renderRentals()
 }
 
-/* ========= FILTER BUTTONS ========= */
+/* ========= FILTER ========= */
 function renderFilters(){
 
   const div = el("filters")
-  div.innerHTML = ""
+  if(!div) return
 
-  div.innerHTML += `<button onclick="setType('all')">Alla</button>`
+  div.innerHTML = `<button onclick="setType('all')">Alla</button>`
 
   getTypes().forEach(t=>{
     div.innerHTML += `<button onclick="setType('${t}')">${t}</button>`
@@ -82,16 +104,17 @@ function renderFilters(){
 function renderWall(){
 
   const div = el("skiWall")
+  if(!div) return
+
   div.innerHTML = ""
 
   let list = skis
-
   if(selectedType !== "all"){
     list = skis.filter(s=>s.type === selectedType)
   }
 
   if(list.length === 0){
-    div.innerHTML = "Ingen utrustning hittad"
+    div.innerHTML = "⚠️ Ingen utrustning hittad"
     return
   }
 
@@ -125,7 +148,6 @@ function getSelected(ids){
 }
 
 function plus(length){
-
   const ids = skis.filter(s=>s.length==length).map(s=>s.id)
 
   if(getSelected(ids)>=getAvailable(ids)){
@@ -145,8 +167,8 @@ function minus(length){
 }
 
 function renderCart(){
-
   const div = el("cart")
+  if(!div) return
 
   if(cart.length===0){
     div.innerHTML="Inga val"
@@ -193,26 +215,33 @@ async function saveBooking(){
     return
   }
 
-  await supabaseClient.from("rentals").insert({
-    name: el("customer").value,
-    phone: el("phone").value,
-    start: el("start").value,
-    end: el("end").value,
-    items: JSON.stringify(cart),
-    returned: false
-  })
+  try{
+    await supabaseClient.from("rentals").insert({
+      name: el("customer").value,
+      phone: el("phone").value,
+      start: el("start").value,
+      end: el("end").value,
+      items: JSON.stringify(cart),
+      returned:false
+    })
 
-  alert("Sparad!")
+    alert("✅ Sparad")
 
-  cart=[]
-  await loadAll()
-  renderAll()
+    cart=[]
+    await loadAll()
+    renderAll()
+
+  }catch(e){
+    showError(e)
+  }
 }
 
 /* ========= BOOKINGS ========= */
 function renderRentals(){
 
   const div = el("rentals")
+  if(!div) return
+
   div.innerHTML=""
 
   const active = rentals.filter(r=>!r.returned)
@@ -223,14 +252,11 @@ function renderRentals(){
   }
 
   active.forEach(r=>{
-
-    const items = parse(r.items)
-
     div.innerHTML += `
       <div class="booking">
         <b>${r.name}</b><br>
         ${r.start} → ${r.end}<br>
-        ${items.length} artiklar<br>
+        ${parse(r.items).length} artiklar
       </div>
     `
   })
@@ -239,5 +265,5 @@ function renderRentals(){
 /* ========= ERROR ========= */
 function showError(e){
   console.error(e)
-  alert("Fel: " + e.message)
+  alert("❌ Fel: " + e.message)
 }
