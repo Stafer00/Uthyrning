@@ -1,4 +1,4 @@
-console.log("VERSION 1.6.4 STABLE UI FIX")
+console.log("VERSION 1.7 PRO STABLE")
 
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
@@ -8,31 +8,18 @@ const supabaseClient = window.supabase.createClient(
 /* ========= STATE ========= */
 let skis = []
 let rentals = []
-let filteredRentals = []
 let cart = []
-let activeType = null
-
-const VALID_TYPES = ["langd","skin","tur","slalom","pjaxa","stav","hjalm","pulka"]
-
-window.onload = init
+let selectedType = "all"
 
 /* ========= INIT ========= */
+window.onload = init
+
 async function init(){
   try{
     el("saveBtn").onclick = saveBooking
-
-    if(el("search")){
-      el("search").oninput = filterRentals
-    }
-
     await loadAll()
-    filteredRentals = rentals
-
     renderAll()
-
-  }catch(e){
-    showError(e)
-  }
+  }catch(e){ showError(e) }
 }
 
 /* ========= LOAD ========= */
@@ -41,121 +28,94 @@ async function loadAll(){
   const skisRes = await supabaseClient.from("skis").select("*")
   const rentRes = await supabaseClient.from("rentals").select("*")
 
-  skis = (skisRes.data || []).map(s=>({
+  skis = (skisRes.data || []).map(s => ({
     id: s.id,
     length: Number(s.length) || 0,
-    type: VALID_TYPES.includes(s.type) ? s.type : "langd"
+    type: (s.type || "okand").toLowerCase().trim()
   }))
 
   rentals = rentRes.data || []
+
+  console.log("TYPES:", [...new Set(skis.map(s=>s.type))])
 }
 
 /* ========= HELP ========= */
 function el(id){ return document.getElementById(id) }
 
-function safeParse(str){
-  try{return JSON.parse(str||"[]")}catch{return[]}
+function parse(x){
+  try{return JSON.parse(x || "[]")}catch{return[]}
+}
+
+/* ========= TYPES ========= */
+function getTypes(){
+  return [...new Set(skis.map(s=>s.type))].filter(Boolean)
 }
 
 /* ========= FILTER ========= */
-function filterRentals(){
-
-  const q = (el("search")?.value || "").toLowerCase()
-
-  filteredRentals = rentals.filter(r =>
-    (r.name || "").toLowerCase().includes(q) ||
-    (r.phone || "").includes(q)
-  )
-
-  renderRentals()
-}
-
-/* ========= TYPE FILTER ========= */
-function setType(type){
-  activeType = type
+function setType(t){
+  selectedType = t
   renderWall()
-}
-
-/* ========= GROUP ========= */
-function getTypes(){
-  return [...new Set(skis.map(s=>s.type))]
-}
-
-function getLengths(type){
-  return [...new Set(
-    skis.filter(s=>s.type===type).map(s=>s.length)
-  )].sort((a,b)=>a-b)
-}
-
-function getIds(type,length){
-  return skis
-    .filter(s=>s.type===type && s.length==length)
-    .map(s=>s.id)
 }
 
 /* ========= RENDER ========= */
 function renderAll(){
+  renderFilters()
   renderWall()
   renderCart()
   renderRentals()
 }
 
-/* ========= UTRUSTNING ========= */
+/* ========= FILTER BUTTONS ========= */
+function renderFilters(){
+
+  const div = el("filters")
+  div.innerHTML = ""
+
+  div.innerHTML += `<button onclick="setType('all')">Alla</button>`
+
+  getTypes().forEach(t=>{
+    div.innerHTML += `<button onclick="setType('${t}')">${t}</button>`
+  })
+}
+
+/* ========= WALL ========= */
 function renderWall(){
 
   const div = el("skiWall")
-  if(!div) return
-
   div.innerHTML = ""
 
-  // 🔥 FIX: visa alltid något
-  let types = getTypes()
-  if(activeType){
-    types = types.includes(activeType) ? [activeType] : types
+  let list = skis
+
+  if(selectedType !== "all"){
+    list = skis.filter(s=>s.type === selectedType)
   }
 
-  if(types.length === 0){
+  if(list.length === 0){
     div.innerHTML = "Ingen utrustning hittad"
     return
   }
 
-  types.forEach(type=>{
+  const lengths = [...new Set(list.map(s=>s.length))].sort((a,b)=>a-b)
 
-    const title = document.createElement("h4")
-    title.innerText = type.toUpperCase()
-    div.appendChild(title)
+  lengths.forEach(length=>{
 
-    const grid = document.createElement("div")
-    grid.className = "grid"
+    const ids = list.filter(s=>s.length==length).map(s=>s.id)
+    const available = getAvailable(ids)
+    const selected = getSelected(ids)
 
-    const lengths = getLengths(type)
+    let bg="#e8f5e9"
+    if(available===0) bg="#ffcdd2"
+    else if(available<=2) bg="#fff3cd"
 
-    if(lengths.length === 0){
-      grid.innerHTML = "Inget i lager"
-    }
-
-    lengths.forEach(length=>{
-
-      const ids = getIds(type,length)
-      const available = getAvailable(ids)
-      const selected = getSelected(ids)
-
-      let bg = "#e8f5e9"
-      if(available === 0) bg = "#ffcdd2"
-      else if(available <= 2) bg = "#fff3cd"
-
-      grid.innerHTML += `
-        <div class="card" style="background:${bg}">
-          <b>${length}</b><br>
-          ${available} kvar<br>
-          <button onclick="minus('${type}',${length})">−</button>
-          ${selected}
-          <button onclick="plus('${type}',${length})">+</button>
-        </div>
-      `
-    })
-
-    div.appendChild(grid)
+    div.innerHTML += `
+      <div class="card" style="background:${bg}">
+        <b>${length}</b><br>
+        ${available} kvar<br>
+        <button onclick="minus(${length})">−</button>
+        ${selected}
+        <button onclick="plus(${length})">+</button>
+      </div>
+    `
   })
 }
 
@@ -164,12 +124,11 @@ function getSelected(ids){
   return cart.filter(id=>ids.includes(id)).length
 }
 
-function plus(type,length){
+function plus(length){
 
-  const ids = getIds(type,length)
-  if(!ids.length) return
+  const ids = skis.filter(s=>s.length==length).map(s=>s.id)
 
-  if(getSelected(ids) >= getAvailable(ids)){
+  if(getSelected(ids)>=getAvailable(ids)){
     alert("Slut i lager")
     return
   }
@@ -178,36 +137,32 @@ function plus(type,length){
   renderAll()
 }
 
-function minus(type,length){
-
-  const ids = getIds(type,length)
+function minus(length){
+  const ids = skis.filter(s=>s.length==length).map(s=>s.id)
   const i = cart.findIndex(id=>ids.includes(id))
-
-  if(i > -1) cart.splice(i,1)
-
+  if(i>-1) cart.splice(i,1)
   renderAll()
 }
 
 function renderCart(){
 
   const div = el("cart")
-  if(!div) return
 
-  if(cart.length === 0){
-    div.innerHTML = "Inga val"
+  if(cart.length===0){
+    div.innerHTML="Inga val"
     return
   }
 
-  const grouped = {}
+  const grouped={}
 
   cart.forEach(id=>{
     const s = skis.find(x=>x.id===id)
     if(!s) return
-    const key = s.type + " " + s.length
-    grouped[key] = (grouped[key]||0)+1
+    const key = s.type+" "+s.length
+    grouped[key]=(grouped[key]||0)+1
   })
 
-  let html = ""
+  let html=""
   Object.keys(grouped).forEach(k=>{
     html += `${k} x ${grouped[k]}<br>`
   })
@@ -218,17 +173,16 @@ function renderCart(){
 /* ========= LAGER ========= */
 function getAvailable(ids){
 
-  let booked = 0
+  let booked=0
 
   rentals.forEach(r=>{
     if(r.returned) return
-
-    safeParse(r.items).forEach(id=>{
+    parse(r.items).forEach(id=>{
       if(ids.includes(id)) booked++
     })
   })
 
-  return ids.length - booked
+  return ids.length-booked
 }
 
 /* ========= SAVE ========= */
@@ -248,80 +202,42 @@ async function saveBooking(){
     returned: false
   })
 
-  clearForm()
+  alert("Sparad!")
+
+  cart=[]
   await loadAll()
-  filteredRentals = rentals
   renderAll()
 }
 
-/* ========= CLEAR ========= */
-function clearForm(){
-  el("customer").value = ""
-  el("phone").value = ""
-  el("start").value = ""
-  el("end").value = ""
-  cart = []
-}
-
-/* ========= BOKNINGAR ========= */
+/* ========= BOOKINGS ========= */
 function renderRentals(){
 
   const div = el("rentals")
-  if(!div) return
+  div.innerHTML=""
 
-  div.innerHTML = ""
+  const active = rentals.filter(r=>!r.returned)
 
-  if(rentals.length === 0){
-    div.innerHTML = "Inga bokningar"
+  if(active.length===0){
+    div.innerHTML="Inga bokningar"
     return
   }
 
-  rentals.forEach(r=>{
+  active.forEach(r=>{
 
-    if(r.returned) return
-
-    const items = safeParse(r.items)
-    const grouped = {}
-
-    items.forEach(id=>{
-      const s = skis.find(x=>x.id===id)
-      if(!s) return
-      const key = s.type + " " + s.length
-      grouped[key] = (grouped[key]||0)+1
-    })
-
-    let itemsHTML = ""
-    Object.keys(grouped).forEach(k=>{
-      itemsHTML += `${k} x ${grouped[k]}<br>`
-    })
+    const items = parse(r.items)
 
     div.innerHTML += `
-      <div style="border:1px solid #ccc;padding:6px;margin:4px;border-radius:6px">
-        <b>${r.name || "-"}</b><br>
-        📞 ${r.phone || "-"}<br>
-        ${r.start} → ${r.end}<br><br>
-
-        ${itemsHTML}
-
-        <button onclick="quickReturn('${r.id}')">Återlämna</button>
+      <div class="booking">
+        <b>${r.name}</b><br>
+        ${r.start} → ${r.end}<br>
+        ${items.length} artiklar<br>
       </div>
     `
   })
 }
 
-/* ========= RETURN ========= */
-async function quickReturn(id){
-
-  await supabaseClient.from("rentals")
-    .update({returned:true})
-    .eq("id",id)
-
-  await loadAll()
-  renderAll()
-}
-
 /* ========= ERROR ========= */
 function showError(e){
   console.error(e)
-  alert("Fel: "+e.message)
+  alert("Fel: " + e.message)
 }
