@@ -1,8 +1,8 @@
-console.log("VERSION 1.7.1 IDIOTSÄKER")
+console.log("VERSION 1.7.2 PRO STABLE")
 
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
+  ""
 )
 
 /* ========= STATE ========= */
@@ -10,6 +10,7 @@ let skis = []
 let rentals = []
 let cart = []
 let selectedType = "all"
+let weekOffset = 0
 
 /* ========= INIT ========= */
 window.onload = init
@@ -19,7 +20,7 @@ async function init(){
     bindUI()
     await loadAll()
     renderAll()
-    debug("App startad OK")
+    console.log("App startad OK")
   }catch(e){
     showError(e)
   }
@@ -27,7 +28,8 @@ async function init(){
 
 /* ========= UI ========= */
 function bindUI(){
-  if(el("saveBtn")) el("saveBtn").onclick = saveBooking
+  const btn = document.getElementById("saveBtn")
+  if(btn) btn.onclick = saveBooking
 }
 
 /* ========= LOAD ========= */
@@ -45,13 +47,13 @@ async function loadAll(){
   skis = (skisData || []).map(s => ({
     id: s.id,
     length: Number(s.length) || 0,
-    type: (s.type || "okand").toLowerCase().trim()
+    type: String(s.type || "okand").toLowerCase().trim()
   }))
 
   rentals = rentData || []
 
-  debug("Skis:", skis.length)
-  debug("Rentals:", rentals.length)
+  console.log("Skis:", skis.length)
+  console.log("Rentals:", rentals.length)
 }
 
 /* ========= HELP ========= */
@@ -59,13 +61,6 @@ function el(id){ return document.getElementById(id) }
 
 function parse(x){
   try{return JSON.parse(x || "[]")}catch{return[]}
-}
-
-function debug(...msg){
-  console.log(...msg)
-  if(el("debug")){
-    el("debug").innerHTML += msg.join(" ") + "<br>"
-  }
 }
 
 /* ========= TYPES ========= */
@@ -87,7 +82,7 @@ function renderAll(){
   renderRentals()
 }
 
-/* ========= FILTER ========= */
+/* ========= FILTER BUTTONS ========= */
 function renderFilters(){
 
   const div = el("filters")
@@ -109,6 +104,7 @@ function renderWall(){
   div.innerHTML = ""
 
   let list = skis
+
   if(selectedType !== "all"){
     list = skis.filter(s=>s.type === selectedType)
   }
@@ -148,7 +144,10 @@ function getSelected(ids){
 }
 
 function plus(length){
+
   const ids = skis.filter(s=>s.length==length).map(s=>s.id)
+
+  if(!ids.length) return
 
   if(getSelected(ids)>=getAvailable(ids)){
     alert("Slut i lager")
@@ -160,13 +159,17 @@ function plus(length){
 }
 
 function minus(length){
+
   const ids = skis.filter(s=>s.length==length).map(s=>s.id)
+
   const i = cart.findIndex(id=>ids.includes(id))
   if(i>-1) cart.splice(i,1)
+
   renderAll()
 }
 
 function renderCart(){
+
   const div = el("cart")
   if(!div) return
 
@@ -199,7 +202,10 @@ function getAvailable(ids){
 
   rentals.forEach(r=>{
     if(r.returned) return
-    parse(r.items).forEach(id=>{
+
+    const items = parse(r.items)
+
+    items.forEach(id=>{
       if(ids.includes(id)) booked++
     })
   })
@@ -262,29 +268,27 @@ function renderRentals(){
   })
 }
 
-/* ========= ERROR ========= */
-function showError(e){
-  console.error(e)
-  alert("❌ Fel: " + e.message)
-}
 /* ========= ROUTING ========= */
 function showView(view){
 
-  document.getElementById("bookingView").classList.add("hidden")
-  document.getElementById("calendarView").classList.add("hidden")
+  const booking = el("bookingView")
+  const calendar = el("calendarView")
+
+  if(booking) booking.classList.add("hidden")
+  if(calendar) calendar.classList.add("hidden")
 
   if(view === "calendar"){
-    document.getElementById("calendarView").classList.remove("hidden")
-    renderWeek() // ladda kalender
+    if(calendar) calendar.classList.remove("hidden")
+    renderWeek()
   }else{
-    document.getElementById("bookingView").classList.remove("hidden")
+    if(booking) booking.classList.remove("hidden")
   }
 }
-let weekOffset = 0
 
+/* ========= CALENDAR ========= */
 function renderWeek(){
 
-  const div = document.getElementById("calendar")
+  const div = el("calendar")
   if(!div) return
 
   let base = getMonday(new Date())
@@ -296,7 +300,9 @@ function renderWeek(){
   for(let i=0;i<7;i++){
     let d=new Date(base)
     d.setDate(base.getDate()+i)
-    dates.push(format(d))
+    const day=format(d)
+    dates.push(day)
+
     html+=`<th>${d.getDate()}/${d.getMonth()+1}</th>`
   }
 
@@ -310,13 +316,17 @@ function renderWeek(){
     html+=`<tr><td>${l}</td>`
 
     dates.forEach(day=>{
+
       let booked=0
 
       rentals.forEach(r=>{
         if(r.returned) return
-        parse(r.items).forEach(id=>{
-          if(ids.includes(id)) booked++
-        })
+
+        if(day >= r.start && day <= r.end){
+          parse(r.items).forEach(id=>{
+            if(ids.includes(id)) booked++
+          })
+        }
       })
 
       const free=ids.length-booked
@@ -338,10 +348,17 @@ function renderWeek(){
 function prevWeek(){weekOffset--;renderWeek()}
 function nextWeek(){weekOffset++;renderWeek()}
 
+/* ========= DATE ========= */
 function format(d){return d.toISOString().split("T")[0]}
 function getMonday(d){
   d=new Date(d)
   let day=d.getDay()
   let diff=d.getDate()-(day==0?6:day-1)
   return new Date(d.setDate(diff))
+}
+
+/* ========= ERROR ========= */
+function showError(e){
+  console.error(e)
+  alert("❌ Fel: " + e.message)
 }
