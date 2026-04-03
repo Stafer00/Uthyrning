@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Skiduthyrning 1.6.4</title>
+<title>Skiduthyrning 1.7 PRO</title>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
@@ -17,10 +17,9 @@ body{
   background:#f5f5f5;
 }
 
-/* LAYOUT */
 .container{
   display:grid;
-  grid-template-columns: 300px 1fr;
+  grid-template-columns:300px 1fr;
   gap:10px;
   padding:10px;
 }
@@ -31,44 +30,34 @@ body{
   border-radius:12px;
 }
 
-/* INPUT */
 input{
   width:100%;
   padding:8px;
   margin-bottom:6px;
-  border-radius:6px;
-  border:1px solid #ccc;
 }
 
-/* BUTTON */
 button{
-  padding:8px 10px;
+  padding:8px;
   margin:4px;
   border:none;
   border-radius:6px;
   background:#2e7dff;
   color:white;
-  cursor:pointer;
 }
 
-/* TYPE BUTTONS */
-.type-buttons{
-  margin-bottom:8px;
-}
-
-/* GRID */
-.grid{
-  display:grid;
-  grid-template-columns: repeat(auto-fill,minmax(90px,1fr));
-  gap:6px;
-}
-
-/* CARD */
 .card{
+  display:inline-block;
+  width:80px;
+  margin:4px;
   padding:8px;
   border-radius:8px;
   text-align:center;
-  font-size:12px;
+}
+
+.booking{
+  border:1px solid #ddd;
+  padding:6px;
+  margin:4px 0;
 }
 
 </style>
@@ -79,70 +68,44 @@ button{
 
 <div class="container">
 
-  <!-- LEFT -->
-  <div>
+<!-- LEFT -->
+<div>
 
-    <!-- KUND -->
-    <div class="section">
-      <h3>Kund</h3>
+<div class="section">
+<h3>Kund</h3>
+<input id="customer" placeholder="Namn">
+<input id="phone" placeholder="Telefon">
+<input id="start" type="date">
+<input id="end" type="date">
+</div>
 
-      <input id="customer" placeholder="Namn">
-      <input id="phone" placeholder="Telefon">
+<div class="section">
+<h3>Bokningar</h3>
+<div id="rentals"></div>
+</div>
 
-      <input id="start" type="date">
-      <input id="end" type="date">
-    </div>
+</div>
 
-    <!-- BOKNINGAR -->
-    <div class="section">
-      <h3>Bokningar</h3>
+<!-- RIGHT -->
+<div>
 
-      <input id="search" placeholder="Sök...">
+<div class="section">
+<h3>Utrustning</h3>
 
-      <div id="rentals">Inga bokningar</div>
-    </div>
+<div id="filters"></div>
 
-  </div>
+<div id="skiWall"></div>
 
-  <!-- RIGHT -->
-  <div>
+<h4>Val</h4>
+<div id="cart"></div>
 
-    <!-- UTRUSTNING -->
-    <div class="section">
-      <h3>Utrustning</h3>
+<button id="saveBtn">Spara</button>
+<button onclick="cart=[];renderAll()">Rensa</button>
+<button onclick="window.location.href='calendar.html'">📅 Kalender</button>
 
-      <!-- FILTER KNAPPAR -->
-      <div class="type-buttons">
+</div>
 
-        <button onclick="setType(null)">Alla</button>
-
-        <button onclick="setType('langd')">🎿</button>
-        <button onclick="setType('skin')">🟢</button>
-        <button onclick="setType('tur')">🟠</button>
-        <button onclick="setType('slalom')">⛷️</button>
-        <button onclick="setType('pjaxa')">🥾</button>
-        <button onclick="setType('stav')">🪄</button>
-        <button onclick="setType('hjalm')">🪖</button>
-        <button onclick="setType('pulka')">🛷</button>
-
-      </div>
-
-      <!-- SKIDOR -->
-      <div id="skiWall"></div>
-
-      <!-- CART -->
-      <div id="cart">Inga val</div>
-
-      <!-- ACTIONS -->
-      <div>
-        <button id="saveBtn">Spara</button>
-        <button onclick="clearForm()">Rensa</button>
-        <button onclick="window.location.href='calendar.html'">📅 Kalender</button>
-      </div>
-
-    </div>
-
-  </div>
+</div>
 
 </div>
 
