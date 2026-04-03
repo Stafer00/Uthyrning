@@ -1,4 +1,4 @@
-console.log("VERSION 1.6.3 CLEAN + FIX")
+console.log("VERSION 1.6.4 STABLE UI FIX")
 
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
@@ -10,7 +10,7 @@ let skis = []
 let rentals = []
 let filteredRentals = []
 let cart = []
-let weekOffset = 0
+let activeType = null
 
 const VALID_TYPES = ["langd","skin","tur","slalom","pjaxa","stav","hjalm","pulka"]
 
@@ -21,8 +21,9 @@ async function init(){
   try{
     el("saveBtn").onclick = saveBooking
 
-    const search = el("search")
-    if(search) search.oninput = filterRentals
+    if(el("search")){
+      el("search").oninput = filterRentals
+    }
 
     await loadAll()
     filteredRentals = rentals
@@ -52,7 +53,6 @@ async function loadAll(){
 /* ========= HELP ========= */
 function el(id){ return document.getElementById(id) }
 
-/* ========= SAFE ========= */
 function safeParse(str){
   try{return JSON.parse(str||"[]")}catch{return[]}
 }
@@ -68,6 +68,12 @@ function filterRentals(){
   )
 
   renderRentals()
+}
+
+/* ========= TYPE FILTER ========= */
+function setType(type){
+  activeType = type
+  renderWall()
 }
 
 /* ========= GROUP ========= */
@@ -91,7 +97,6 @@ function getIds(type,length){
 function renderAll(){
   renderWall()
   renderCart()
-  renderWeek()
   renderRentals()
 }
 
@@ -103,14 +108,33 @@ function renderWall(){
 
   div.innerHTML = ""
 
-  getTypes().forEach(type=>{
+  // 🔥 FIX: visa alltid något
+  let types = getTypes()
+  if(activeType){
+    types = types.includes(activeType) ? [activeType] : types
+  }
 
-    div.innerHTML += `<h4>${type.toUpperCase()}</h4>`
+  if(types.length === 0){
+    div.innerHTML = "Ingen utrustning hittad"
+    return
+  }
+
+  types.forEach(type=>{
+
+    const title = document.createElement("h4")
+    title.innerText = type.toUpperCase()
+    div.appendChild(title)
 
     const grid = document.createElement("div")
     grid.className = "grid"
 
-    getLengths(type).forEach(length=>{
+    const lengths = getLengths(type)
+
+    if(lengths.length === 0){
+      grid.innerHTML = "Inget i lager"
+    }
+
+    lengths.forEach(length=>{
 
       const ids = getIds(type,length)
       const available = getAvailable(ids)
@@ -247,14 +271,12 @@ function renderRentals(){
 
   div.innerHTML = ""
 
-  const list = filteredRentals.length ? filteredRentals : rentals
-
-  if(list.length === 0){
+  if(rentals.length === 0){
     div.innerHTML = "Inga bokningar"
     return
   }
 
-  list.forEach(r=>{
+  rentals.forEach(r=>{
 
     if(r.returned) return
 
@@ -295,82 +317,7 @@ async function quickReturn(id){
     .eq("id",id)
 
   await loadAll()
-  filteredRentals = rentals
   renderAll()
-}
-
-/* ========= KALENDER ========= */
-function renderWeek(){
-
-  const div = el("calendar")
-  if(!div) return
-
-  let base = getMonday(new Date())
-  base.setDate(base.getDate()+weekOffset*7)
-
-  let dates=[]
-  let html="<table><tr><th>cm</th>"
-
-  for(let i=0;i<7;i++){
-    let d=new Date(base)
-    d.setDate(base.getDate()+i)
-    dates.push(format(d))
-    html+=`<th>${d.getDate()}/${d.getMonth()+1}</th>`
-  }
-
-  html+="</tr>"
-
-  const lengths=[...new Set(skis.map(s=>s.length))].sort((a,b)=>a-b)
-
-  lengths.forEach(l=>{
-
-    const ids=skis.filter(s=>s.length==l).map(s=>s.id)
-
-    html+=`<tr><td>${l}</td>`
-
-    dates.forEach(day=>{
-
-      let booked=0
-
-      rentals.forEach(r=>{
-        if(r.returned) return
-
-        const items=safeParse(r.items)
-
-        if(day>=r.start && day<=r.end){
-          items.forEach(id=>{
-            if(ids.includes(id)) booked++
-          })
-        }
-      })
-
-      const free=ids.length-booked
-
-      let bg="#4caf50"
-      if(free===0) bg="#f44336"
-      else if(free<=2) bg="#ff9800"
-
-      html+=`<td style="background:${bg}">${free}</td>`
-    })
-
-    html+="</tr>"
-  })
-
-  html+="</table>"
-  div.innerHTML=html
-}
-
-/* ========= NAV ========= */
-function prevWeek(){weekOffset--;renderWeek()}
-function nextWeek(){weekOffset++;renderWeek()}
-
-/* ========= DATE ========= */
-function format(d){return d.toISOString().split("T")[0]}
-function getMonday(d){
-  d=new Date(d)
-  let day=d.getDay()
-  let diff=d.getDate()-(day==0?6:day-1)
-  return new Date(d.setDate(diff))
 }
 
 /* ========= ERROR ========= */
