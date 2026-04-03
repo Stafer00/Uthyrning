@@ -1,8 +1,8 @@
-console.log("VERSION 1.7.2 PRO STABLE")
+console.log("VERSION 1.8 PRO MAX")
 
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
+  ""
 )
 
 /* ========= STATE ========= */
@@ -20,7 +20,6 @@ async function init(){
     bindUI()
     await loadAll()
     renderAll()
-    console.log("App startad OK")
   }catch(e){
     showError(e)
   }
@@ -28,8 +27,7 @@ async function init(){
 
 /* ========= UI ========= */
 function bindUI(){
-  const btn = document.getElementById("saveBtn")
-  if(btn) btn.onclick = saveBooking
+  if(el("saveBtn")) el("saveBtn").onclick = saveBooking
 }
 
 /* ========= LOAD ========= */
@@ -51,9 +49,6 @@ async function loadAll(){
   }))
 
   rentals = rentData || []
-
-  console.log("Skis:", skis.length)
-  console.log("Rentals:", rentals.length)
 }
 
 /* ========= HELP ========= */
@@ -104,7 +99,6 @@ function renderWall(){
   div.innerHTML = ""
 
   let list = skis
-
   if(selectedType !== "all"){
     list = skis.filter(s=>s.type === selectedType)
   }
@@ -147,8 +141,6 @@ function plus(length){
 
   const ids = skis.filter(s=>s.length==length).map(s=>s.id)
 
-  if(!ids.length) return
-
   if(getSelected(ids)>=getAvailable(ids)){
     alert("Slut i lager")
     return
@@ -159,12 +151,9 @@ function plus(length){
 }
 
 function minus(length){
-
   const ids = skis.filter(s=>s.length==length).map(s=>s.id)
-
   const i = cart.findIndex(id=>ids.includes(id))
   if(i>-1) cart.splice(i,1)
-
   renderAll()
 }
 
@@ -203,9 +192,7 @@ function getAvailable(ids){
   rentals.forEach(r=>{
     if(r.returned) return
 
-    const items = parse(r.items)
-
-    items.forEach(id=>{
+    parse(r.items).forEach(id=>{
       if(ids.includes(id)) booked++
     })
   })
@@ -221,25 +208,20 @@ async function saveBooking(){
     return
   }
 
-  try{
-    await supabaseClient.from("rentals").insert({
-      name: el("customer").value,
-      phone: el("phone").value,
-      start: el("start").value,
-      end: el("end").value,
-      items: JSON.stringify(cart),
-      returned:false
-    })
+  await supabaseClient.from("rentals").insert({
+    name: el("customer").value,
+    phone: el("phone").value,
+    start: el("start").value,
+    end: el("end").value,
+    items: JSON.stringify(cart),
+    returned:false
+  })
 
-    alert("✅ Sparad")
+  alert("✅ Sparad")
 
-    cart=[]
-    await loadAll()
-    renderAll()
-
-  }catch(e){
-    showError(e)
-  }
+  cart=[]
+  await loadAll()
+  renderAll()
 }
 
 /* ========= BOOKINGS ========= */
@@ -271,17 +253,14 @@ function renderRentals(){
 /* ========= ROUTING ========= */
 function showView(view){
 
-  const booking = el("bookingView")
-  const calendar = el("calendarView")
+  el("bookingView")?.classList.add("hidden")
+  el("calendarView")?.classList.add("hidden")
 
-  if(booking) booking.classList.add("hidden")
-  if(calendar) calendar.classList.add("hidden")
-
-  if(view === "calendar"){
-    if(calendar) calendar.classList.remove("hidden")
+  if(view==="calendar"){
+    el("calendarView")?.classList.remove("hidden")
     renderWeek()
   }else{
-    if(booking) booking.classList.remove("hidden")
+    el("bookingView")?.classList.remove("hidden")
   }
 }
 
@@ -291,7 +270,7 @@ function renderWeek(){
   const div = el("calendar")
   if(!div) return
 
-  let base = getMonday(new Date())
+  let base=getMonday(new Date())
   base.setDate(base.getDate()+weekOffset*7)
 
   let dates=[]
@@ -301,8 +280,8 @@ function renderWeek(){
     let d=new Date(base)
     d.setDate(base.getDate()+i)
     const day=format(d)
-    dates.push(day)
 
+    dates.push(day)
     html+=`<th>${d.getDate()}/${d.getMonth()+1}</th>`
   }
 
@@ -322,7 +301,7 @@ function renderWeek(){
       rentals.forEach(r=>{
         if(r.returned) return
 
-        if(day >= r.start && day <= r.end){
+        if(day>=r.start && day<=r.end){
           parse(r.items).forEach(id=>{
             if(ids.includes(id)) booked++
           })
@@ -335,7 +314,11 @@ function renderWeek(){
       if(free===0) bg="#f44336"
       else if(free<=2) bg="#ff9800"
 
-      html+=`<td style="background:${bg}">${free}</td>`
+      html+=`
+        <td onclick="openDay('${day}')" style="background:${bg}">
+          ${free}
+        </td>
+      `
     })
 
     html+="</tr>"
@@ -345,6 +328,117 @@ function renderWeek(){
   div.innerHTML=html
 }
 
+/* ========= POPUP ========= */
+function openDay(day){
+
+  let html=""
+
+  rentals.forEach(r=>{
+
+    if(r.returned) return
+
+    if(day>=r.start && day<=r.end){
+
+      const items=parse(r.items)
+      const grouped={}
+
+      items.forEach(id=>{
+        const s=skis.find(x=>x.id===id)
+        if(!s) return
+        grouped[s.length]=(grouped[s.length]||0)+1
+      })
+
+      let skisHTML=""
+
+      Object.keys(grouped).forEach(l=>{
+        skisHTML+=`
+          ${l} cm x ${grouped[l]}
+          <button onclick="returnOne('${r.id}',${l})">−</button><br>
+        `
+      })
+
+      html+=`
+        <div class="popup-card">
+          <b>${r.name}</b><br>
+          ${r.start} → ${r.end}<br><br>
+          ${skisHTML}
+          <button onclick="extend('${r.id}')">Förläng</button>
+          <button onclick="returnAll('${r.id}')">Återlämna allt</button>
+        </div>
+      `
+    }
+  })
+
+  document.body.insertAdjacentHTML("beforeend",`
+    <div class="popup" id="popup">
+      <div class="popup-box">
+        <h3>${day}</h3>
+        ${html||"Inget"}
+        <button onclick="closePopup()">Stäng</button>
+      </div>
+    </div>
+  `)
+}
+
+function closePopup(){
+  el("popup")?.remove()
+}
+
+/* ========= ACTIONS ========= */
+async function returnOne(id,length){
+
+  const r=rentals.find(x=>x.id==id)
+  let items=parse(r.items)
+
+  const index=items.findIndex(itemId=>{
+    const s=skis.find(x=>x.id===itemId)
+    return s && s.length==length
+  })
+
+  if(index===-1) return
+
+  items.splice(index,1)
+
+  if(items.length===0){
+    await returnAll(id)
+    return
+  }
+
+  await supabaseClient.from("rentals")
+    .update({items:JSON.stringify(items)})
+    .eq("id",id)
+
+  await loadAll()
+  renderWeek()
+  closePopup()
+}
+
+async function returnAll(id){
+
+  await supabaseClient.from("rentals")
+    .update({returned:true})
+    .eq("id",id)
+
+  await loadAll()
+  renderWeek()
+  closePopup()
+}
+
+async function extend(id){
+
+  const d=prompt("Nytt slutdatum YYYY-MM-DD")
+  if(!d) return
+
+  await supabaseClient.from("rentals")
+    .update({end:d})
+    .eq("id",id)
+
+  await loadAll()
+  renderWeek()
+  closePopup()
+}
+
+/* ========= NAV ========= */
 function prevWeek(){weekOffset--;renderWeek()}
 function nextWeek(){weekOffset++;renderWeek()}
 
@@ -360,5 +454,5 @@ function getMonday(d){
 /* ========= ERROR ========= */
 function showError(e){
   console.error(e)
-  alert("❌ Fel: " + e.message)
+  alert("❌ " + e.message)
 }
