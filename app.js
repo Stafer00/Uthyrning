@@ -2,7 +2,7 @@ console.log("VERSION 1.7 PRO STABLE")
 
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
-  "DIN-ANON-KEY-HÄR"
+  
 )
 
 /* ========= STATE ========= */
