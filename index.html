@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Skiduthyrning 1.7 PRO</title>
+<title>Skiduthyrning PRO</title>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
@@ -18,9 +18,6 @@ body{
 }
 
 .container{
-  display:grid;
-  grid-template-columns:300px 1fr;
-  gap:10px;
   padding:10px;
 }
 
@@ -28,12 +25,7 @@ body{
   background:white;
   padding:12px;
   border-radius:12px;
-}
-
-input{
-  width:100%;
-  padding:8px;
-  margin-bottom:6px;
+  margin-bottom:10px;
 }
 
 button{
@@ -54,10 +46,8 @@ button{
   text-align:center;
 }
 
-.booking{
-  border:1px solid #ddd;
-  padding:6px;
-  margin:4px 0;
+.hidden{
+  display:none;
 }
 
 </style>
@@ -68,42 +58,53 @@ button{
 
 <div class="container">
 
-<!-- LEFT -->
-<div>
-
+<!-- NAV -->
 <div class="section">
-<h3>Kund</h3>
-<input id="customer" placeholder="Namn">
-<input id="phone" placeholder="Telefon">
-<input id="start" type="date">
-<input id="end" type="date">
+  <button onclick="showView('booking')">📦 Bokning</button>
+  <button onclick="showView('calendar')">📅 Kalender</button>
 </div>
 
-<div class="section">
-<h3>Bokningar</h3>
-<div id="rentals"></div>
-</div>
+<!-- BOOKING VIEW -->
+<div id="bookingView">
+
+  <div class="section">
+    <h3>Kund</h3>
+    <input id="customer" placeholder="Namn">
+    <input id="phone" placeholder="Telefon">
+    <input id="start" type="date">
+    <input id="end" type="date">
+  </div>
+
+  <div class="section">
+    <h3>Utrustning</h3>
+    <div id="filters"></div>
+    <div id="skiWall"></div>
+
+    <h4>Val</h4>
+    <div id="cart"></div>
+
+    <button id="saveBtn">Spara</button>
+    <button onclick="cart=[];renderAll()">Rensa</button>
+  </div>
+
+  <div class="section">
+    <h3>Bokningar</h3>
+    <div id="rentals"></div>
+  </div>
 
 </div>
 
-<!-- RIGHT -->
-<div>
+<!-- CALENDAR VIEW -->
+<div id="calendarView" class="hidden">
 
-<div class="section">
-<h3>Utrustning</h3>
+  <div class="section">
+    <h3>📅 Kalender</h3>
 
-<div id="filters"></div>
+    <button onclick="prevWeek()">←</button>
+    <button onclick="nextWeek()">→</button>
 
-<div id="skiWall"></div>
-
-<h4>Val</h4>
-<div id="cart"></div>
-
-<button id="saveBtn">Spara</button>
-<button onclick="cart=[];renderAll()">Rensa</button>
-<button onclick="window.location.href='calendar.html'">📅 Kalender</button>
-
-</div>
+    <div id="calendar"></div>
+  </div>
 
 </div>
 
