@@ -113,12 +113,17 @@ input{
 
     <!-- KUND -->
     <div class="section">
-      <h3>Kund</h3>
-      <input id="customer" placeholder="Namn">
-      <input id="phone" placeholder="Telefon">
-      <input id="start" type="date">
-      <input id="end" type="date">
-    </div>
+  <h3>Val</h3>
+
+  <button onclick="addPackage('langd')">🎿 Längdpaket</button>
+  <button onclick="addPackage('slalom')">⛷️ Slalompaket</button>
+
+  <div id="cart"></div>
+  <div id="total"></div>
+
+  <button id="saveBtn">Spara bokning</button>
+  <button onclick="cart=[];render()">Rensa</button>
+</div>
 
     <!-- BOKNINGAR -->
     <div class="section">
