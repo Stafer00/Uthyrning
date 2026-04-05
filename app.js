@@ -1,4 +1,4 @@
-console.log("PRO+ STABIL FINAL")
+console.log("PRO++ STABIL + KALENDER")
 
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
@@ -18,9 +18,7 @@ const PRICES = {
 }
 
 /* STATE */
-let skis=[]
-let rentals=[]
-let cart=[]
+let skis=[],rentals=[],cart=[],weekOffset=0
 
 /* INIT */
 window.onload=init
@@ -46,20 +44,18 @@ function render(){
   renderCart()
   renderRentals()
   renderDashboard()
+  renderCalendar()
 }
 
 /* UTRUSTNING */
 function renderWall(){
-
   const div=el("skiWall")
   div.innerHTML=""
 
   const types=[...new Set(skis.map(s=>s.type))]
 
   types.forEach(type=>{
-
     div.innerHTML+=`<h4>${type.toUpperCase()}</h4>`
-
     const grid=document.createElement("div")
     grid.className="grid"
 
@@ -68,7 +64,6 @@ function renderWall(){
     )].sort((a,b)=>a-b)
 
     lengths.forEach(length=>{
-
       const ids=skis.filter(s=>s.type===type && s.length==length).map(s=>s.id)
 
       const available=getAvailable(ids)
@@ -122,8 +117,7 @@ function calcTotal(){
   let total=0
   cart.forEach(id=>{
     const s=skis.find(x=>x.id===id)
-    if(!s) return
-    total+=PRICES[s.type]||100
+    if(s) total+=PRICES[s.type]||100
   })
   return total
 }
@@ -138,21 +132,8 @@ function renderCart(){
     return
   }
 
-  const grouped={}
-
-  cart.forEach(id=>{
-    const s=skis.find(x=>x.id===id)
-    const key=s.type+" "+s.length+" cm"
-    grouped[key]=(grouped[key]||0)+1
-  })
-
-  let html=""
-  Object.keys(grouped).forEach(k=>{
-    html+=`${k} x ${grouped[k]}<br>`
-  })
-
-  div.innerHTML=html
-  totalDiv.innerHTML=`<b>Total: ${calcTotal()} kr</b>`
+  div.innerHTML=cart.length+" artiklar"
+  totalDiv.innerHTML=`<b>${calcTotal()} kr</b>`
 }
 
 /* LAGER */
@@ -169,9 +150,8 @@ function getAvailable(ids){
 
 /* SAVE */
 async function saveBooking(){
-
   if(!el("customer").value || cart.length===0){
-    alert("Fyll i kund + välj utrustning")
+    alert("Fyll i allt")
     return
   }
 
@@ -191,68 +171,98 @@ async function saveBooking(){
 
 /* BOOKINGS */
 function renderRentals(){
-
   const div=el("rentals")
   div.innerHTML=""
 
-  const active=rentals.filter(r=>!r.returned)
-
-  active.forEach(r=>{
-    const items=parse(r.items)
-
-    let total=0
-    items.forEach(id=>{
-      const s=skis.find(x=>x.id===id)
-      if(s) total+=PRICES[s.type]||100
-    })
-
+  rentals.filter(r=>!r.returned).forEach(r=>{
     div.innerHTML+=`
-      <div class="booking-card">
+      <div>
         <b>${r.name}</b><br>
-        ${items.length} artiklar<br>
-        💰 ${total} kr
-        <button onclick="markReturned('${r.id}')">Klar</button>
+        ${r.start} → ${r.end}
       </div>
     `
   })
 }
 
-/* RETURN */
-async function markReturned(id){
-  await supabaseClient.from("rentals")
-    .update({returned:true})
-    .eq("id",id)
-
-  await load()
-  render()
-}
-
 /* DASHBOARD */
 function renderDashboard(){
-
-  const div=el("dashboard")
 
   const active=rentals.filter(r=>!r.returned)
 
   let items=0
-  let revenue=0
+  active.forEach(r=>items+=parse(r.items).length)
 
-  active.forEach(r=>{
-    const arr=parse(r.items)
-    items+=arr.length
+  const capacity=skis.length
+  const used=items
+  const percent=capacity?Math.round((used/capacity)*100):0
 
-    arr.forEach(id=>{
-      const s=skis.find(x=>x.id===id)
-      if(s) revenue+=PRICES[s.type]||100
-    })
-  })
-
-  div.innerHTML=`
-    📦 Bokningar: ${active.length}<br>
-    🎿 Artiklar ute: ${items}<br>
-    💰 Intäkter: ${revenue} kr
+  el("dashboard").innerHTML=`
+    Bokningar: ${active.length}<br>
+    Artiklar: ${items}<br>
+    Beläggning: ${percent}%
   `
 }
+
+/* 📅 KALENDER */
+function renderCalendar(){
+
+  const div=el("calendar")
+
+  let base=new Date()
+  base.setDate(base.getDate()+weekOffset*7)
+
+  let html="<table><tr><th>cm</th>"
+
+  let days=[]
+
+  for(let i=0;i<7;i++){
+    let d=new Date(base)
+    d.setDate(base.getDate()+i)
+    days.push(d)
+    html+=`<th>${d.getDate()}</th>`
+  }
+
+  html+="</tr>"
+
+  const lengths=[...new Set(skis.map(s=>s.length))]
+
+  lengths.forEach(l=>{
+    const ids=skis.filter(s=>s.length==l).map(s=>s.id)
+
+    html+=`<tr><td>${l}</td>`
+
+    days.forEach(day=>{
+
+      let booked=0
+
+      rentals.forEach(r=>{
+        if(r.returned) return
+
+        if(day>=new Date(r.start) && day<=new Date(r.end)){
+          parse(r.items).forEach(id=>{
+            if(ids.includes(id)) booked++
+          })
+        }
+      })
+
+      const free=ids.length-booked
+
+      let bg="#4caf50"
+      if(free===0) bg="#f44336"
+      else if(free<=2) bg="#ff9800"
+
+      html+=`<td style="background:${bg}">${free}</td>`
+    })
+
+    html+="</tr>"
+  })
+
+  html+="</table>"
+  div.innerHTML=html
+}
+
+function prevWeek(){weekOffset--;render()}
+function nextWeek(){weekOffset++;render()}
 
 /* BUTTON */
 document.addEventListener("click",e=>{
