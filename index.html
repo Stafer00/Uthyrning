@@ -5,28 +5,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Skiduthyrning PRO</title>
+<title>Skiduthyrning 2.1</title>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
-
-body{
-  margin:0;
-  font-family:-apple-system;
-  background:#f5f5f5;
-}
-
-.container{
-  padding:10px;
-}
-
-.section{
-  background:white;
-  padding:12px;
-  border-radius:12px;
-  margin-bottom:10px;
-}
+body{font-family:-apple-system;margin:0;background:#f5f5f5;}
+.container{padding:10px;}
+.section{background:white;padding:12px;margin-bottom:10px;border-radius:10px;}
 
 button{
   padding:8px;
@@ -37,19 +23,44 @@ button{
   color:white;
 }
 
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:6px;
+}
+
 .card{
-  display:inline-block;
-  width:80px;
-  margin:4px;
   padding:8px;
   border-radius:8px;
   text-align:center;
 }
 
-.hidden{
-  display:none;
+table{
+  width:100%;
+  border-collapse:collapse;
+  table-layout:fixed;
 }
 
+td,th{
+  padding:6px;
+  font-size:12px;
+  text-align:center;
+}
+
+.popup{
+  position:fixed;
+  top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,0.6);
+  display:flex;justify-content:center;align-items:center;
+}
+
+.popup-box{
+  background:white;
+  padding:16px;
+  border-radius:10px;
+  width:90%;
+  max-width:400px;
+}
 </style>
 
 </head>
@@ -58,54 +69,50 @@ button{
 
 <div class="container">
 
-<!-- NAV -->
+<!-- FILTER -->
 <div class="section">
-  <button onclick="showView('booking')">📦 Bokning</button>
-  <button onclick="showView('calendar')">📅 Kalender</button>
+  <div id="filters"></div>
 </div>
 
-<!-- BOOKING VIEW -->
-<div id="bookingView">
-
-  <div class="section">
-    <h3>Kund</h3>
-    <input id="customer" placeholder="Namn">
-    <input id="phone" placeholder="Telefon">
-    <input id="start" type="date">
-    <input id="end" type="date">
-  </div>
-
-  <div class="section">
-    <h3>Utrustning</h3>
-    <div id="filters"></div>
-    <div id="skiWall"></div>
-
-    <h4>Val</h4>
-    <div id="cart"></div>
-
-    <button id="saveBtn">Spara</button>
-    <button onclick="cart=[];renderAll()">Rensa</button>
-  </div>
-
-  <div class="section">
-    <h3>Bokningar</h3>
-    <div id="rentals"></div>
-  </div>
-
+<!-- UTRUSTNING -->
+<div class="section">
+  <h3>Utrustning</h3>
+  <div id="skiWall"></div>
 </div>
 
-<!-- CALENDAR VIEW -->
-<div id="calendarView" class="hidden">
+<!-- VAL -->
+<div class="section">
+  <h3>Val</h3>
+  <div id="cart"></div>
+  <div id="total"></div>
+</div>
 
-  <div class="section">
-    <h3>📅 Kalender</h3>
+<!-- BOKNING -->
+<div class="section">
+  <h3>Boka</h3>
 
-    <button onclick="prevWeek()">←</button>
-    <button onclick="nextWeek()">→</button>
+  <input id="customer" placeholder="Namn"><br>
+  <input id="phone" placeholder="Telefon"><br>
+  <input id="start" type="date"><br>
+  <input id="end" type="date"><br>
 
-    <div id="calendar"></div>
-  </div>
+  <button id="saveBtn">Spara bokning</button>
+</div>
 
+<!-- BOKNINGAR -->
+<div class="section">
+  <h3>Bokningar</h3>
+  <div id="rentals"></div>
+</div>
+
+<!-- KALENDER -->
+<div class="section">
+  <h3>Kalender</h3>
+
+  <button onclick="prevWeek()">←</button>
+  <button onclick="nextWeek()">→</button>
+
+  <div id="calendar"></div>
 </div>
 
 </div>
