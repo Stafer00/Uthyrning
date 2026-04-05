@@ -10,17 +10,15 @@
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
-
 body{
   margin:0;
   font-family:-apple-system;
   background:#f5f5f5;
 }
 
-/* LAYOUT */
 .main{
   display:grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns:320px 1fr;
   gap:10px;
   padding:10px;
 }
@@ -31,7 +29,17 @@ body{
   border-radius:12px;
 }
 
-/* GRID */
+.hidden{display:none}
+
+button{
+  padding:8px;
+  margin:4px;
+  border:none;
+  border-radius:6px;
+  background:#2e7dff;
+  color:white;
+}
+
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(90px,1fr));
@@ -44,59 +52,31 @@ body{
   border-radius:8px;
 }
 
-/* BUTTON */
-button{
-  padding:8px;
-  margin:4px;
-  border:none;
-  border-radius:6px;
-  background:#2e7dff;
-  color:white;
-  cursor:pointer;
-}
-
-/* LEFT PANEL */
-.left{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
-
-/* RIGHT PANEL */
-.right{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
-
-/* INPUT */
 input{
   width:100%;
   padding:6px;
   margin-bottom:6px;
-  border-radius:6px;
-  border:1px solid #ccc;
 }
 
-/* MOBILE */
 @media(max-width:800px){
-  .main{
-    grid-template-columns:1fr;
-  }
+  .main{grid-template-columns:1fr}
 }
-
 </style>
 
 </head>
 
 <body>
 
-<div class="main">
+<!-- NAV -->
+<div style="padding:10px">
+  <button onclick="showView('booking')">📋 Bokning</button>
+  <button onclick="showView('calendar')">📅 Kalender</button>
+</div>
 
-  <!-- LEFT -->
-  <div class="left">
+<!-- BOOKING VIEW -->
+<div id="bookingView" class="main">
 
-    <!-- KUND -->
+  <div>
     <div class="section">
       <h3>Kund</h3>
       <input id="customer" placeholder="Namn">
@@ -105,41 +85,36 @@ input{
       <input id="end" type="date">
     </div>
 
-    <!-- BOKNINGAR -->
     <div class="section">
       <h3>Bokningar</h3>
       <div id="rentals"></div>
     </div>
-
-    <!-- NAV -->
-    <div class="section">
-      <button onclick="window.location.href='./calendar.html'">
-  📅 Öppna kalender
-</button>
-    </div>
-
   </div>
 
-  <!-- RIGHT -->
-  <div class="right">
-
-    <!-- UTRUSTNING -->
+  <div>
     <div class="section">
       <h3>Utrustning</h3>
       <div id="skiWall"></div>
     </div>
 
-    <!-- VAL -->
     <div class="section">
       <h3>Val</h3>
       <div id="cart"></div>
-      <div id="total"></div>
-
       <button id="saveBtn">Spara bokning</button>
-      <button onclick="cart=[];render()">Rensa</button>
     </div>
-
   </div>
+
+</div>
+
+<!-- CALENDAR VIEW -->
+<div id="calendarView" class="section hidden" style="margin:10px">
+
+  <h3>📅 Kalender</h3>
+
+  <button onclick="prevWeek()">←</button>
+  <button onclick="nextWeek()">→</button>
+
+  <div id="calendar"></div>
 
 </div>
 
