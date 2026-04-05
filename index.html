@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Skiduthyrning PRO+</title>
+<title>Skiduthyrning PRO++</title>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
@@ -17,7 +17,6 @@ body{
   background:#f5f5f5;
 }
 
-/* LAYOUT */
 .main{
   display:grid;
   grid-template-columns:320px 1fr;
@@ -31,7 +30,6 @@ body{
   border-radius:12px;
 }
 
-/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(90px,1fr));
@@ -44,7 +42,6 @@ body{
   border-radius:8px;
 }
 
-/* BUTTON */
 button{
   padding:8px;
   margin:4px;
@@ -55,7 +52,6 @@ button{
   cursor:pointer;
 }
 
-/* INPUT */
 input{
   width:100%;
   padding:6px;
@@ -64,15 +60,21 @@ input{
   border:1px solid #ccc;
 }
 
-.left, .right{
+.left,.right{
   display:flex;
   flex-direction:column;
   gap:10px;
 }
 
-.booking-card{
-  border-bottom:1px solid #eee;
-  padding:6px 0;
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+td,th{
+  text-align:center;
+  padding:6px;
+  font-size:12px;
 }
 
 @media(max-width:800px){
@@ -125,6 +127,15 @@ input{
     <div class="section">
       <h3>Utrustning</h3>
       <div id="skiWall"></div>
+    </div>
+
+    <div class="section">
+      <h3>📅 Kalender</h3>
+
+      <button onclick="prevWeek()">←</button>
+      <button onclick="nextWeek()">→</button>
+
+      <div id="calendar"></div>
     </div>
 
   </div>
