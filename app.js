@@ -52,30 +52,54 @@ function render(){
 
 /* WALL */
 function renderWall(){
-  const div=el("skiWall")
-  div.innerHTML=""
 
-  const types=[...new Set(skis.map(s=>s.type))]
+  const div = el("skiWall")
+  div.innerHTML = ""
+
+  const types = [...new Set(skis.map(s=>s.type))]
 
   types.forEach(type=>{
-    div.innerHTML+=`<h4>${type}</h4>`
 
-    const lengths=[...new Set(
+    // RUBRIK
+    div.innerHTML += `<h4>${type.toUpperCase()}</h4>`
+
+    // GRID START
+    const grid = document.createElement("div")
+    grid.className = "grid"
+
+    const lengths = [...new Set(
       skis.filter(s=>s.type===type).map(s=>s.length)
-    )]
+    )].sort((a,b)=>a-b)
 
     lengths.forEach(length=>{
-      const ids=skis.filter(s=>s.type===type&&s.length==length).map(s=>s.id)
 
-      div.innerHTML+=`
-        <div class="card">
-          ${length} cm<br>
-          <button onclick="minus('${type}',${length})">-</button>
-          ${getSelected(ids)}
-          <button onclick="plus('${type}',${length})">+</button>
-        </div>
+      const ids = skis
+        .filter(s=>s.type===type && s.length==length)
+        .map(s=>s.id)
+
+      const available = getAvailable(ids)
+      const selected = getSelected(ids)
+
+      let bg="#c8e6c9"
+      if(available===0) bg="#ffcdd2"
+      else if(available<=2) bg="#fff3cd"
+
+      const card = document.createElement("div")
+      card.className = "card"
+      card.style.background = bg
+
+      card.innerHTML = `
+        <b>${length}</b><br>
+        ${available} kvar<br>
+        <button onclick="minus('${type}',${length})">−</button>
+        ${selected}
+        <button onclick="plus('${type}',${length})">+</button>
       `
+
+      grid.appendChild(card)
     })
+
+    div.appendChild(grid)
   })
 }
 
