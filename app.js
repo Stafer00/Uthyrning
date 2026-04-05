@@ -1,10 +1,21 @@
-console.log("PRO 3.0 STABIL")
+console.log("PRO 4.0 STABIL + PRIS + PAKET")
 
-/* ========= SUPABASE ========= */
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljYXNkaXhob2JpYWlpemV2Z3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTMxODksImV4cCI6MjA4ODkyOTE4OX0.KtJFN_RhN8WIIPPYX1TfnyZYCdlhug7SBqYnMALOw2c"
 )
+
+/* ========= PRISER ========= */
+const PRICES = {
+  langd: 150,
+  slalom: 200,
+  pjaxa: 100,
+  stav: 50,
+  hjalm: 50,
+  pulka: 200,
+  skin: 180,
+  tur: 180
+}
 
 /* ========= STATE ========= */
 let skis = []
@@ -24,7 +35,12 @@ async function load(){
   const { data: s } = await supabaseClient.from("skis").select("*")
   const { data: r } = await supabaseClient.from("rentals").select("*")
 
-  skis = s || []
+  skis = (s || []).map(x=>({
+    id:x.id,
+    length:Number(x.length)||0,
+    type:(x.type||"").toLowerCase().trim()
+  }))
+
   rentals = r || []
 }
 
@@ -44,11 +60,9 @@ function render(){
 function renderWall(){
 
   const div = el("skiWall")
-  if(!div) return
-
   div.innerHTML = ""
 
-  const types = [...new Set(skis.map(s=>s.type))]
+  const types = [...new Set(skis.map(s=>s.type).filter(Boolean))]
 
   types.forEach(type=>{
 
@@ -95,10 +109,7 @@ function getSelected(ids){
 }
 
 function plus(type,length){
-
-  const ids = skis
-    .filter(s=>s.type===type && s.length==length)
-    .map(s=>s.id)
+  const ids = skis.filter(s=>s.type===type && s.length==length).map(s=>s.id)
 
   if(getSelected(ids) >= getAvailable(ids)){
     alert("Slut i lager")
@@ -110,24 +121,47 @@ function plus(type,length){
 }
 
 function minus(type,length){
-
-  const ids = skis
-    .filter(s=>s.type===type && s.length==length)
-    .map(s=>s.id)
-
+  const ids = skis.filter(s=>s.type===type && s.length==length).map(s=>s.id)
   const i = cart.findIndex(id=>ids.includes(id))
   if(i>-1) cart.splice(i,1)
+  render()
+}
+
+/* ========= PAKET ========= */
+function addPackage(type){
+
+  const needed = ["skidor","pjaxa","stav"]
+
+  needed.forEach(part=>{
+    const item = skis.find(s=>s.type===type || s.type===part)
+    if(item) cart.push(item.id)
+  })
 
   render()
+}
+
+/* ========= PRIS ========= */
+function calcTotal(){
+
+  let total = 0
+
+  cart.forEach(id=>{
+    const s = skis.find(x=>x.id===id)
+    if(!s) return
+    total += PRICES[s.type] || 100
+  })
+
+  return total
 }
 
 function renderCart(){
 
   const div = el("cart")
-  if(!div) return
+  const totalDiv = el("total")
 
   if(cart.length===0){
     div.innerHTML="Inga val"
+    totalDiv.innerHTML=""
     return
   }
 
@@ -146,20 +180,18 @@ function renderCart(){
   })
 
   div.innerHTML = html
+  totalDiv.innerHTML = `<b>Total: ${calcTotal()} kr</b>`
 }
 
 /* ========= LAGER ========= */
 function getAvailable(ids){
-
   let booked = 0
-
   rentals.forEach(r=>{
     if(r.returned) return
     parse(r.items).forEach(id=>{
       if(ids.includes(id)) booked++
     })
   })
-
   return ids.length - booked
 }
 
@@ -177,6 +209,7 @@ async function saveBooking(){
     start: el("start").value,
     end: el("end").value,
     items: JSON.stringify(cart),
+    total: calcTotal(),
     returned:false
   })
 
@@ -185,52 +218,25 @@ async function saveBooking(){
   render()
 }
 
-/* ========= BOOKINGS PRO ========= */
+/* ========= BOOKINGS ========= */
 function renderRentals(){
 
   const div = el("rentals")
-  if(!div) return
-
   div.innerHTML = ""
 
   const active = rentals.filter(r=>!r.returned)
-
-  if(active.length===0){
-    div.innerHTML="Inga bokningar"
-    return
-  }
 
   active.forEach(r=>{
 
     const items = parse(r.items)
 
-    const grouped = {}
-
-    items.forEach(id=>{
-      const s = skis.find(x=>x.id===id)
-      if(!s) return
-      const key = s.type + " " + s.length + " cm"
-      grouped[key]=(grouped[key]||0)+1
-    })
-
-    let itemsHtml=""
-    Object.keys(grouped).forEach(k=>{
-      itemsHtml += `${k} x ${grouped[k]}<br>`
-    })
-
     div.innerHTML += `
       <div class="booking-card">
         <b>${r.name}</b><br>
-        📅 ${r.start} → ${r.end}<br>
-        🎿 ${items.length} artiklar<br>
-
-        <div style="font-size:12px;color:#555">
-          ${itemsHtml}
-        </div>
-
-        <button onclick="markReturned('${r.id}')">
-          ✅ Återlämnad
-        </button>
+        ${r.start} → ${r.end}<br>
+        ${items.length} artiklar<br>
+        💰 ${r.total || 0} kr
+        <button onclick="markReturned('${r.id}')">Återlämnad</button>
       </div>
     `
   })
@@ -238,9 +244,7 @@ function renderRentals(){
 
 /* ========= RETURN ========= */
 async function markReturned(id){
-
-  await supabaseClient
-    .from("rentals")
+  await supabaseClient.from("rentals")
     .update({returned:true})
     .eq("id",id)
 
@@ -252,18 +256,21 @@ async function markReturned(id){
 function renderDashboard(){
 
   const div = el("dashboard")
-  if(!div) return
 
   const active = rentals.filter(r=>!r.returned)
 
-  let itemsCount = 0
+  let items=0
+  let revenue=0
+
   active.forEach(r=>{
-    itemsCount += parse(r.items).length
+    items += parse(r.items).length
+    revenue += r.total || 0
   })
 
   div.innerHTML = `
-    📊 Aktiva bokningar: <b>${active.length}</b><br>
-    🎿 Uthyrda artiklar: <b>${itemsCount}</b>
+    📊 Bokningar: ${active.length}<br>
+    🎿 Artiklar: ${items}<br>
+    💰 Intäkter: ${revenue} kr
   `
 }
 
