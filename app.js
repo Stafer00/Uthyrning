@@ -1,4 +1,4 @@
-console.log("VERSION 1.8 PRO MAX")
+console.log("VERSION 2.0 PRIS-KOPPLAD")
 
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
@@ -8,9 +8,10 @@ const supabaseClient = window.supabase.createClient(
 /* ========= STATE ========= */
 let skis = []
 let rentals = []
+let products = []
+let prices = []
 let cart = []
 let selectedType = "all"
-let weekOffset = 0
 
 /* ========= INIT ========= */
 window.onload = init
@@ -28,27 +29,30 @@ async function init(){
 /* ========= UI ========= */
 function bindUI(){
   if(el("saveBtn")) el("saveBtn").onclick = saveBooking
+
+  el("start")?.addEventListener("change", calculateTotal)
+  el("end")?.addEventListener("change", calculateTotal)
 }
 
 /* ========= LOAD ========= */
 async function loadAll(){
 
-  const { data: skisData, error: skiErr } =
+  const { data: skisData } =
     await supabaseClient.from("skis").select("*")
 
-  const { data: rentData, error: rentErr } =
+  const { data: rentData } =
     await supabaseClient.from("rentals").select("*")
 
-  if(skiErr) throw skiErr
-  if(rentErr) throw rentErr
+  const { data: prodData } =
+    await supabaseClient.from("products").select("*")
 
-  skis = (skisData || []).map(s => ({
-    id: s.id,
-    length: Number(s.length) || 0,
-    type: String(s.type || "okand").toLowerCase().trim()
-  }))
+  const { data: priceData } =
+    await supabaseClient.from("prices").select("*")
 
+  skis = skisData || []
   rentals = rentData || []
+  products = prodData || []
+  prices = priceData || []
 }
 
 /* ========= HELP ========= */
@@ -75,6 +79,7 @@ function renderAll(){
   renderWall()
   renderCart()
   renderRentals()
+  calculateTotal()
 }
 
 /* ========= FILTER BUTTONS ========= */
@@ -200,6 +205,62 @@ function getAvailable(ids){
   return ids.length-booked
 }
 
+/* ========= DAGAR ========= */
+function getDays(){
+
+  const start = el("start")?.value
+  const end = el("end")?.value
+
+  if(!start || !end) return 1
+
+  const s = new Date(start)
+  const e = new Date(end)
+
+  const diff = Math.ceil((e - s)/(1000*60*60*24)) + 1
+
+  return Math.max(1, diff)
+}
+
+/* ========= PRIS ========= */
+function getPriceForProduct(productId){
+
+  const p = prices.find(x=>x.product_id == productId)
+  if(!p) return 0
+
+  const days = getDays()
+
+  if(days <= 1) return p.day_1
+  if(days == 2) return p.day_2
+  if(days == 3) return p.day_3
+  if(days == 4) return p.day_4
+  if(days == 5) return p.day_5
+
+  return p.day_7
+}
+
+/* ========= TOTAL ========= */
+function calculateTotal(){
+
+  let total = 0
+
+  cart.forEach(id=>{
+
+    const ski = skis.find(s=>s.id===id)
+    if(!ski) return
+
+    const product = products.find(p => p.type === ski.type)
+    if(!product) return
+
+    total += getPriceForProduct(product.id)
+  })
+
+  const div = el("total")
+  if(div){
+    const days = getDays()
+    div.innerHTML = `💰 ${total} kr (${days} dagar)`
+  }
+}
+
 /* ========= SAVE ========= */
 async function saveBooking(){
 
@@ -248,207 +309,6 @@ function renderRentals(){
       </div>
     `
   })
-}
-
-/* ========= ROUTING ========= */
-function showView(view){
-
-  el("bookingView")?.classList.add("hidden")
-  el("calendarView")?.classList.add("hidden")
-
-  if(view==="calendar"){
-    el("calendarView")?.classList.remove("hidden")
-    renderWeek()
-  }else{
-    el("bookingView")?.classList.remove("hidden")
-  }
-}
-
-/* ========= CALENDAR ========= */
-function renderWeek(){
-
-  const div = el("calendar")
-  if(!div) return
-
-  let base=getMonday(new Date())
-  base.setDate(base.getDate()+weekOffset*7)
-
-  let dates=[]
-  let html="<table><tr><th>cm</th>"
-
-  for(let i=0;i<7;i++){
-    let d=new Date(base)
-    d.setDate(base.getDate()+i)
-    const day=format(d)
-
-    dates.push(day)
-    html+=`<th>${d.getDate()}/${d.getMonth()+1}</th>`
-  }
-
-  html+="</tr>"
-
-  const lengths=[...new Set(skis.map(s=>s.length))].sort((a,b)=>a-b)
-
-  lengths.forEach(l=>{
-    const ids=skis.filter(s=>s.length==l).map(s=>s.id)
-
-    html+=`<tr><td>${l}</td>`
-
-    dates.forEach(day=>{
-
-      let booked=0
-
-      rentals.forEach(r=>{
-        if(r.returned) return
-
-        if(day>=r.start && day<=r.end){
-          parse(r.items).forEach(id=>{
-            if(ids.includes(id)) booked++
-          })
-        }
-      })
-
-      const free=ids.length-booked
-
-      let bg="#4caf50"
-      if(free===0) bg="#f44336"
-      else if(free<=2) bg="#ff9800"
-
-      html+=`
-        <td onclick="openDay('${day}')" style="background:${bg}">
-          ${free}
-        </td>
-      `
-    })
-
-    html+="</tr>"
-  })
-
-  html+="</table>"
-  div.innerHTML=html
-}
-
-/* ========= POPUP ========= */
-function openDay(day){
-
-  let html=""
-
-  rentals.forEach(r=>{
-
-    if(r.returned) return
-
-    if(day>=r.start && day<=r.end){
-
-      const items=parse(r.items)
-      const grouped={}
-
-      items.forEach(id=>{
-        const s=skis.find(x=>x.id===id)
-        if(!s) return
-        grouped[s.length]=(grouped[s.length]||0)+1
-      })
-
-      let skisHTML=""
-
-      Object.keys(grouped).forEach(l=>{
-        skisHTML+=`
-          ${l} cm x ${grouped[l]}
-          <button onclick="returnOne('${r.id}',${l})">−</button><br>
-        `
-      })
-
-      html+=`
-        <div class="popup-card">
-          <b>${r.name}</b><br>
-          ${r.start} → ${r.end}<br><br>
-          ${skisHTML}
-          <button onclick="extend('${r.id}')">Förläng</button>
-          <button onclick="returnAll('${r.id}')">Återlämna allt</button>
-        </div>
-      `
-    }
-  })
-
-  document.body.insertAdjacentHTML("beforeend",`
-    <div class="popup" id="popup">
-      <div class="popup-box">
-        <h3>${day}</h3>
-        ${html||"Inget"}
-        <button onclick="closePopup()">Stäng</button>
-      </div>
-    </div>
-  `)
-}
-
-function closePopup(){
-  el("popup")?.remove()
-}
-
-/* ========= ACTIONS ========= */
-async function returnOne(id,length){
-
-  const r=rentals.find(x=>x.id==id)
-  let items=parse(r.items)
-
-  const index=items.findIndex(itemId=>{
-    const s=skis.find(x=>x.id===itemId)
-    return s && s.length==length
-  })
-
-  if(index===-1) return
-
-  items.splice(index,1)
-
-  if(items.length===0){
-    await returnAll(id)
-    return
-  }
-
-  await supabaseClient.from("rentals")
-    .update({items:JSON.stringify(items)})
-    .eq("id",id)
-
-  await loadAll()
-  renderWeek()
-  closePopup()
-}
-
-async function returnAll(id){
-
-  await supabaseClient.from("rentals")
-    .update({returned:true})
-    .eq("id",id)
-
-  await loadAll()
-  renderWeek()
-  closePopup()
-}
-
-async function extend(id){
-
-  const d=prompt("Nytt slutdatum YYYY-MM-DD")
-  if(!d) return
-
-  await supabaseClient.from("rentals")
-    .update({end:d})
-    .eq("id",id)
-
-  await loadAll()
-  renderWeek()
-  closePopup()
-}
-
-/* ========= NAV ========= */
-function prevWeek(){weekOffset--;renderWeek()}
-function nextWeek(){weekOffset++;renderWeek()}
-
-/* ========= DATE ========= */
-function format(d){return d.toISOString().split("T")[0]}
-function getMonday(d){
-  d=new Date(d)
-  let day=d.getDay()
-  let diff=d.getDate()-(day==0?6:day-1)
-  return new Date(d.setDate(diff))
 }
 
 /* ========= ERROR ========= */
