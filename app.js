@@ -40,29 +40,47 @@ function render(){
 /* WALL */
 function renderWall(){
 
-  const div=el("skiWall")
-  div.innerHTML=""
+  const div = el("skiWall")
+  div.innerHTML = ""
 
-  const lengths=[...new Set(skis.map(s=>s.length))].sort((a,b)=>a-b)
+  const types = [...new Set(skis.map(s=>s.type))]
 
-  lengths.forEach(l=>{
+  types.forEach(type=>{
 
-    const ids=skis.filter(s=>s.length==l).map(s=>s.id)
-    const available=getAvailable(ids)
-    const selected=getSelected(ids)
+    div.innerHTML += `<h4>${type.toUpperCase()}</h4>`
 
-    let bg="#c8e6c9"
-    if(available===0) bg="#ffcdd2"
+    const grid = document.createElement("div")
+    grid.className = "grid"
 
-    div.innerHTML+=`
-      <div class="card" style="background:${bg}">
-        ${l} cm<br>
-        ${available} kvar<br>
-        <button onclick="minus(${l})">−</button>
-        ${selected}
-        <button onclick="plus(${l})">+</button>
-      </div>
-    `
+    const lengths = [...new Set(
+      skis.filter(s=>s.type===type).map(s=>s.length)
+    )].sort((a,b)=>a-b)
+
+    lengths.forEach(length=>{
+
+      const ids = skis
+        .filter(s=>s.type===type && s.length==length)
+        .map(s=>s.id)
+
+      const available = getAvailable(ids)
+      const selected = getSelected(ids)
+
+      let bg="#c8e6c9"
+      if(available===0) bg="#ffcdd2"
+      else if(available<=2) bg="#fff3cd"
+
+      grid.innerHTML += `
+        <div class="card" style="background:${bg}">
+          <b>${length}</b><br>
+          ${available} kvar<br>
+          <button onclick="minus('${type}',${length})">−</button>
+          ${selected}
+          <button onclick="plus('${type}',${length})">+</button>
+        </div>
+      `
+    })
+
+    div.appendChild(grid)
   })
 }
 
@@ -71,16 +89,23 @@ function getSelected(ids){
   return cart.filter(id=>ids.includes(id)).length
 }
 
-function plus(l){
-  const ids=skis.filter(s=>s.length==l).map(s=>s.id)
+function plus(type,length){
+  const ids = skis
+    .filter(s=>s.type===type && s.length==length)
+    .map(s=>s.id)
+
   cart.push(ids[0])
   render()
 }
 
-function minus(l){
-  const ids=skis.filter(s=>s.length==l).map(s=>s.id)
-  const i=cart.findIndex(id=>ids.includes(id))
+function minus(type,length){
+  const ids = skis
+    .filter(s=>s.type===type && s.length==length)
+    .map(s=>s.id)
+
+  const i = cart.findIndex(id=>ids.includes(id))
   if(i>-1) cart.splice(i,1)
+
   render()
 }
 
