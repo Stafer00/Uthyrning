@@ -198,24 +198,41 @@ function getAvailable(ids){
 /* ========= SAVE ========= */
 async function saveBooking(){
 
+  console.log("TRY SAVE")
+
   if(!el("customer").value || cart.length===0){
     alert("Fyll i kund + välj utrustning")
     return
   }
 
-  await supabaseClient.from("rentals").insert({
-    name: el("customer").value,
-    phone: el("phone").value,
-    start: el("start").value,
-    end: el("end").value,
-    items: JSON.stringify(cart),
-    total: calcTotal(),
-    returned:false
-  })
+  try{
 
-  cart=[]
-  await load()
-  render()
+    const { error } = await supabaseClient.from("rentals").insert({
+      name: el("customer").value,
+      phone: el("phone").value,
+      start: el("start").value,
+      end: el("end").value,
+      items: JSON.stringify(cart),
+      total: calcTotal(),
+      returned:false
+    })
+
+    if(error){
+      console.error(error)
+      alert("❌ Fel: " + error.message)
+      return
+    }
+
+    alert("✅ Bokning sparad!")
+
+    cart=[]
+    await load()
+    render()
+
+  }catch(e){
+    console.error(e)
+    alert("❌ Krasch: " + e.message)
+  }
 }
 
 /* ========= BOOKINGS ========= */
