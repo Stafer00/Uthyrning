@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Skiduthyrning PRO</title>
+<title>Skiduthyrning PRO+</title>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
@@ -31,19 +31,6 @@ body{
   border-radius:12px;
 }
 
-/* LEFT / RIGHT */
-.left{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
-
-.right{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
-
 /* GRID */
 .grid{
   display:grid;
@@ -53,16 +40,8 @@ body{
 
 .card{
   text-align:center;
-  padding:8px;
-  border-radius:10px;
-}
-
-/* BOOKINGS */
-.booking-card{
-  border:1px solid #eee;
-  padding:8px;
+  padding:6px;
   border-radius:8px;
-  margin-bottom:6px;
 }
 
 /* BUTTON */
@@ -79,17 +58,25 @@ button{
 /* INPUT */
 input{
   width:100%;
-  padding:8px;
+  padding:6px;
   margin-bottom:6px;
   border-radius:6px;
   border:1px solid #ccc;
 }
 
-/* MOBILE */
+.left, .right{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.booking-card{
+  border-bottom:1px solid #eee;
+  padding:6px 0;
+}
+
 @media(max-width:800px){
-  .main{
-    grid-template-columns:1fr;
-  }
+  .main{grid-template-columns:1fr;}
 }
 
 </style>
@@ -103,7 +90,6 @@ input{
   <!-- LEFT -->
   <div class="left">
 
-    <!-- 🔥 KUND (FIXAD) -->
     <div class="section">
       <h3>Kund</h3>
       <input id="customer" placeholder="Namn">
@@ -112,27 +98,20 @@ input{
       <input id="end" type="date">
     </div>
 
-    <!-- DASHBOARD -->
     <div class="section">
-      <h3>Dashboard</h3>
+      <h3>📊 Dashboard</h3>
       <div id="dashboard"></div>
     </div>
 
-    <!-- VAL -->
     <div class="section">
       <h3>Val</h3>
-
-      <button onclick="addPackage('langd')">🎿 Längdpaket</button>
-      <button onclick="addPackage('slalom')">⛷️ Slalompaket</button>
-
       <div id="cart"></div>
       <div id="total"></div>
 
-      <button onclick="saveBooking()">Spara bokning</button>
+      <button id="saveBtn">Spara bokning</button>
       <button onclick="cart=[];render()">Rensa</button>
     </div>
 
-    <!-- BOKNINGAR -->
     <div class="section">
       <h3>Bokningar</h3>
       <div id="rentals"></div>
@@ -143,7 +122,6 @@ input{
   <!-- RIGHT -->
   <div class="right">
 
-    <!-- UTRUSTNING -->
     <div class="section">
       <h3>Utrustning</h3>
       <div id="skiWall"></div>
