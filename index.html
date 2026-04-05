@@ -51,12 +51,10 @@ body{
   gap:6px;
 }
 
-/* CARD */
 .card{
   text-align:center;
   padding:8px;
   border-radius:10px;
-  font-size:14px;
 }
 
 /* BOOKINGS */
@@ -81,7 +79,7 @@ button{
 /* INPUT */
 input{
   width:100%;
-  padding:6px;
+  padding:8px;
   margin-bottom:6px;
   border-radius:6px;
   border:1px solid #ccc;
@@ -105,25 +103,34 @@ input{
   <!-- LEFT -->
   <div class="left">
 
+    <!-- 🔥 KUND (FIXAD) -->
+    <div class="section">
+      <h3>Kund</h3>
+      <input id="customer" placeholder="Namn">
+      <input id="phone" placeholder="Telefon">
+      <input id="start" type="date">
+      <input id="end" type="date">
+    </div>
+
     <!-- DASHBOARD -->
     <div class="section">
       <h3>Dashboard</h3>
       <div id="dashboard"></div>
     </div>
 
-    <!-- KUND -->
+    <!-- VAL -->
     <div class="section">
-  <h3>Val</h3>
+      <h3>Val</h3>
 
-  <button onclick="addPackage('langd')">🎿 Längdpaket</button>
-  <button onclick="addPackage('slalom')">⛷️ Slalompaket</button>
+      <button onclick="addPackage('langd')">🎿 Längdpaket</button>
+      <button onclick="addPackage('slalom')">⛷️ Slalompaket</button>
 
-  <div id="cart"></div>
-  <div id="total"></div>
+      <div id="cart"></div>
+      <div id="total"></div>
 
-  <button id="saveBtn">Spara bokning</button>
-  <button onclick="cart=[];render()">Rensa</button>
-</div>
+      <button id="saveBtn">Spara bokning</button>
+      <button onclick="cart=[];render()">Rensa</button>
+    </div>
 
     <!-- BOKNINGAR -->
     <div class="section">
@@ -140,15 +147,6 @@ input{
     <div class="section">
       <h3>Utrustning</h3>
       <div id="skiWall"></div>
-    </div>
-
-    <!-- VAL -->
-    <div class="section">
-      <h3>Val</h3>
-      <div id="cart"></div>
-
-      <button id="saveBtn">Spara bokning</button>
-      <button onclick="cart=[];render()">Rensa</button>
     </div>
 
   </div>
