@@ -245,21 +245,97 @@ function showView(view){
 }
 
 /* ========= CALENDAR ========= */
-let weekOffset=0
+let weekOffset = 0
+
+function getMonday(d){
+  d = new Date(d)
+  let day = d.getDay()
+  let diff = d.getDate() - (day === 0 ? 6 : day - 1)
+  return new Date(d.setDate(diff))
+}
+
+function formatDate(d){
+  return d.toISOString().split("T")[0]
+}
 
 function renderCalendar(){
 
-  const div=el("calendar")
+  const div = el("calendar")
   if(!div) return
 
-  let base=new Date()
-  base.setDate(base.getDate()+weekOffset*7)
+  let base = getMonday(new Date())
+  base.setDate(base.getDate() + weekOffset*7)
 
-  let html="<table><tr><th>cm</th>"
+  let days = []
+  let html = "<table><tr><th>cm</th>"
 
   for(let i=0;i<7;i++){
-    html+=`<th>${i+1}</th>`
+    let d = new Date(base)
+    d.setDate(base.getDate()+i)
+
+    const dateStr = formatDate(d)
+    days.push(dateStr)
+
+    html += `<th>
+      ${d.getDate()}/${d.getMonth()+1}
+    </th>`
   }
+
+  html += "</tr>"
+
+  const lengths = [...new Set(skis.map(s=>s.length))].sort((a,b)=>a-b)
+
+  lengths.forEach(length=>{
+
+    const ids = skis.filter(s=>s.length==length).map(s=>s.id)
+
+    html += `<tr><td>${length}</td>`
+
+    days.forEach(day=>{
+
+      let booked = 0
+      let bookings = []
+
+      rentals.forEach(r=>{
+
+        if(r.returned) return
+
+        if(r.start && r.end){
+          if(day >= r.start && day <= r.end){
+
+            parse(r.items).forEach(id=>{
+              if(ids.includes(id)){
+                booked++
+                bookings.push(r)
+              }
+            })
+          }
+        }
+      })
+
+      const free = ids.length - booked
+
+      let bg = "#4caf50"
+      if(free === 0) bg = "#f44336"
+      else if(free <= 2) bg = "#ff9800"
+
+      html += `
+        <td 
+          style="background:${bg};cursor:pointer"
+          onclick="openDay('${day}', ${length})"
+        >
+          ${free}
+        </td>
+      `
+    })
+
+    html += "</tr>"
+  })
+
+  html += "</table>"
+
+  div.innerHTML = html
+}
 
   html+="</tr>"
 
@@ -301,3 +377,51 @@ function renderCalendar(){
 
 function prevWeek(){weekOffset--;renderCalendar()}
 function nextWeek(){weekOffset++;renderCalendar()}
+function openDay(day, length){
+
+  const ids = skis.filter(s=>s.length==length).map(s=>s.id)
+
+  let html = `<h3>${day} – ${length} cm</h3>`
+
+  let found = false
+
+  rentals.forEach(r=>{
+
+    if(r.returned) return
+
+    if(r.start && r.end){
+      if(day >= r.start && day <= r.end){
+
+        const items = parse(r.items)
+
+        const match = items.some(id=>ids.includes(id))
+
+        if(match){
+          found = true
+
+          html += `
+            <div style="border-bottom:1px solid #ccc;margin-bottom:6px;padding-bottom:6px">
+              <b>${r.name}</b><br>
+              ${r.start} → ${r.end}<br>
+              ${items.length} artiklar
+            </div>
+          `
+        }
+      }
+    }
+  })
+
+  if(!found){
+    html += "Inga bokningar"
+  }
+
+  document.body.insertAdjacentHTML("beforeend",`
+    <div class="popup" onclick="this.remove()">
+      <div class="popup-box" onclick="event.stopPropagation()">
+        ${html}
+        <br><br>
+        <button onclick="this.closest('.popup').remove()">Stäng</button>
+      </div>
+    </div>
+  `)
+}
