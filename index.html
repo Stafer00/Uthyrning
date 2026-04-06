@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Skiduthyrning PRO iPad</title>
+<title>Skiduthyrning PRO SPA</title>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
@@ -24,24 +24,9 @@ body{
   min-height:100vh;
   gap:10px;
   padding:10px;
-  box-sizing:border-box;
 }
 
-/* LEFT */
-.left{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
-
-/* RIGHT */
-.right{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
-
-/* BOX */
+/* SECTIONS */
 .section{
   background:white;
   padding:10px;
@@ -70,7 +55,6 @@ button{
   border-radius:6px;
   background:#2e7dff;
   color:white;
-  cursor:pointer;
 }
 
 /* INPUT */
@@ -91,12 +75,24 @@ input{
   padding:6px 10px;
   background:#ddd;
   border-radius:6px;
-  cursor:pointer;
 }
 
 .tab.active{
   background:#2e7dff;
   color:white;
+}
+
+/* VIEWS */
+.view{display:none;}
+.view.active{display:block;}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+td,th{
+  padding:4px;
+  text-align:center;
 }
 
 </style>
@@ -105,10 +101,16 @@ input{
 
 <body>
 
+<div style="padding:10px">
+  <button onclick="showView('booking')">📦 Bokning</button>
+  <button onclick="showView('calendar')">📅 Kalender</button>
+</div>
+
+<div id="bookingView" class="view active">
 <div class="main">
 
 <!-- LEFT -->
-<div class="left">
+<div>
 
 <div class="section">
 <h3>Kund</h3>
@@ -121,15 +123,7 @@ input{
 <div class="section">
 <h3>Val</h3>
 <div id="cart"></div>
-<div id="total"></div>
 <button id="saveBtn">Spara</button>
-<button onclick="cart=[];render()">Rensa</button>
-</div>
-
-<div class="section">
-<button onclick="window.location.href='calendar.html'">
-📅 Kalender
-</button>
 </div>
 
 <div class="section">
@@ -140,18 +134,27 @@ input{
 </div>
 
 <!-- RIGHT -->
-<div class="right">
-
 <div class="section">
 <h3>Utrustning</h3>
-
 <div id="tabs" class="tabs"></div>
 <div id="skiWall"></div>
-
 </div>
 
 </div>
+</div>
 
+<!-- CALENDAR -->
+<div id="calendarView" class="view">
+<div class="section">
+
+<h3>Kalender</h3>
+
+<button onclick="prevWeek()">←</button>
+<button onclick="nextWeek()">→</button>
+
+<div id="calendar"></div>
+
+</div>
 </div>
 
 <script src="app.js"></script>
