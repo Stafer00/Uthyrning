@@ -1,4 +1,4 @@
-console.log("PRO iPad STABIL FIX")
+console.log("PRO iPad STABIL + PRIS")
 
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
@@ -9,6 +9,14 @@ let skis=[],rentals=[],cart=[]
 let activeType=null
 let weekOffset=0
 
+/* ========= PRIS ========= */
+const priceTable = {
+  Knatte: [165,235,305,365,415,450,35],
+  Junior: [190,270,360,410,460,520,60],
+  Vuxen:  [450,600,750,900,1000,1100,100]
+}
+
+/* ========= INIT ========= */
 window.onload=init
 
 async function init(){
@@ -18,22 +26,22 @@ async function init(){
   render()
 }
 
-/* LOAD */
+/* ========= LOAD ========= */
 async function load(){
   skis=(await supabaseClient.from("skis").select("*")).data||[]
   rentals=(await supabaseClient.from("rentals").select("*")).data||[]
 }
 
-/* HELP */
+/* ========= HELP ========= */
 function el(id){return document.getElementById(id)}
 function parse(x){try{return JSON.parse(x||"[]")}catch{return[]}}
 
-/* UI */
+/* ========= UI ========= */
 function bindUI(){
   el("saveBtn").onclick=saveBooking
 }
 
-/* TABS */
+/* ========= TABS ========= */
 function setupTabs(){
   const div=el("tabs")
   div.innerHTML=""
@@ -59,14 +67,14 @@ function setTab(t){
   renderWall()
 }
 
-/* RENDER */
+/* ========= RENDER ========= */
 function render(){
   renderWall()
   renderCart()
   renderRentals()
 }
 
-/* WALL */
+/* ========= WALL ========= */
 function renderWall(){
   const div=el("skiWall")
   div.innerHTML=""
@@ -101,7 +109,7 @@ function renderWall(){
   div.appendChild(grid)
 }
 
-/* CART */
+/* ========= CART ========= */
 function getSelected(ids){
   return cart.filter(id=>ids.includes(id)).length
 }
@@ -125,13 +133,55 @@ function minus(length){
   render()
 }
 
-function renderCart(){
-  el("cart").innerHTML = cart.length===0
-    ? "Inga val"
-    : cart.length+" artiklar"
+/* ========= PRIS LOGIK ========= */
+function getDays(){
+  const start=el("start").value
+  const end=el("end").value
+
+  if(!start || !end) return 1
+
+  const d1=new Date(start)
+  const d2=new Date(end)
+
+  return Math.ceil((d2-d1)/(1000*60*60*24))+1
 }
 
-/* LAGER */
+function getPrice(type,days){
+  const t=priceTable[type]
+  if(!t) return 0
+
+  if(days<=5) return t[days-1]
+  if(days<=7) return t[5]
+
+  return t[5]+(days-7)*t[6]
+}
+
+function renderCart(){
+
+  if(cart.length===0){
+    el("cart").innerHTML="Inga val"
+    return
+  }
+
+  const days=getDays()
+
+  let total=0
+
+  cart.forEach(id=>{
+    const ski=skis.find(s=>s.id===id)
+    if(ski){
+      total+=getPrice(ski.type,days)
+    }
+  })
+
+  el("cart").innerHTML=`
+    ${cart.length} artiklar<br>
+    ${days} dagar<br>
+    <b>${total} kr</b>
+  `
+}
+
+/* ========= LAGER ========= */
 function getAvailable(ids){
   let booked=0
   rentals.forEach(r=>{
@@ -143,7 +193,7 @@ function getAvailable(ids){
   return ids.length-booked
 }
 
-/* SAVE */
+/* ========= SAVE ========= */
 async function saveBooking(){
   if(!el("customer").value || cart.length===0){
     alert("Fyll i kund + välj utrustning")
@@ -164,7 +214,7 @@ async function saveBooking(){
   render()
 }
 
-/* BOOKINGS */
+/* ========= BOOKINGS ========= */
 function renderRentals(){
   const div=el("rentals")
   div.innerHTML=""
@@ -190,14 +240,14 @@ function renderRentals(){
   })
 }
 
-/* RETURN */
+/* ========= RETURN ========= */
 async function markReturned(id){
   await supabaseClient.from("rentals").update({returned:true}).eq("id",id)
   await load()
   render()
 }
 
-/* VIEW */
+/* ========= VIEW ========= */
 function showView(view){
   el("bookingView").classList.remove("active")
   el("calendarView").classList.remove("active")
@@ -210,7 +260,7 @@ function showView(view){
   }
 }
 
-/* CALENDAR */
+/* ========= CALENDAR ========= */
 function renderCalendar(){
   const div=el("calendar")
   if(!div) return
@@ -219,7 +269,6 @@ function renderCalendar(){
   base.setDate(base.getDate()+weekOffset*7)
 
   let html="<table><tr><th>cm</th>"
-
   let days=[]
 
   for(let i=0;i<7;i++){
@@ -266,7 +315,6 @@ function renderCalendar(){
   })
 
   html+="</table>"
-
   div.innerHTML=html
 }
 
