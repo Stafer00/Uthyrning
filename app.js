@@ -1,4 +1,4 @@
-console.log("PRO iPad TABS STABIL")
+console.log("PRO iPad STABIL FIX")
 
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
@@ -7,6 +7,7 @@ const supabaseClient = window.supabase.createClient(
 
 let skis=[],rentals=[],cart=[]
 let activeType=null
+let weekOffset=0
 
 window.onload=init
 
@@ -17,25 +18,23 @@ async function init(){
   render()
 }
 
-/* ========= LOAD ========= */
+/* LOAD */
 async function load(){
   skis=(await supabaseClient.from("skis").select("*")).data||[]
   rentals=(await supabaseClient.from("rentals").select("*")).data||[]
 }
 
-/* ========= HELP ========= */
+/* HELP */
 function el(id){return document.getElementById(id)}
 function parse(x){try{return JSON.parse(x||"[]")}catch{return[]}}
 
-/* ========= UI ========= */
+/* UI */
 function bindUI(){
-  const btn=el("saveBtn")
-  if(btn) btn.onclick=saveBooking
+  el("saveBtn").onclick=saveBooking
 }
 
-/* ========= TABS ========= */
+/* TABS */
 function setupTabs(){
-
   const div=el("tabs")
   div.innerHTML=""
 
@@ -54,37 +53,31 @@ function setupTabs(){
 
 function setTab(t){
   activeType=t
-
   document.querySelectorAll(".tab").forEach(tab=>{
-    tab.classList.remove("active")
-    if(tab.innerText===t) tab.classList.add("active")
+    tab.classList.toggle("active",tab.innerText===t)
   })
-
   renderWall()
 }
 
-/* ========= RENDER ========= */
+/* RENDER */
 function render(){
   renderWall()
   renderCart()
   renderRentals()
 }
 
-/* ========= WALL ========= */
+/* WALL */
 function renderWall(){
-
   const div=el("skiWall")
   div.innerHTML=""
 
   const list=skis.filter(s=>s.type===activeType)
-
   const lengths=[...new Set(list.map(s=>s.length))].sort((a,b)=>a-b)
 
   const grid=document.createElement("div")
   grid.className="grid"
 
   lengths.forEach(length=>{
-
     const ids=list.filter(s=>s.length==length).map(s=>s.id)
 
     const available=getAvailable(ids)
@@ -108,16 +101,13 @@ function renderWall(){
   div.appendChild(grid)
 }
 
-/* ========= CART ========= */
+/* CART */
 function getSelected(ids){
   return cart.filter(id=>ids.includes(id)).length
 }
 
 function plus(length){
-
-  const ids=skis
-    .filter(s=>s.type===activeType && s.length==length)
-    .map(s=>s.id)
+  const ids=skis.filter(s=>s.type===activeType && s.length==length).map(s=>s.id)
 
   if(getSelected(ids)>=getAvailable(ids)){
     alert("Slut i lager")
@@ -129,13 +119,9 @@ function plus(length){
 }
 
 function minus(length){
-  const ids=skis
-    .filter(s=>s.type===activeType && s.length==length)
-    .map(s=>s.id)
-
+  const ids=skis.filter(s=>s.type===activeType && s.length==length).map(s=>s.id)
   const i=cart.findIndex(id=>ids.includes(id))
   if(i>-1) cart.splice(i,1)
-
   render()
 }
 
@@ -145,24 +131,20 @@ function renderCart(){
     : cart.length+" artiklar"
 }
 
-/* ========= LAGER ========= */
+/* LAGER */
 function getAvailable(ids){
-
   let booked=0
-
   rentals.forEach(r=>{
     if(r.returned) return
     parse(r.items).forEach(id=>{
       if(ids.includes(id)) booked++
     })
   })
-
   return ids.length-booked
 }
 
-/* ========= SAVE ========= */
+/* SAVE */
 async function saveBooking(){
-
   if(!el("customer").value || cart.length===0){
     alert("Fyll i kund + välj utrustning")
     return
@@ -182,9 +164,8 @@ async function saveBooking(){
   render()
 }
 
-/* ========= BOOKINGS ========= */
+/* BOOKINGS */
 function renderRentals(){
-
   const div=el("rentals")
   div.innerHTML=""
 
@@ -196,166 +177,80 @@ function renderRentals(){
   }
 
   active.forEach(r=>{
-
     const items=parse(r.items)
 
     div.innerHTML+=`
-      <div style="
-        border:1px solid #ddd;
-        padding:6px;
-        border-radius:8px;
-        margin-bottom:6px;
-        font-size:12px;
-      ">
+      <div class="card">
         <b>${r.name}</b><br>
         ${r.start||"-"} → ${r.end||"-"}<br>
         ${items.length} artiklar<br>
-
-        <button onclick="markReturned('${r.id}')">
-          Återlämnad
-        </button>
+        <button onclick="markReturned('${r.id}')">Återlämnad</button>
       </div>
     `
   })
 }
 
-/* ========= RETURN ========= */
+/* RETURN */
 async function markReturned(id){
-
-  await supabaseClient
-    .from("rentals")
-    .update({returned:true})
-    .eq("id",id)
-
+  await supabaseClient.from("rentals").update({returned:true}).eq("id",id)
   await load()
   render()
 }
-/* ========= VIEW ========= */
-function showView(view){
 
-  document.getElementById("bookingView").classList.remove("active")
-  document.getElementById("calendarView").classList.remove("active")
+/* VIEW */
+function showView(view){
+  el("bookingView").classList.remove("active")
+  el("calendarView").classList.remove("active")
 
   if(view==="calendar"){
-    document.getElementById("calendarView").classList.add("active")
+    el("calendarView").classList.add("active")
     renderCalendar()
   }else{
-    document.getElementById("bookingView").classList.add("active")
+    el("bookingView").classList.add("active")
   }
 }
 
-/* ========= CALENDAR ========= */
-let weekOffset = 0
-
-function getMonday(d){
-  d = new Date(d)
-  let day = d.getDay()
-  let diff = d.getDate() - (day === 0 ? 6 : day - 1)
-  return new Date(d.setDate(diff))
-}
-
-function formatDate(d){
-  return d.toISOString().split("T")[0]
-}
-
+/* CALENDAR */
 function renderCalendar(){
-
-  const div = el("calendar")
+  const div=el("calendar")
   if(!div) return
 
-  let base = getMonday(new Date())
-  base.setDate(base.getDate() + weekOffset*7)
+  let base=getMonday(new Date())
+  base.setDate(base.getDate()+weekOffset*7)
 
-  let days = []
-  let html = "<table><tr><th>cm</th>"
+  let html="<table><tr><th>cm</th>"
+
+  let days=[]
 
   for(let i=0;i<7;i++){
-    let d = new Date(base)
+    let d=new Date(base)
     d.setDate(base.getDate()+i)
 
-    const dateStr = formatDate(d)
-    days.push(dateStr)
+    let ds=formatDate(d)
+    days.push(ds)
 
-    html += `<th>
-      ${d.getDate()}/${d.getMonth()+1}
-    </th>`
+    html+=`<th>${d.getDate()}/${d.getMonth()+1}</th>`
   }
-
-  html += "</tr>"
-
-  const lengths = [...new Set(skis.map(s=>s.length))].sort((a,b)=>a-b)
-
-  lengths.forEach(length=>{
-
-    const ids = skis.filter(s=>s.length==length).map(s=>s.id)
-
-    html += `<tr><td>${length}</td>`
-
-    days.forEach(day=>{
-
-      let booked = 0
-      let bookings = []
-
-      rentals.forEach(r=>{
-
-        if(r.returned) return
-
-        if(r.start && r.end){
-          if(day >= r.start && day <= r.end){
-
-            parse(r.items).forEach(id=>{
-              if(ids.includes(id)){
-                booked++
-                bookings.push(r)
-              }
-            })
-          }
-        }
-      })
-
-      const free = ids.length - booked
-
-      let bg = "#4caf50"
-      if(free === 0) bg = "#f44336"
-      else if(free <= 2) bg = "#ff9800"
-
-      html += `
-        <td 
-          style="background:${bg};cursor:pointer"
-          onclick="openDay('${day}', ${length})"
-        >
-          ${free}
-        </td>
-      `
-    })
-
-    html += "</tr>"
-  })
-
-  html += "</table>"
-
-  div.innerHTML = html
-}
 
   html+="</tr>"
 
-  const lengths=[...new Set(skis.map(s=>s.length))]
+  const lengths=[...new Set(skis.map(s=>s.length))].sort((a,b)=>a-b)
 
-  lengths.forEach(l=>{
+  lengths.forEach(length=>{
+    const ids=skis.filter(s=>s.length==length).map(s=>s.id)
 
-    const ids=skis.filter(s=>s.length==l).map(s=>s.id)
+    html+=`<tr><td>${length}</td>`
 
-    html+=`<tr><td>${l}</td>`
-
-    for(let i=0;i<7;i++){
-
+    days.forEach(day=>{
       let booked=0
 
       rentals.forEach(r=>{
         if(r.returned) return
-        parse(r.items).forEach(id=>{
-          if(ids.includes(id)) booked++
-        })
+        if(day>=r.start && day<=r.end){
+          parse(r.items).forEach(id=>{
+            if(ids.includes(id)) booked++
+          })
+        }
       })
 
       const free=ids.length-booked
@@ -365,7 +260,7 @@ function renderCalendar(){
       else if(free<=2) bg="#ff9800"
 
       html+=`<td style="background:${bg}">${free}</td>`
-    }
+    })
 
     html+="</tr>"
   })
@@ -375,53 +270,16 @@ function renderCalendar(){
   div.innerHTML=html
 }
 
+function getMonday(d){
+  d=new Date(d)
+  let day=d.getDay()
+  let diff=d.getDate()-(day===0?6:day-1)
+  return new Date(d.setDate(diff))
+}
+
+function formatDate(d){
+  return d.toISOString().split("T")[0]
+}
+
 function prevWeek(){weekOffset--;renderCalendar()}
 function nextWeek(){weekOffset++;renderCalendar()}
-function openDay(day, length){
-
-  const ids = skis.filter(s=>s.length==length).map(s=>s.id)
-
-  let html = `<h3>${day} – ${length} cm</h3>`
-
-  let found = false
-
-  rentals.forEach(r=>{
-
-    if(r.returned) return
-
-    if(r.start && r.end){
-      if(day >= r.start && day <= r.end){
-
-        const items = parse(r.items)
-
-        const match = items.some(id=>ids.includes(id))
-
-        if(match){
-          found = true
-
-          html += `
-            <div style="border-bottom:1px solid #ccc;margin-bottom:6px;padding-bottom:6px">
-              <b>${r.name}</b><br>
-              ${r.start} → ${r.end}<br>
-              ${items.length} artiklar
-            </div>
-          `
-        }
-      }
-    }
-  })
-
-  if(!found){
-    html += "Inga bokningar"
-  }
-
-  document.body.insertAdjacentHTML("beforeend",`
-    <div class="popup" onclick="this.remove()">
-      <div class="popup-box" onclick="event.stopPropagation()">
-        ${html}
-        <br><br>
-        <button onclick="this.closest('.popup').remove()">Stäng</button>
-      </div>
-    </div>
-  `)
-}
