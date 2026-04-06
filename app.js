@@ -1,4 +1,4 @@
-console.log("PRO+++ LIVE")
+console.log("PRO+++ EXTENDED (ÅTERLÄMNING + DEL + FÖRLÄNGNING)")
 
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
@@ -26,6 +26,7 @@ async function load(){
 function el(id){return document.getElementById(id)}
 function parse(x){try{return JSON.parse(x||"[]")}catch{return[]}}
 
+/* RENDER */
 function render(){
   renderWall()
   renderCart()
@@ -37,6 +38,7 @@ function render(){
 /* UTRUSTNING */
 function renderWall(){
   const div=el("skiWall");div.innerHTML=""
+
   const types=[...new Set(skis.map(s=>s.type))]
 
   types.forEach(type=>{
@@ -50,12 +52,12 @@ function renderWall(){
       const available=getAvailable(ids)
 
       grid.innerHTML+=`
-      <div class="card" style="background:${available? '#c8e6c9':'#ffcdd2'}">
-        ${length}<br>${available} kvar<br>
-        <button onclick="minus('${type}',${length})">−</button>
-        ${getSelected(ids)}
-        <button onclick="plus('${type}',${length})">+</button>
-      </div>`
+        <div class="card" style="background:${available? '#c8e6c9':'#ffcdd2'}">
+          ${length}<br>${available} kvar<br>
+          <button onclick="minus('${type}',${length})">−</button>
+          ${getSelected(ids)}
+          <button onclick="plus('${type}',${length})">+</button>
+        </div>`
     })
 
     div.appendChild(grid)
@@ -80,9 +82,9 @@ function minus(type,length){
 }
 
 /* PRIS */
-function calcTotal(){
+function calcTotal(items){
   let t=0
-  cart.forEach(id=>{
+  items.forEach(id=>{
     const s=skis.find(x=>x.id===id)
     if(s) t+=PRICES[s.type]||100
   })
@@ -91,7 +93,7 @@ function calcTotal(){
 
 function renderCart(){
   el("cart").innerHTML=cart.length+" artiklar"
-  el("total").innerHTML=cart.length?calcTotal()+" kr":""
+  el("total").innerHTML=cart.length?calcTotal(cart)+" kr":""
 }
 
 /* LAGER */
@@ -106,41 +108,11 @@ function getAvailable(ids){
   return ids.length-booked
 }
 
-/* 🔔 KONFLIKTKOLL */
-function hasConflict(){
-
-  const start=new Date(el("start").value)
-  const end=new Date(el("end").value)
-
-  for(const r of rentals){
-    if(r.returned) continue
-
-    const rs=new Date(r.start)
-    const re=new Date(r.end)
-
-    const overlap = start<=re && end>=rs
-
-    if(overlap){
-      const items=parse(r.items)
-      for(const id of items){
-        if(cart.includes(id)){
-          return true
-        }
-      }
-    }
-  }
-  return false
-}
-
 /* SAVE */
 async function saveBooking(){
 
   if(!el("customer").value || cart.length===0){
     return alert("Fyll i allt")
-  }
-
-  if(hasConflict()){
-    return alert("⚠️ Överbokning!")
   }
 
   await supabaseClient.from("rentals").insert({
@@ -152,58 +124,86 @@ async function saveBooking(){
     returned:false
   })
 
-  showReceipt()
-
   cart=[]
   await load()
   render()
 }
 
-/* 📄 KVITTO */
-function showReceipt(){
-  document.body.insertAdjacentHTML("beforeend",`
-  <div class="popup" onclick="this.remove()">
-    <div class="popup-box">
-      <h3>Kvitto</h3>
-      ${el("customer").value}<br>
-      ${el("start").value} → ${el("end").value}<br>
-      ${cart.length} artiklar<br>
-      <b>${calcTotal()} kr</b>
-    </div>
-  </div>
-  `)
-}
-
-/* BOOKINGS */
+/* BOOKINGS + ACTIONS */
 function renderRentals(){
-  const div=el("rentals");div.innerHTML=""
+
+  const div=el("rentals")
+  div.innerHTML=""
 
   rentals.filter(r=>!r.returned).forEach(r=>{
+
+    const items=parse(r.items)
+
     div.innerHTML+=`
-      <div onclick="showCustomer('${r.name}')">
+      <div class="booking-card">
         <b>${r.name}</b><br>
-        ${r.start}
+        ${r.start} → ${r.end}<br>
+        ${items.length} artiklar<br>
+        💰 ${calcTotal(items)} kr<br>
+
+        <button onclick="returnAll('${r.id}')">Återlämnad</button>
+        <button onclick="partialReturn('${r.id}')">Del</button>
+        <button onclick="extendRental('${r.id}','${r.end}')">Förläng</button>
       </div>
     `
   })
 }
 
-/* 👥 KUNDHISTORIK */
-function showCustomer(name){
+/* FULL ÅTERLÄMNING */
+async function returnAll(id){
+  await supabaseClient.from("rentals")
+    .update({returned:true})
+    .eq("id",id)
 
-  const list=rentals.filter(r=>r.name===name)
+  await load()
+  render()
+}
 
-  let html=`<h3>${name}</h3>`
+/* DELÅTERLÄMNING 🔥 */
+async function partialReturn(id){
 
-  list.forEach(r=>{
-    html+=`${r.start} → ${r.end}<br>`
-  })
+  const rental = rentals.find(r=>r.id==id)
+  let items = parse(rental.items)
 
-  document.body.insertAdjacentHTML("beforeend",`
-    <div class="popup" onclick="this.remove()">
-      <div class="popup-box">${html}</div>
-    </div>
-  `)
+  if(items.length===0) return
+
+  const removeCount = Number(prompt("Hur många lämnas tillbaka?"))
+
+  if(!removeCount || removeCount<=0) return
+
+  items.splice(0, removeCount)
+
+  if(items.length===0){
+    await returnAll(id)
+  }else{
+    await supabaseClient.from("rentals")
+      .update({items:JSON.stringify(items)})
+      .eq("id",id)
+  }
+
+  await load()
+  render()
+}
+
+/* FÖRLÄNGNING 📅 */
+async function extendRental(id,endDate){
+
+  const d = new Date(endDate)
+  d.setDate(d.getDate()+1)
+
+  const newDate = d.toISOString().split("T")[0]
+
+  await supabaseClient.from("rentals")
+    .update({end:newDate})
+    .eq("id",id)
+
+  await load()
+  render()
 }
 
 /* DASHBOARD */
@@ -218,11 +218,10 @@ function renderDashboard(){
   `
 }
 
-/* 📅 KALENDER */
+/* KALENDER */
 function renderCalendar(){
 
   const div=el("calendar")
-
   let base=new Date()
   base.setDate(base.getDate()+weekOffset*7)
 
@@ -264,7 +263,7 @@ function renderCalendar(){
       if(free===0) bg="#f44336"
       else if(free<=2) bg="#ff9800"
 
-      html+=`<td style="background:${bg}" onclick="dayDetails('${l}')">${free}</td>`
+      html+=`<td style="background:${bg}">${free}</td>`
     })
 
     html+="</tr>"
@@ -274,19 +273,10 @@ function renderCalendar(){
   div.innerHTML=html
 }
 
-function dayDetails(text){
-  document.body.insertAdjacentHTML("beforeend",`
-    <div class="popup" onclick="this.remove()">
-      <div class="popup-box">
-        Detaljer för ${text} cm
-      </div>
-    </div>
-  `)
-}
-
 function prevWeek(){weekOffset--;render()}
 function nextWeek(){weekOffset++;render()}
 
+/* BUTTON */
 document.addEventListener("click",e=>{
   if(e.target.id==="saveBtn") saveBooking()
 })
