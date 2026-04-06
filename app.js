@@ -1,4 +1,4 @@
-console.log("PRO iPad TABS")
+console.log("PRO iPad TABS STABIL")
 
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
@@ -13,52 +13,64 @@ window.onload=init
 async function init(){
   await load()
   setupTabs()
+  bindUI()
   render()
 }
 
-/* LOAD */
+/* ========= LOAD ========= */
 async function load(){
   skis=(await supabaseClient.from("skis").select("*")).data||[]
   rentals=(await supabaseClient.from("rentals").select("*")).data||[]
 }
 
-/* HELP */
+/* ========= HELP ========= */
 function el(id){return document.getElementById(id)}
 function parse(x){try{return JSON.parse(x||"[]")}catch{return[]}}
 
-/* TABS */
+/* ========= UI ========= */
+function bindUI(){
+  const btn=el("saveBtn")
+  if(btn) btn.onclick=saveBooking
+}
+
+/* ========= TABS ========= */
 function setupTabs(){
 
-  const types=[...new Set(skis.map(s=>s.type))]
-  activeType=types[0]
-
   const div=el("tabs")
+  div.innerHTML=""
+
+  const types=[...new Set(skis.map(s=>s.type).filter(Boolean))]
+
+  activeType=types[0]
 
   types.forEach(t=>{
     div.innerHTML+=`
-      <div class="tab" onclick="setTab('${t}')">${t}</div>
+      <div class="tab ${t===activeType?'active':''}" onclick="setTab('${t}')">
+        ${t}
+      </div>
     `
   })
 }
 
 function setTab(t){
   activeType=t
-  renderWall()
 
   document.querySelectorAll(".tab").forEach(tab=>{
     tab.classList.remove("active")
     if(tab.innerText===t) tab.classList.add("active")
   })
+
+  renderWall()
 }
 
-/* RENDER */
+/* ========= RENDER ========= */
 function render(){
   renderWall()
   renderCart()
   renderRentals()
 }
 
-/* WALL */
+/* ========= WALL ========= */
 function renderWall(){
 
   const div=el("skiWall")
@@ -66,7 +78,7 @@ function renderWall(){
 
   const list=skis.filter(s=>s.type===activeType)
 
-  const lengths=[...new Set(list.map(s=>s.length))]
+  const lengths=[...new Set(list.map(s=>s.length))].sort((a,b)=>a-b)
 
   const grid=document.createElement("div")
   grid.className="grid"
@@ -80,11 +92,12 @@ function renderWall(){
 
     let bg="#c8e6c9"
     if(available===0) bg="#ffcdd2"
+    else if(available<=2) bg="#fff3cd"
 
     grid.innerHTML+=`
       <div class="card" style="background:${bg}">
-        ${length}<br>
-        ${available}<br>
+        <b>${length}</b><br>
+        ${available} kvar<br>
         <button onclick="minus(${length})">−</button>
         ${selected}
         <button onclick="plus(${length})">+</button>
@@ -95,42 +108,65 @@ function renderWall(){
   div.appendChild(grid)
 }
 
-/* CART */
+/* ========= CART ========= */
 function getSelected(ids){
   return cart.filter(id=>ids.includes(id)).length
 }
 
 function plus(length){
-  const ids=skis.filter(s=>s.type===activeType && s.length==length).map(s=>s.id)
-  cart.push(ids[0])
+
+  const ids=skis
+    .filter(s=>s.type===activeType && s.length==length)
+    .map(s=>s.id)
+
+  if(getSelected(ids)>=getAvailable(ids)){
+    alert("Slut i lager")
+    return
+  }
+
+  cart.push(ids[getSelected(ids)])
   render()
 }
 
 function minus(length){
-  const ids=skis.filter(s=>s.type===activeType && s.length==length).map(s=>s.id)
+  const ids=skis
+    .filter(s=>s.type===activeType && s.length==length)
+    .map(s=>s.id)
+
   const i=cart.findIndex(id=>ids.includes(id))
   if(i>-1) cart.splice(i,1)
+
   render()
 }
 
 function renderCart(){
-  el("cart").innerHTML=cart.length+" artiklar"
+  el("cart").innerHTML = cart.length===0
+    ? "Inga val"
+    : cart.length+" artiklar"
 }
 
-/* LAGER */
+/* ========= LAGER ========= */
 function getAvailable(ids){
+
   let booked=0
+
   rentals.forEach(r=>{
     if(r.returned) return
     parse(r.items).forEach(id=>{
       if(ids.includes(id)) booked++
     })
   })
+
   return ids.length-booked
 }
 
-/* SAVE */
+/* ========= SAVE ========= */
 async function saveBooking(){
+
+  if(!el("customer").value || cart.length===0){
+    alert("Fyll i kund + välj utrustning")
+    return
+  }
 
   await supabaseClient.from("rentals").insert({
     name:el("customer").value,
@@ -146,17 +182,51 @@ async function saveBooking(){
   render()
 }
 
-/* BOOKINGS */
+/* ========= BOOKINGS ========= */
 function renderRentals(){
+
   const div=el("rentals")
   div.innerHTML=""
 
-  rentals.forEach(r=>{
-    div.innerHTML+=`<div>${r.name}</div>`
+  const active=rentals.filter(r=>!r.returned)
+
+  if(active.length===0){
+    div.innerHTML="Inga bokningar"
+    return
+  }
+
+  active.forEach(r=>{
+
+    const items=parse(r.items)
+
+    div.innerHTML+=`
+      <div style="
+        border:1px solid #ddd;
+        padding:6px;
+        border-radius:8px;
+        margin-bottom:6px;
+        font-size:12px;
+      ">
+        <b>${r.name}</b><br>
+        ${r.start||"-"} → ${r.end||"-"}<br>
+        ${items.length} artiklar<br>
+
+        <button onclick="markReturned('${r.id}')">
+          Återlämnad
+        </button>
+      </div>
+    `
   })
 }
 
-/* BUTTON */
-document.addEventListener("click",e=>{
-  if(e.target.id==="saveBtn") saveBooking()
-})
+/* ========= RETURN ========= */
+async function markReturned(id){
+
+  await supabaseClient
+    .from("rentals")
+    .update({returned:true})
+    .eq("id",id)
+
+  await load()
+  render()
+}
