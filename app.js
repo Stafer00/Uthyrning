@@ -230,3 +230,74 @@ async function markReturned(id){
   await load()
   render()
 }
+/* ========= VIEW ========= */
+function showView(view){
+
+  document.getElementById("bookingView").classList.remove("active")
+  document.getElementById("calendarView").classList.remove("active")
+
+  if(view==="calendar"){
+    document.getElementById("calendarView").classList.add("active")
+    renderCalendar()
+  }else{
+    document.getElementById("bookingView").classList.add("active")
+  }
+}
+
+/* ========= CALENDAR ========= */
+let weekOffset=0
+
+function renderCalendar(){
+
+  const div=el("calendar")
+  if(!div) return
+
+  let base=new Date()
+  base.setDate(base.getDate()+weekOffset*7)
+
+  let html="<table><tr><th>cm</th>"
+
+  for(let i=0;i<7;i++){
+    html+=`<th>${i+1}</th>`
+  }
+
+  html+="</tr>"
+
+  const lengths=[...new Set(skis.map(s=>s.length))]
+
+  lengths.forEach(l=>{
+
+    const ids=skis.filter(s=>s.length==l).map(s=>s.id)
+
+    html+=`<tr><td>${l}</td>`
+
+    for(let i=0;i<7;i++){
+
+      let booked=0
+
+      rentals.forEach(r=>{
+        if(r.returned) return
+        parse(r.items).forEach(id=>{
+          if(ids.includes(id)) booked++
+        })
+      })
+
+      const free=ids.length-booked
+
+      let bg="#4caf50"
+      if(free===0) bg="#f44336"
+      else if(free<=2) bg="#ff9800"
+
+      html+=`<td style="background:${bg}">${free}</td>`
+    }
+
+    html+="</tr>"
+  })
+
+  html+="</table>"
+
+  div.innerHTML=html
+}
+
+function prevWeek(){weekOffset--;renderCalendar()}
+function nextWeek(){weekOffset++;renderCalendar()}
