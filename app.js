@@ -216,8 +216,11 @@ async function saveBooking(){
 
 /* ========= BOOKINGS ========= */
 function renderRentals(){
+
   const div=el("rentals")
   div.innerHTML=""
+
+  const today = formatDate(new Date())
 
   const active=rentals.filter(r=>!r.returned)
 
@@ -227,14 +230,67 @@ function renderRentals(){
   }
 
   active.forEach(r=>{
+
     const items=parse(r.items)
+
+    let listHTML=""
+    let counts={}
+    let total=0
+
+    const days = (r.start && r.end)
+      ? Math.ceil((new Date(r.end)-new Date(r.start))/(1000*60*60*24))+1
+      : 1
+
+    items.forEach(id=>{
+      const ski=skis.find(s=>s.id===id)
+
+      if(ski){
+
+        // lista
+        listHTML += `${ski.type} ${ski.length} cm<br>`
+
+        // räkna per kategori
+        counts[ski.type]=(counts[ski.type]||0)+1
+
+        // pris
+        total += getPrice(ski.type, days)
+      }
+    })
+
+    // kategori summering
+    let countHTML=""
+    Object.keys(counts).forEach(k=>{
+      countHTML += `${k}: ${counts[k]} st<br>`
+    })
+
+    // återlämning idag
+    let returnToday = (r.end === today)
+      ? `<div style="color:#d32f2f;font-weight:bold">Åter idag!</div>`
+      : ""
 
     div.innerHTML+=`
       <div class="card">
+
         <b>${r.name}</b><br>
         ${r.start||"-"} → ${r.end||"-"}<br>
-        ${items.length} artiklar<br>
-        <button onclick="markReturned('${r.id}')">Återlämnad</button>
+        ${returnToday}
+
+        <hr>
+
+        ${countHTML}
+
+        <hr>
+
+        ${listHTML}
+
+        <hr>
+
+        <b>${total} kr</b><br>
+
+        <button onclick="markReturned('${r.id}')">
+          Återlämnad
+        </button>
+
       </div>
     `
   })
