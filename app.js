@@ -72,6 +72,9 @@ function render(){
   renderWall()
   renderCart()
   renderRentals()
+
+  const statsHTML = renderStats()
+  el("rentals").innerHTML = statsHTML + el("rentals").innerHTML
 }
 
 /* ========= WALL ========= */
@@ -387,3 +390,90 @@ function formatDate(d){
 
 function prevWeek(){weekOffset--;renderCalendar()}
 function nextWeek(){weekOffset++;renderCalendar()}
+// ========= EDIT BOOKING =========
+function editBooking(id){
+
+  const r = rentals.find(x=>x.id==id)
+  if(!r) return
+
+  document.body.insertAdjacentHTML("beforeend",`
+    <div class="popup" onclick="this.remove()">
+      <div class="popup-box" onclick="event.stopPropagation()">
+
+        <h3>${r.name}</h3>
+
+        Start:<br>
+        <input id="editStart" type="date" value="${r.start||""}"><br>
+
+        Slut:<br>
+        <input id="editEnd" type="date" value="${r.end||""}"><br><br>
+
+        <button onclick="saveEdit('${id}')">Spara</button>
+        <button onclick="deleteBooking('${id}')">Ta bort</button>
+
+      </div>
+    </div>
+  `)
+}
+
+async function saveEdit(id){
+
+  const start = document.getElementById("editStart").value
+  const end = document.getElementById("editEnd").value
+
+  await supabaseClient
+    .from("rentals")
+    .update({start,end})
+    .eq("id",id)
+
+  document.querySelector(".popup").remove()
+
+  await load()
+  render()
+}
+
+async function deleteBooking(id){
+
+  await supabaseClient
+    .from("rentals")
+    .delete()
+    .eq("id",id)
+
+  document.querySelector(".popup").remove()
+
+  await load()
+  render()
+}
+
+
+// ========= STATISTIK =========
+function renderStats(){
+
+  const totalItems = rentals.reduce((sum,r)=>{
+    return sum + parse(r.items).length
+  },0)
+
+  const active = rentals.filter(r=>!r.returned).length
+
+  let typesCount = {}
+
+  rentals.forEach(r=>{
+    parse(r.items).forEach(id=>{
+      const ski = skis.find(s=>s.id===id)
+      if(ski){
+        typesCount[ski.type]=(typesCount[ski.type]||0)+1
+      }
+    })
+  })
+
+  let mostUsed = Object.keys(typesCount).sort((a,b)=>typesCount[b]-typesCount[a])[0] || "-"
+
+  return `
+    <div class="section">
+      <b>Statistik</b><br>
+      Totalt uthyrda: ${totalItems}<br>
+      Aktiva bokningar: ${active}<br>
+      Mest hyrd: ${mostUsed}
+    </div>
+  `
+}
