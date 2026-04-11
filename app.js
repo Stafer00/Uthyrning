@@ -1,4 +1,4 @@
-console.log("PRO STABIL FULL")
+console.log("PRO STABIL FINAL")
 
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
@@ -39,6 +39,9 @@ function parse(x){try{return JSON.parse(x||"[]")}catch{return[]}}
 /* ========= UI ========= */
 function bindUI(){
   el("saveBtn").onclick=saveBooking
+
+  el("start").onchange=renderCart
+  el("end").onchange=renderCart
 }
 
 /* ========= TABS ========= */
@@ -166,7 +169,6 @@ function renderCart(){
   }
 
   const days=getDays()
-
   let total=0
 
   cart.forEach(id=>{
@@ -220,8 +222,6 @@ function renderRentals(){
   const div=el("rentals")
   div.innerHTML=""
 
-  const today=formatDate(new Date())
-
   const active=rentals.filter(r=>!r.returned)
 
   if(active.length===0){
@@ -229,14 +229,10 @@ function renderRentals(){
     return
   }
 
-  div.innerHTML+=renderStats()
-
   active.forEach(r=>{
 
     const items=parse(r.items)
-
     let list=""
-    let counts={}
     let total=0
 
     const days=(r.start&&r.end)
@@ -247,99 +243,43 @@ function renderRentals(){
       const ski=skis.find(s=>s.id===id)
       if(ski){
         list+=`${ski.type} ${ski.length} cm<br>`
-        counts[ski.type]=(counts[ski.type]||0)+1
         total+=getPrice(ski.type,days)
       }
     })
 
-    let countHTML=""
-    Object.keys(counts).forEach(k=>{
-      countHTML+=`${k}: ${counts[k]}<br>`
-    })
-
-    let warn=(r.end===today)
-      ? "<div style='color:red'>Åter idag!</div>"
-      : ""
-
     div.innerHTML+=`
-      <div class="card" onclick="editBooking('${r.id}')">
+      <div class="card">
         <b>${r.name}</b><br>
         ${r.start} → ${r.end}<br>
-        ${warn}
-        <hr>
-        ${countHTML}
-        <hr>
         ${list}
-        <hr>
         <b>${total} kr</b><br>
+        <button onclick="markReturned('${r.id}')">Återlämnad</button>
       </div>
     `
   })
 }
 
-/* ========= EDIT ========= */
-function editBooking(id){
-  const r=rentals.find(x=>x.id==id)
-  if(!r) return
-
-  document.body.insertAdjacentHTML("beforeend",`
-    <div class="popup" onclick="this.remove()">
-      <div class="popup-box" onclick="event.stopPropagation()">
-        <h3>${r.name}</h3>
-        <input id="editStart" type="date" value="${r.start||""}">
-        <input id="editEnd" type="date" value="${r.end||""}">
-        <button onclick="saveEdit('${id}')">Spara</button>
-        <button onclick="deleteBooking('${id}')">Ta bort</button>
-      </div>
-    </div>
-  `)
-}
-
-async function saveEdit(id){
-  const start=el("editStart").value
-  const end=el("editEnd").value
-
-  await supabaseClient.from("rentals").update({start,end}).eq("id",id)
-
-  document.querySelector(".popup").remove()
+/* ========= RETURN ========= */
+async function markReturned(id){
+  await supabaseClient.from("rentals").update({returned:true}).eq("id",id)
   await load()
   render()
 }
 
-async function deleteBooking(id){
-  await supabaseClient.from("rentals").delete().eq("id",id)
-  document.querySelector(".popup").remove()
-  await load()
-  render()
-}
+/* ========= VIEW ========= */
+function showView(view){
 
-/* ========= STATISTIK ========= */
-function renderStats(){
+  el("bookingView").classList.remove("active")
+  el("calendarView").classList.remove("active")
 
-  const total=rentals.reduce((s,r)=>s+parse(r.items).length,0)
-  const active=rentals.filter(r=>!r.returned).length
+  if(view==="calendar"){
+    el("calendarView").classList.add("active")
 
-  let types={}
+    setTimeout(()=>renderCalendar(),50)
 
-  rentals.forEach(r=>{
-    parse(r.items).forEach(id=>{
-      const ski=skis.find(s=>s.id===id)
-      if(ski){
-        types[ski.type]=(types[ski.type]||0)+1
-      }
-    })
-  })
-
-  const top=Object.keys(types).sort((a,b)=>types[b]-types[a])[0]||"-"
-
-  return `
-    <div class="section">
-      <b>Statistik</b><br>
-      Totalt: ${total}<br>
-      Aktiva: ${active}<br>
-      Mest hyrd: ${top}
-    </div>
-  `
+  }else{
+    el("bookingView").classList.add("active")
+  }
 }
 
 /* ========= CALENDAR ========= */
