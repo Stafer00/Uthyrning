@@ -1,4 +1,4 @@
-console.log("PRO STABIL FINAL")
+console.log("PRO STABIL MED KATEGORIER")
 
 const supabaseClient = window.supabase.createClient(
   "https://ycasdixhobiaiizevgsi.supabase.co",
@@ -46,14 +46,16 @@ function bindUI(){
 
 /* ========= TABS ========= */
 function setupTabs(){
-  const div=el("tabs")
-  div.innerHTML=""
 
-  const types=[...new Set(skis.map(s=>s.type).filter(Boolean))]
-  activeType=types.length?types[0]:null
+  const div = el("tabs")
+  div.innerHTML = ""
+
+  const types = ["Knatte","Junior","Vuxen"]
+
+  activeType = types[0]
 
   types.forEach(t=>{
-    div.innerHTML+=`
+    div.innerHTML += `
       <div class="tab ${t===activeType?'active':''}" onclick="setTab('${t}')">
         ${t}
       </div>
@@ -79,15 +81,13 @@ function render(){
 /* ========= WALL ========= */
 function renderWall(){
 
-  if(!activeType){
-    el("skiWall").innerHTML="Ingen utrustning"
-    return
-  }
-
   const div=el("skiWall")
   div.innerHTML=""
 
-  const list=skis.filter(s=>s.type===activeType)
+  const list=skis.filter(s=>
+    s.type && s.type.toLowerCase() === activeType.toLowerCase()
+  )
+
   const lengths=[...new Set(list.map(s=>s.length))].sort((a,b)=>a-b)
 
   const grid=document.createElement("div")
@@ -123,7 +123,9 @@ function getSelected(ids){
 }
 
 function plus(length){
-  const ids=skis.filter(s=>s.type===activeType && s.length==length).map(s=>s.id)
+  const ids=skis.filter(s=>
+    s.type && s.type.toLowerCase()===activeType.toLowerCase() && s.length==length
+  ).map(s=>s.id)
 
   if(getSelected(ids)>=getAvailable(ids)){
     alert("Slut i lager")
@@ -135,9 +137,13 @@ function plus(length){
 }
 
 function minus(length){
-  const ids=skis.filter(s=>s.type===activeType && s.length==length).map(s=>s.id)
+  const ids=skis.filter(s=>
+    s.type && s.type.toLowerCase()===activeType.toLowerCase() && s.length==length
+  ).map(s=>s.id)
+
   const i=cart.findIndex(id=>ids.includes(id))
   if(i>-1) cart.splice(i,1)
+
   render()
 }
 
@@ -152,7 +158,12 @@ function getDays(){
 }
 
 function getPrice(type,days){
-  const t=priceTable[type]
+
+  if(!type) return 0
+
+  const tKey = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase()
+  const t = priceTable[tKey]
+
   if(!t) return 0
 
   if(days<=5) return t[days-1]
@@ -274,9 +285,7 @@ function showView(view){
 
   if(view==="calendar"){
     el("calendarView").classList.add("active")
-
     setTimeout(()=>renderCalendar(),50)
-
   }else{
     el("bookingView").classList.add("active")
   }
